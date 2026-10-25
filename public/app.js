@@ -1415,11 +1415,6 @@
       alert('Could not delete guide: ' + err.message);
     }
   }
-      }
-    } catch (err) {
-      alert('Failed to delete guide: ' + err.message);
-    }
-  }
 
   // AI Evaluation of Candidate Solution
   async function evaluateSolution() {
@@ -1764,6 +1759,10 @@
     });
   }
 
-  // Start app on DOMContentLoaded
-  document.addEventListener('DOMContentLoaded', init);
+  // Start app on DOMContentLoaded or immediately if already loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
