@@ -71,7 +71,8 @@ The application connects to your local GPU-accelerated Ollama runtime serving `q
    - "What to say to the interviewer" talking points
    - Clean production refactor with complexity analysis
 6. **Local Persistence**: Saves your code solutions and completion progress automatically in browser storage.
-7. **SQLite Database Knowledge Base**: Every generated Knowledge Guide is automatically saved into a local SQLite database (`knowledge.db`).
-   - Instant loading of previously generated guides from SQLite DB without re-running LLM generation.
-   - Dedicated **Saved DB** panel to browse, search, review, and manage your complete offline knowledge library.
-   - Option to re-generate fresh versions anytime with live web search grounding.
+7. **Dual Knowledge Storage (Local JSON vs SQLite DB)**:
+   - **Interactive Storage Toggle**: Seamlessly choose whether generated knowledge guides are saved into a **Local JSON File** (`knowledge.json`) or an **SQLite DB** (`knowledge.db`).
+   - **Automatic No-SQLite Fallback**: If SQLite is not installed or supported in your Node environment, the application automatically falls back to local JSON storage without errors or crashes.
+   - **Instant Loading**: Previously saved guides load instantly from your selected storage without waiting on LLM re-generation.
+   - **Dedicated Saved Guides Panel**: Search, filter, view, and delete saved guides from either JSON or SQLite with a single click.

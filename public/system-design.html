@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SYS.DEPTH — System Design, Servers & Web Architecture</title>
+  
+  <!-- Modern Clean Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Markdown & Code Formatting -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-docker.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-nginx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-http.min.js"></script>
+
+  <!-- Reusable Shared Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top App Navigation -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="sys-logo-mark">
+          <i class="fa-solid fa-server"></i>
+        </span>
+        <div class="logo-text">
+          <span class="title">SYS.DEPTH</span>
+          <span class="subtitle">System Design, Servers & Deployments</span>
+        </div>
+      </div>
+
+      <!-- Shared Track Switcher Component -->
+      <div class="track-switcher">
+        <a href="/" class="track-tab js-tab" title="JavaScript Engine Internals"><i class="fa-brands fa-js"></i> JavaScript</a>
+        <a href="/react" class="track-tab react-tab" title="React.js Fiber & Hooks Mastery"><i class="fa-brands fa-react"></i> React.js</a>
+        <a href="/design-system" class="track-tab ds-tab" title="Design System Architecture & WCAG"><i class="fa-solid fa-layer-group"></i> Design System</a>
+        <a href="/system-design" class="track-tab active sys-tab" title="System Design, Servers & Deployments"><i class="fa-solid fa-server"></i> System Design</a>
+      </div>
+      
+      <div class="model-status-pill" id="modelStatusPill">
+        <span class="status-indicator"></span>
+        <span class="model-name">Checking Local LLM...</span>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="progress-container">
+        <div class="progress-labels">
+          <span>Curriculum Mastery</span>
+          <span id="masteryPercent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button class="icon-btn" id="themeToggle" title="Toggle Dark/Light Mode">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+      <button class="btn secondary-btn" id="resetProgressBtn" title="Reset Mastered Topics to 0%">
+        <i class="fa-solid fa-arrow-rotate-left"></i> Reset Progress
+      </button>
+      <button class="btn secondary-btn" id="exportProgressBtn" title="Export Progress">
+        <i class="fa-solid fa-download"></i> Export
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace Layout -->
+  <div class="workspace-container">
+    
+    <!-- LEFT PANEL: System Design Syllabus & Explorer -->
+    <aside class="sidebar-panel">
+      <div class="sidebar-header">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="topicSearch" placeholder="Search Docker, Nginx, Redis, CI/CD, TLS, DNS...">
+        </div>
+      </div>
+
+      <div class="topics-tree" id="topicsTree">
+        <div class="loading-state">
+          <i class="fa-solid fa-circle-notch fa-spin"></i> Loading System Design syllabus...
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER PANEL: Dedicated Knowledge Information Arena (No Code Editor) -->
+    <main class="arena-panel">
+      <div class="ds-arena">
+        
+        <!-- Breadcrumbs & Quick Controls -->
+        <div class="arena-topbar" style="margin-bottom: 16px;">
+          <div class="topic-breadcrumbs">
+            <span id="crumbCategory">Server Fundamentals & Web Networking</span>
+            <i class="fa-solid fa-chevron-right crumb-sep"></i>
+            <span id="crumbTopic" class="current-topic">DNS Resolution, TCP Handshake & TLS 1.3 Lifecycle</span>
+          </div>
+
+          <div class="ds-hero-actions">
+            <!-- Storage Destination Toggle Button (JSON vs SQLite) -->
+            <div class="storage-toggle-control" id="storageToggleControl" title="Choose storage destination for generated knowledge guides">
+              <span class="storage-toggle-label"><i class="fa-solid fa-floppy-disk"></i> Save:</span>
+              <div class="storage-toggle-group">
+                <button type="button" class="storage-toggle-btn active" data-mode="json" id="btnStorageJson" title="Save guides into local JSON file (knowledge.json)">
+                  <i class="fa-solid fa-file-code"></i> JSON File
+                </button>
+                <button type="button" class="storage-toggle-btn" data-mode="sqlite" id="btnStorageSqlite" title="Save guides into SQLite DB (knowledge.db)">
+                  <i class="fa-solid fa-database"></i> SQL DB
+                </button>
+              </div>
+              <span class="sqlite-status-tag" id="sqliteStatusTag" style="display: none;" title="SQLite is not installed or available in Node runtime">
+                <i class="fa-solid fa-circle-exclamation"></i> No SQLite
+              </span>
+            </div>
+
+            <button class="ds-mark-mastered-btn" id="markMasteredBtn" title="Mark this topic as understood / mastered">
+              <i class="fa-regular fa-circle-check"></i> Mark as Mastered
+            </button>
+
+            <label class="online-search-toggle" title="Search Cloudflare, AWS & web specs to ground the explanation">
+              <input type="checkbox" id="onlineSearchCheckbox" checked>
+              <span class="toggle-track"><i class="fa-solid fa-globe"></i> Live Web Architecture Search</span>
+            </label>
+
+            <button class="sys-generate-btn" id="generateKnowledgeBtn" title="Generate fresh in-depth senior system design guide using local LLM + web search">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Knowledge Guide
+            </button>
+          </div>
+        </div>
+
+        <!-- Topic Architectural Hero & Overview Card -->
+        <section class="ds-topic-hero" id="topicHero">
+          <div class="ds-topic-hero-header">
+            <div class="ds-topic-title-area">
+              <div class="ds-badges-row">
+                <span class="ds-badge sys-badge-senior"><i class="fa-solid fa-server"></i> System Architecture</span>
+                <span class="ds-badge ds-badge-category" id="topicBadge">Networking</span>
+              </div>
+              <h1 class="ds-topic-title" id="topicTitle">DNS Resolution, TCP Handshake & TLS 1.3 Lifecycle</h1>
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+              <button class="icon-btn-sm" id="copyGuideBtn" title="Copy full knowledge guide to clipboard">
+                <i class="fa-regular fa-copy"></i> Copy Guide
+              </button>
+            </div>
+          </div>
+
+          <!-- Why Senior Developers Must Master This -->
+          <div class="sys-importance-banner" id="topicImportanceBanner">
+            <strong><i class="fa-solid fa-network-wired"></i> Production Impact:</strong>
+            <span id="topicImportanceText">Understanding connection latency, TCP slow start, and TLS handshakes is critical for optimizing Time to First Byte (TTFB) and debugging production network bottlenecks.</span>
+          </div>
+
+          <!-- Grid: Core Mental Model & Traps -->
+          <div class="ds-collapsible-grid">
+            <!-- Mental Model Card -->
+            <div class="ds-info-card">
+              <div class="ds-info-card-title">
+                <i class="fa-solid fa-brain" style="color: #10b981;"></i> Core Mental Model
+              </div>
+              <div class="ds-info-card-content" id="topicMentalModel">
+                Browser Cache -> OS Resolver -> Recursive DNS Server -> Root / TLD / Authoritative DNS -> IP resolved -> TCP 3-Way Handshake -> TLS 1.3 1-RTT Handshake.
+              </div>
+            </div>
+
+            <!-- Senior Traps & Pitfalls Card -->
+            <div class="ds-info-card">
+              <div class="ds-info-card-title">
+                <i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b;"></i> Senior Interview Traps
+              </div>
+              <div class="ds-info-card-content" id="topicTraps">
+                Assuming DNS lookups are free; ignoring DNS TTL values; failing to leverage TLS 1.3 0-RTT session resumption for repeat visitors.
+              </div>
+            </div>
+          </div>
+
+          <!-- Senior Interview Questions Box -->
+          <div class="ds-info-card" id="interviewQuestionsCard" style="display: none;">
+            <div class="ds-info-card-title">
+              <i class="fa-solid fa-comments" style="color: #38bdf8;"></i> Senior / Staff System Design Interview Questions
+            </div>
+            <div class="ds-info-card-content" id="topicInterviewQuestions">
+              <!-- Rendered Questions List -->
+            </div>
+          </div>
+        </section>
+
+        <!-- View Navigation Tabs: Knowledge Guide vs Saved Guides -->
+        <div class="ds-main-tabs">
+          <button class="ds-tab-btn sys-tab-btn active" id="tabGuideBtn" data-view="guide">
+            <i class="fa-solid fa-book-open"></i> System Design Masterclass Guide
+          </button>
+          <button class="ds-tab-btn sys-tab-btn" id="tabSavedBtn" data-view="saved">
+            <i class="fa-solid fa-box-archive" id="tabSavedIcon"></i> <span id="tabSavedLabel">Saved</span> (<span id="savedCountBadge">0</span>)
+          </button>
+        </div>
+
+        <!-- View 1: Knowledge Guide -->
+        <div class="ds-guide-view" id="guideView">
+          <div class="ds-guide-card">
+            <!-- Dynamic Markdown Content -->
+            <div id="guideContent" class="markdown-content">
+              <!-- Rendered Guide -->
+            </div>
+          </div>
+        </div>
+
+        <!-- View 2: Saved Guides Database -->
+        <div class="ds-guide-view" id="savedView" style="display: none;">
+          <div class="ds-guide-card">
+            <div class="saved-guides-filter-bar" style="margin-bottom: 16px;">
+              <div class="search-box" style="flex: 1;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="savedGuidesSearch" placeholder="Filter saved system design guides by keyword or topic...">
+              </div>
+              <div class="saved-storage-toggle" title="Switch storage source view">
+                <button type="button" class="storage-tab-toggle-btn active" data-mode="json" id="panelStorageJsonBtn" title="View Local JSON Guides (knowledge.json)">
+                  <i class="fa-solid fa-file-code"></i> JSON
+                </button>
+                <button type="button" class="storage-tab-toggle-btn" data-mode="sqlite" id="panelStorageSqlBtn" title="View SQLite DB Guides (knowledge.db)">
+                  <i class="fa-solid fa-database"></i> SQL
+                </button>
+              </div>
+              <button class="icon-btn-sm" id="refreshSavedGuidesBtn" title="Refresh Saved Guides">
+                <i class="fa-solid fa-arrow-rotate-right"></i> Refresh
+              </button>
+            </div>
+
+            <div id="savedGuidesList" class="saved-guides-list">
+              <div class="empty-eval-state">
+                <i class="fa-solid fa-database"></i>
+                <h3>Loading saved guides...</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="system-design.js"></script>
+</body>
+</html>
