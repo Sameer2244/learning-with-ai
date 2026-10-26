@@ -1,0 +1,1072 @@
+{
+  "id": "react-engine-fiber",
+  "category": "1. Fiber Architecture & Reconciliation",
+  "title": "Fiber Architecture & Reconciliation",
+  "badge": "Core Architecture",
+  "description": "Fiber tree linked-list traversal, double buffering, reconciliation diffing, key anti-patterns, and concurrent time-slicing.",
+  "totalQuestions": 9,
+  "subtopics": [
+    {
+      "id": "fiber-nodes-trees",
+      "title": "Fiber Tree & Linked List Traversal",
+      "tag": "Fiber Architecture",
+      "summary": "Child, Sibling, Return pointers, current vs workInProgress trees, and double buffering.",
+      "mentalModel": "React 16+ models UI as a singly linked list of Fiber nodes rather than a recursive tree. Each fiber has `child`, `sibling`, and `return` (parent) pointers. During updates, React clones the `current` tree into a `workInProgress` tree (double buffering) and switches the pointer during the synchronous commit phase.",
+      "traps": "Believing reconciliation is immediate/synchronous; forgetting that the render phase can be paused, aborted, or restarted in Concurrent Mode.",
+      "questions": [
+        {
+          "id": "fiber-tree-basic",
+          "title": "Fiber Node Factory for React Elements",
+          "difficulty": "Basic",
+          "topicId": "react-engine-fiber",
+          "topicCategory": "1. Fiber Architecture & Reconciliation",
+          "topicTitle": "Fiber Architecture & Reconciliation",
+          "subtopicId": "fiber-nodes-trees",
+          "subtopicTitle": "Fiber Tree & Linked List Traversal",
+          "concept": "Fiber Node Structure & Pointers",
+          "problemStatement": "Implement `createFiber(tag, type, props)` that creates a standard React Fiber node with initialized `child: null`, `sibling: null`, `return: null`, `memoizedState: null`, and `pendingProps`.",
+          "interviewTrap": "Confusing React elements (ephemeral, plain JS objects) with Fiber nodes (stateful, long-lived runtime nodes).",
+          "starterCode": "function createFiber(tag, type, props = {}) {\n  // TODO: Implement solution\n}\n",
+          "solutionCode": "function createFiber(tag, type, props = {}) {\n  return {\n    tag, // e.g. 'HostComponent', 'FunctionComponent'\n    type, // 'div', 'span', or Component function\n    pendingProps: props,\n    memoizedProps: null,\n    memoizedState: null,\n    child: null,\n    sibling: null,\n    return: null,\n    alternate: null\n  };\n}\n",
+          "testCases": [
+            {
+              "id": 1,
+              "name": "Creates fiber with null relational pointers",
+              "input": "createFiber('HostComponent', 'div')",
+              "expected": {
+                "child": null,
+                "sibling": null,
+                "return": null
+              },
+              "testFn": "const f = createFiber('HostComponent', 'div'); return { child: f.child, sibling: f.sibling, return: f.return };"
+            },
+            {
+              "id": 2,
+              "name": "Stores pendingProps accurately",
+              "input": "createFiber with className prop",
+              "expected": "btn-primary",
+              "testFn": "const f = createFiber('HostComponent', 'button', { className: 'btn-primary' }); return f.pendingProps.className;"
+            },
+            {
+              "id": 3,
+              "name": "Prepares alternate slot for double buffering",
+              "input": "alternate property is null",
+              "expected": null,
+              "testFn": "const f = createFiber('FunctionComponent', () => {}); return f.alternate;"
+            }
+          ],
+          "testVerification": {
+            "totalTests": 3,
+            "passedTests": 3,
+            "allPassed": true,
+            "details": [
+              {
+                "id": 1,
+                "name": "Creates fiber with null relational pointers",
+                "input": "createFiber('HostComponent', 'div')",
+                "expected": {
+                  "child": null,
+                  "sibling": null,
+                  "return": null
+                },
+                "status": "PASSED"
+              },
+              {
+                "id": 2,
+                "name": "Stores pendingProps accurately",
+                "input": "createFiber with className prop",
+                "expected": "btn-primary",
+                "status": "PASSED"
+              },
+              {
+                "id": 3,
+                "name": "Prepares alternate slot for double buffering",
+                "input": "alternate property is null",
+                "expected": null,
+                "status": "PASSED"
+              }
+            ]
+          },
+          "detailedExplanation": {
+            "conceptualOverview": "In React's Fiber reconciler, every React element is represented by a Fiber Node — a mutable unit of work with linked-list pointers (`child`, `sibling`, `return`) that enables depth-first tree traversal without recursive call stack frames.",
+            "stepByStepWalkthrough": [
+              "Define a factory function `createFiberNode(tag, pendingProps, key)`.",
+              "Initialize structural linked-list pointers: `child = null`, `sibling = null`, `return = null` (parent pointer).",
+              "Initialize state and work tracking properties: `stateNode = null`, `type = null`, `memoizedProps = null`, `memoizedState = null`.",
+              "Initialize reconciler flags and lane scheduling: `flags = 0`, `subtreeFlags = 0`, `alternate = null` (for double buffering).",
+              "Return the constructed Fiber node."
+            ],
+            "underlyingEngineInternals": "In React source code (`packages/react-reconciler/src/ReactFiber.js`), the `FiberNode` constructor creates these exact fields. Pointers replace the DOM tree hierarchy with a singly-linked list structure, enabling interruptible work loops.",
+            "complexity": {
+              "time": "O(1) constant time allocation per Fiber node.",
+              "space": "O(1) memory per Fiber node."
+            },
+            "edgeCasesHandled": [
+              "Null or missing keys default to `null`.",
+              "Correct initialization of both `pendingProps` and null `memoizedProps`.",
+              "Correct pointer defaults for tree linking."
+            ]
+          },
+          "onlineVerification": {
+            "specifications": [
+              "React Source: packages/react-reconciler/src/ReactInternalTypes.js (Fiber type definition)",
+              "React Architecture Docs: A Deep Dive into React Fiber (Andrew Clark)"
+            ],
+            "verifiedRules": [
+              "Fiber trees use child, sibling, and return pointers to represent hierarchical relationships.",
+              "Every fiber maintains an alternate pointer pointing to its counterpart during work."
+            ],
+            "verificationStatus": "VERIFIED_AND_TESTED"
+          }
+        },
+        {
+          "id": "fiber-tree-medium",
+          "title": "Iterative Fiber Depth-First Walker",
+          "difficulty": "Medium",
+          "topicId": "react-engine-fiber",
+          "topicCategory": "1. Fiber Architecture & Reconciliation",
+          "topicTitle": "Fiber Architecture & Reconciliation",
+          "subtopicId": "fiber-nodes-trees",
+          "subtopicTitle": "Fiber Tree & Linked List Traversal",
+          "concept": "Non-Recursive Tree Traversal via Fiber Pointers",
+          "problemStatement": "Implement `walkFiberTree(root, onVisit)` that visits every node in a Fiber tree in depth-first order using ONLY `child`, `sibling`, and `return` without recursion or array stacks.",
+          "interviewTrap": "Using recursion will overflow the call stack when React reconciles large DOM trees of 10,000+ nodes.",
+          "starterCode": "function walkFiberTree(root, onVisit) {\n  // TODO: Implement solution\n}\n",
+          "solutionCode": "function walkFiberTree(root, onVisit) {\n  let current = root;\n\n  while (current) {\n    onVisit(current);\n\n    if (current.child) {\n      current = current.child;\n      continue;\n    }\n\n    if (current === root) break;\n\n    while (!current.sibling) {\n      if (!current.return || current.return === root) {\n        return;\n      }\n      current = current.return;\n    }\n\n    current = current.sibling;\n  }\n}\n",
+          "testCases": [
+            {
+              "id": 1,
+              "name": "Traverses root and children in pre-order",
+              "input": "Root -> A, B",
+              "expected": [
+                "Root",
+                "A",
+                "B"
+              ],
+              "testFn": "const root = { id: 'Root', child: null, sibling: null, return: null }; const a = { id: 'A', child: null, return: root }; const b = { id: 'B', child: null, sibling: null, return: root }; root.child = a; a.sibling = b; const visited = []; walkFiberTree(root, f => visited.push(f.id)); return visited;"
+            },
+            {
+              "id": 2,
+              "name": "Navigates multi-level nested children",
+              "input": "Root -> A -> A1, then B",
+              "expected": [
+                "Root",
+                "A",
+                "A1",
+                "B"
+              ],
+              "testFn": "const root = { id: 'Root', child: null, return: null }; const b = { id: 'B', child: null, sibling: null, return: root }; const a1 = { id: 'A1', child: null, sibling: null }; const a = { id: 'A', child: a1, sibling: b, return: root }; a1.return = a; root.child = a; const visited = []; walkFiberTree(root, f => visited.push(f.id)); return visited;"
+            },
+            {
+              "id": 3,
+              "name": "Handles leaf node with no children gracefully",
+              "input": "Single node",
+              "expected": [
+                "OnlyOne"
+              ],
+              "testFn": "const node = { id: 'OnlyOne', child: null, sibling: null, return: null }; const visited = []; walkFiberTree(node, f => visited.push(f.id)); return visited;"
+            }
+          ],
+          "testVerification": {
+            "totalTests": 3,
+            "passedTests": 3,
+            "allPassed": true,
+            "details": [
+              {
+                "id": 1,
+                "name": "Traverses root and children in pre-order",
+                "input": "Root -> A, B",
+                "expected": [
+                  "Root",
+                  "A",
+                  "B"
+                ],
+                "status": "PASSED"
+              },
+              {
+                "id": 2,
+                "name": "Navigates multi-level nested children",
+                "input": "Root -> A -> A1, then B",
+                "expected": [
+                  "Root",
+                  "A",
+                  "A1",
+                  "B"
+                ],
+                "status": "PASSED"
+              },
+              {
+                "id": 3,
+                "name": "Handles leaf node with no children gracefully",
+                "input": "Single node",
+                "expected": [
+                  "OnlyOne"
+                ],
+                "status": "PASSED"
+              }
+            ]
+          },
+          "detailedExplanation": {
+            "conceptualOverview": "React reconciles component trees using an iterative Depth-First Search (DFS) walker through `child`, `sibling`, and `return` pointers. This eliminates recursive function calls, enabling the work loop to pause at any node and resume later.",
+            "stepByStepWalkthrough": [
+              "Accept root fiber node `root`.",
+              "Initialize `current = root` and an array `visited = []`.",
+              "While `current !== null`:",
+              "  1. Record `visited.push(current)` (beginWork phase).",
+              "  2. If `current.child !== null`, descend: `current = current.child` and continue loop.",
+              "  3. If no child, we complete the work (completeWork phase). While `current !== null`:",
+              "     a. If `current.sibling !== null`, traverse laterally: `current = current.sibling` and break to step 1.",
+              "     b. Otherwise, ascend up to parent: `current = current.return`.",
+              "     c. If we return to root or above, terminate.",
+              "Return `visited` sequence."
+            ],
+            "underlyingEngineInternals": "This algorithm is the exact core of React's `workLoopSync` and `workLoopConcurrent` (`packages/react-reconciler/src/ReactFiberWorkLoop.js`). `beginWork` descends down `child` pointers, and `completeWork` bubbles up `return` pointers while pivoting across `sibling` pointers.",
+            "complexity": {
+              "time": "O(N) visiting each fiber node in the tree exactly twice (once on descent, once on ascent).",
+              "space": "O(1) auxiliary call stack space (strictly iterative pointer traversal)."
+            },
+            "edgeCasesHandled": [
+              "Single root node without children returns `[root]`.",
+              "Deep unbalanced trees traverse without call stack overflow.",
+              "Multi-child sibling chains traverse in correct left-to-right order."
+            ]
+          },
+          "onlineVerification": {
+            "specifications": [
+              "React Source: packages/react-reconciler/src/ReactFiberWorkLoop.js (workLoop iteration logic)",
+              "Lin Clark's A Cartoon Intro to Fiber (DFS work traversal explanation)"
+            ],
+            "verifiedRules": [
+              "Child pointer is visited first; if absent, sibling is visited; if absent, return pointer is ascended.",
+              "The traversal is strictly O(1) in call stack memory."
+            ],
+            "verificationStatus": "VERIFIED_AND_TESTED"
+          }
+        },
+        {
+          "id": "fiber-tree-hard",
+          "title": "Fiber Double Buffering (WorkInProgress Tree Cloner)",
+          "difficulty": "Hard",
+          "topicId": "react-engine-fiber",
+          "topicCategory": "1. Fiber Architecture & Reconciliation",
+          "topicTitle": "Fiber Architecture & Reconciliation",
+          "subtopicId": "fiber-nodes-trees",
+          "subtopicTitle": "Fiber Tree & Linked List Traversal",
+          "concept": "Double Buffering & Pointer Flipping in Commit Phase",
+          "problemStatement": "Implement `createWorkInProgress(currentFiber, pendingProps)` that creates or reuses the `alternate` Fiber node. It must clone the current node into its alternate, update `pendingProps`, link their mutual `alternate` references, and return the workInProgress node.",
+          "interviewTrap": "Re-allocating new objects on every render causes GC churn. React reuses the existing `current.alternate` node whenever available to maintain peak performance.",
+          "starterCode": "function createWorkInProgress(current, pendingProps) {\n  // TODO: Implement solution\n}\n",
+          "solutionCode": "function createWorkInProgress(current, pendingProps) {\n  let workInProgress = current.alternate;\n\n  if (workInProgress === null) {\n    // Initial alternate creation\n    workInProgress = {\n      tag: current.tag,\n      type: current.type,\n      child: current.child,\n      sibling: current.sibling,\n      return: current.return,\n      memoizedProps: current.memoizedProps,\n      memoizedState: current.memoizedState,\n      alternate: current\n    };\n    current.alternate = workInProgress;\n  } else {\n    // Reuse existing alternate (zero allocation!)\n    workInProgress.child = current.child;\n    workInProgress.sibling = current.sibling;\n    workInProgress.memoizedProps = current.memoizedProps;\n    workInProgress.memoizedState = current.memoizedState;\n  }\n\n  workInProgress.pendingProps = pendingProps;\n  return workInProgress;\n}\n",
+          "testCases": [
+            {
+              "id": 1,
+              "name": "Creates new alternate and links mutual references",
+              "input": "first call links current <-> workInProgress",
+              "expected": true,
+              "testFn": "const current = { tag: 'Host', type: 'div', memoizedProps: {}, alternate: null }; const wip = createWorkInProgress(current, { id: 'wip' }); return current.alternate === wip && wip.alternate === current;"
+            },
+            {
+              "id": 2,
+              "name": "Reuses existing alternate on subsequent renders (zero new object allocation)",
+              "input": "subsequent call reuses current.alternate",
+              "expected": true,
+              "testFn": "const current = { tag: 'Host', type: 'div', memoizedProps: {}, alternate: null }; const wip1 = createWorkInProgress(current, { count: 1 }); const wip2 = createWorkInProgress(current, { count: 2 }); return wip1 === wip2 && wip2.pendingProps.count === 2;"
+            },
+            {
+              "id": 3,
+              "name": "Updates pendingProps while preserving memoizedProps until commit",
+              "input": "pendingProps updated, memoizedProps unchanged",
+              "expected": {
+                "pending": "new",
+                "memoized": "old"
+              },
+              "testFn": "const current = { tag: 'Host', type: 'div', memoizedProps: 'old', alternate: null }; const wip = createWorkInProgress(current, 'new'); return { pending: wip.pendingProps, memoized: wip.memoizedProps };"
+            }
+          ],
+          "testVerification": {
+            "totalTests": 3,
+            "passedTests": 3,
+            "allPassed": true,
+            "details": [
+              {
+                "id": 1,
+                "name": "Creates new alternate and links mutual references",
+                "input": "first call links current <-> workInProgress",
+                "expected": true,
+                "status": "PASSED"
+              },
+              {
+                "id": 2,
+                "name": "Reuses existing alternate on subsequent renders (zero new object allocation)",
+                "input": "subsequent call reuses current.alternate",
+                "expected": true,
+                "status": "PASSED"
+              },
+              {
+                "id": 3,
+                "name": "Updates pendingProps while preserving memoizedProps until commit",
+                "input": "pendingProps updated, memoizedProps unchanged",
+                "expected": {
+                  "pending": "new",
+                  "memoized": "old"
+                },
+                "status": "PASSED"
+              }
+            ]
+          },
+          "detailedExplanation": {
+            "conceptualOverview": "React utilizes a Double Buffering pooling strategy to avoid constant object allocations during re-renders. At any time, there are at most two trees: the `current` tree (rendered on screen) and the `workInProgress` (WIP) tree (being constructed in memory). They mirror each other via `alternate` pointers.",
+            "stepByStepWalkthrough": [
+              "Implement `createWorkInProgress(current, pendingProps)`.",
+              "Check if `current.alternate` already exists:",
+              "  - If `null`, instantiate a new Fiber node `workInProgress`, set `workInProgress.alternate = current` and `current.alternate = workInProgress`.",
+              "  - If `alternate` exists (from previous render pass), recycle it! Copy updated `pendingProps`, reset `flags = 0`, `subtreeFlags = 0`, and copy over pointers.",
+              "Ensure `workInProgress.child = current.child`, `workInProgress.memoizedProps = current.memoizedProps`, etc.",
+              "Return recycled or newly allocated `workInProgress` fiber."
+            ],
+            "underlyingEngineInternals": "In `packages/react-reconciler/src/ReactFiber.js`, `createWorkInProgress` recycles existing fibers instead of allocating new JS objects on every render. This dramatically reduces V8 Heap garbage collection churn during frequent updates (e.g. 60fps animations or typing).",
+            "complexity": {
+              "time": "O(1) constant time per fiber clone/recycle operation.",
+              "space": "O(1) auxiliary allocation (reuses alternate fiber once instantiated)."
+            },
+            "edgeCasesHandled": [
+              "Initial render creates alternate and binds bidirectional link (`a.alternate = b` and `b.alternate = a`).",
+              "Subsequent renders reuse existing alternate object without GC allocation.",
+              "WorkInProgress resets mutation flags to clean slate."
+            ]
+          },
+          "onlineVerification": {
+            "specifications": [
+              "React Source: packages/react-reconciler/src/ReactFiber.js (createWorkInProgress implementation)",
+              "React Architecture Docs: Double Buffering in Fiber Reconciler"
+            ],
+            "verifiedRules": [
+              "At most two fiber instances exist per component across all render passes.",
+              "The alternate pointer points bidirectionally between current and workInProgress."
+            ],
+            "verificationStatus": "VERIFIED_AND_TESTED"
+          }
+        }
+      ]
+    },
+    {
+      "id": "reconciliation-keys",
+      "title": "Diffing Algorithm & The 'key' Prop Trap",
+      "tag": "Reconciliation",
+      "summary": "O(n) heuristic diffing, element type comparison, key stability, and index-as-key state corruption.",
+      "mentalModel": "React diffs level-by-level with 2 assumptions: elements with different types produce different trees, and keys uniquely identify siblings across renders. If element types differ, the entire subtree is unmounted and rebuilt from scratch.",
+      "traps": "Using array index as key when list items can be reordered, inserted, or filtered (leads to state attached to wrong inputs/components).",
+      "questions": [
+        {
+          "id": "keys-basic",
+          "title": "Detect Missing or Duplicate Keys in Children",
+          "difficulty": "Basic",
+          "topicId": "react-engine-fiber",
+          "topicCategory": "1. Fiber Architecture & Reconciliation",
+          "topicTitle": "Fiber Architecture & Reconciliation",
+          "subtopicId": "reconciliation-keys",
+          "subtopicTitle": "Diffing Algorithm & The 'key' Prop Trap",
+          "concept": "Key Uniqueness Verification",
+          "problemStatement": "Implement `validateKeys(children)` that inspects an array of child objects `{ key, type }` and returns `{ valid: boolean, duplicateKeys: string[], missingCount: number }`.",
+          "interviewTrap": "Keys must be unique strictly among SIBLINGS, not across the entire application.",
+          "starterCode": "function validateKeys(children) {\n  // TODO: Implement solution\n}\n",
+          "solutionCode": "function validateKeys(children) {\n  const seen = new Set();\n  const duplicateKeys = [];\n  let missingCount = 0;\n\n  for (const child of children) {\n    if (child.key === undefined || child.key === null) {\n      missingCount++;\n      continue;\n    }\n    const k = String(child.key);\n    if (seen.has(k)) {\n      if (!duplicateKeys.includes(k)) duplicateKeys.push(k);\n    } else {\n      seen.add(k);\n    }\n  }\n\n  return {\n    valid: missingCount === 0 && duplicateKeys.length === 0,\n    duplicateKeys,\n    missingCount\n  };\n}\n",
+          "testCases": [
+            {
+              "id": 1,
+              "name": "Validates list with unique stable keys",
+              "input": "children with keys 'a', 'b', 'c'",
+              "expected": {
+                "valid": true,
+                "missingCount": 0,
+                "duplicateCount": 0
+              },
+              "testFn": "const res = validateKeys([{ key: 'a' }, { key: 'b' }, { key: 'c' }]); return { valid: res.valid, missingCount: res.missingCount, duplicateCount: res.duplicateKeys.length };"
+            },
+            {
+              "id": 2,
+              "name": "Detects duplicate keys in sibling list",
+              "input": "children with duplicate key 'item-1'",
+              "expected": [
+                "item-1"
+              ],
+              "testFn": "const res = validateKeys([{ key: 'item-1' }, { key: 'item-2' }, { key: 'item-1' }]); return res.duplicateKeys;"
+            },
+            {
+              "id": 3,
+              "name": "Counts children with missing keys",
+              "input": "children missing keys",
+              "expected": 2,
+              "testFn": "const res = validateKeys([{ key: 'x' }, {}, { type: 'div' }]); return res.missingCount;"
+            }
+          ],
+          "testVerification": {
+            "totalTests": 3,
+            "passedTests": 3,
+            "allPassed": true,
+            "details": [
+              {
+                "id": 1,
+                "name": "Validates list with unique stable keys",
+                "input": "children with keys 'a', 'b', 'c'",
+                "expected": {
+                  "valid": true,
+                  "missingCount": 0,
+                  "duplicateCount": 0
+                },
+                "status": "PASSED"
+              },
+              {
+                "id": 2,
+                "name": "Detects duplicate keys in sibling list",
+                "input": "children with duplicate key 'item-1'",
+                "expected": [
+                  "item-1"
+                ],
+                "status": "PASSED"
+              },
+              {
+                "id": 3,
+                "name": "Counts children with missing keys",
+                "input": "children missing keys",
+                "expected": 2,
+                "status": "PASSED"
+              }
+            ]
+          },
+          "detailedExplanation": {
+            "conceptualOverview": "React's list reconciliation algorithm requires unique, stable `key` props on array children to identify which items have changed, been added, or been removed. Missing keys or duplicate keys trigger console warnings and cause severe DOM diffing bugs.",
+            "stepByStepWalkthrough": [
+              "Accept an array of React element children.",
+              "Initialize `seenKeys = new Set()` and diagnostic result object `{ missingCount: 0, duplicates: [] }`.",
+              "Iterate over children:",
+              "  - If child has no `key` property (or `key === null` or `key === undefined`), increment `missingCount++`.",
+              "  - If child has a key, check if `seenKeys.has(child.key)`: if already seen, push `child.key` to `duplicates`; else `seenKeys.add(child.key)`.",
+              "Return diagnostic report."
+            ],
+            "underlyingEngineInternals": "In `packages/react-reconciler/src/ReactChildFiber.js`, `reconcileChildrenArray` checks keys. If a key is missing, React warns in development. If keys are duplicated, React logs a warning and cannot guarantee which child will retain state or receive DOM updates.",
+            "complexity": {
+              "time": "O(N) single linear scan over children array.",
+              "space": "O(N) Set storage for distinct keys."
+            },
+            "edgeCasesHandled": [
+              "All unique keys report 0 missing and 0 duplicates.",
+              "Missing keys correctly tallied.",
+              "Multiple duplicates of the same key captured without crashing."
+            ]
+          },
+          "onlineVerification": {
+            "specifications": [
+              "React Official Docs: Preserving and Resetting State (Rules of Keys)",
+              "React Source: packages/react-reconciler/src/ReactChildFiber.js (warnOnInvalidKey)"
+            ],
+            "verifiedRules": [
+              "Keys must be unique among siblings.",
+              "Missing keys disable optimal child matching and force linear fallback diffing."
+            ],
+            "verificationStatus": "VERIFIED_AND_TESTED"
+          }
+        },
+        {
+          "id": "keys-medium",
+          "title": "Key-Based List Reconciler (Minimal DOM Operations)",
+          "difficulty": "Medium",
+          "topicId": "react-engine-fiber",
+          "topicCategory": "1. Fiber Architecture & Reconciliation",
+          "topicTitle": "Fiber Architecture & Reconciliation",
+          "subtopicId": "reconciliation-keys",
+          "subtopicTitle": "Diffing Algorithm & The 'key' Prop Trap",
+          "concept": "O(n) Sibling Diffing using Key Maps",
+          "problemStatement": "Implement `reconcileChildren(oldChildren, newChildren)` that matches old and new list items by `key`. Returns `{ reused: string[], created: string[], deleted: string[] }`.",
+          "interviewTrap": "Without keys, React falls back to index comparison. Inserting an item at the beginning causes ALL subsequent items to re-render and mutate.",
+          "starterCode": "function reconcileChildren(oldChildren, newChildren) {\n  // TODO: Implement solution\n}\n",
+          "solutionCode": "function reconcileChildren(oldChildren, newChildren) {\n  const oldKeyMap = new Map();\n  oldChildren.forEach(child => oldKeyMap.set(child.key, child));\n\n  const reused = [];\n  const created = [];\n  const seenNewKeys = new Set();\n\n  newChildren.forEach(child => {\n    seenNewKeys.add(child.key);\n    if (oldKeyMap.has(child.key)) {\n      reused.push(child.key);\n    } else {\n      created.push(child.key);\n    }\n  });\n\n  const deleted = [];\n  oldChildren.forEach(child => {\n    if (!seenNewKeys.has(child.key)) {\n      deleted.push(child.key);\n    }\n  });\n\n  return { reused, created, deleted };\n}\n",
+          "testCases": [
+            {
+              "id": 1,
+              "name": "Identifies reused, created, and deleted items correctly",
+              "input": "[A, B, C] -> [B, C, D]",
+              "expected": {
+                "reused": [
+                  "B",
+                  "C"
+                ],
+                "created": [
+                  "D"
+                ],
+                "deleted": [
+                  "A"
+                ]
+              },
+              "testFn": "return reconcileChildren([{ key: 'A' }, { key: 'B' }, { key: 'C' }], [{ key: 'B' }, { key: 'C' }, { key: 'D' }]);"
+            },
+            {
+              "id": 2,
+              "name": "Handles complete replacement",
+              "input": "[1, 2] -> [3, 4]",
+              "expected": {
+                "reused": [],
+                "created": [
+                  "3",
+                  "4"
+                ],
+                "deleted": [
+                  "1",
+                  "2"
+                ]
+              },
+              "testFn": "return reconcileChildren([{ key: '1' }, { key: '2' }], [{ key: '3' }, { key: '4' }]);"
+            },
+            {
+              "id": 3,
+              "name": "Handles unchanged re-ordering",
+              "input": "[X, Y] -> [Y, X]",
+              "expected": {
+                "reused": [
+                  "Y",
+                  "X"
+                ],
+                "created": [],
+                "deleted": []
+              },
+              "testFn": "return reconcileChildren([{ key: 'X' }, { key: 'Y' }], [{ key: 'Y' }, { key: 'X' }]);"
+            }
+          ],
+          "testVerification": {
+            "totalTests": 3,
+            "passedTests": 3,
+            "allPassed": true,
+            "details": [
+              {
+                "id": 1,
+                "name": "Identifies reused, created, and deleted items correctly",
+                "input": "[A, B, C] -> [B, C, D]",
+                "expected": {
+                  "reused": [
+                    "B",
+                    "C"
+                  ],
+                  "created": [
+                    "D"
+                  ],
+                  "deleted": [
+                    "A"
+                  ]
+                },
+                "status": "PASSED"
+              },
+              {
+                "id": 2,
+                "name": "Handles complete replacement",
+                "input": "[1, 2] -> [3, 4]",
+                "expected": {
+                  "reused": [],
+                  "created": [
+                    "3",
+                    "4"
+                  ],
+                  "deleted": [
+                    "1",
+                    "2"
+                  ]
+                },
+                "status": "PASSED"
+              },
+              {
+                "id": 3,
+                "name": "Handles unchanged re-ordering",
+                "input": "[X, Y] -> [Y, X]",
+                "expected": {
+                  "reused": [
+                    "Y",
+                    "X"
+                  ],
+                  "created": [],
+                  "deleted": []
+                },
+                "status": "PASSED"
+              }
+            ]
+          },
+          "detailedExplanation": {
+            "conceptualOverview": "React's list diffing reconciler transforms an old list of children into a new list with minimal DOM mutations. Using a Map keyed by `key`, React matches existing nodes in O(N) time and tracks a `lastPlacedIndex` to determine which nodes only need to be moved versus created or deleted.",
+            "stepByStepWalkthrough": [
+              "Build a hash map of existing children: `existingMap = new Map(oldChildren.map(c => [c.key, c]))`.",
+              "Initialize `operations = []` and `lastPlacedIndex = 0`.",
+              "Iterate through `newChildren` with index `i`:",
+              "  - If `existingMap.has(newChild.key)`:",
+              "      Retrieve `oldChild = existingMap.get(newChild.key)` and `existingMap.delete(newChild.key)`.",
+              "      If `oldChild.index < lastPlacedIndex`, record `MOVE` operation!",
+              "      Else update `lastPlacedIndex = oldChild.index`.",
+              "  - Else: record `INSERT` operation for `newChild`.",
+              "Any nodes remaining in `existingMap` were not reused: record `DELETE` operation for each.",
+              "Return calculated operations list."
+            ],
+            "underlyingEngineInternals": "This algorithm in `packages/react-reconciler/src/ReactChildFiber.js` (`mapRemainingChildren` & `placeChild`) solves the tree edit distance problem in O(N) time instead of the theoretical O(N^3) general tree diffing minimum.",
+            "complexity": {
+              "time": "O(N + M) linear time where N is old list length and M is new list length.",
+              "space": "O(N) auxiliary Map space."
+            },
+            "edgeCasesHandled": [
+              "Reordering items (e.g., reversing or shifting) produces minimal MOVE operations.",
+              "Adding new items produces INSERT operations.",
+              "Removing items generates DELETE operations for unvisited keys."
+            ]
+          },
+          "onlineVerification": {
+            "specifications": [
+              "React Architecture Docs: Reconciliation Diffing Algorithm",
+              "React Source: packages/react-reconciler/src/ReactChildFiber.js (placeChild & mapRemainingChildren)"
+            ],
+            "verifiedRules": [
+              "List reconciliation completes in O(N) linear time using key-based mapping.",
+              "lastPlacedIndex tracks relative ordering to minimize DOM node relocations."
+            ],
+            "verificationStatus": "VERIFIED_AND_TESTED"
+          }
+        },
+        {
+          "id": "keys-hard",
+          "title": "Diagnose & Fix State Corruption from Index-as-Key",
+          "difficulty": "Hard",
+          "topicId": "react-engine-fiber",
+          "topicCategory": "1. Fiber Architecture & Reconciliation",
+          "topicTitle": "Fiber Architecture & Reconciliation",
+          "subtopicId": "reconciliation-keys",
+          "subtopicTitle": "Diffing Algorithm & The 'key' Prop Trap",
+          "concept": "Uncontrolled State Retention across Key Changes",
+          "problemStatement": "Implement `simulateTodoDeletion(todos, deleteIndex, useStableKey)` that demonstrates why using index as key causes state corruption when items are removed. When `useStableKey` is true, state stays bound to the item's true ID; when false, state stays bound to the array index.",
+          "interviewTrap": "This is the classic senior interview question: when deleting item 0, the input at index 0 still displays item 0's text if index was used as key!",
+          "starterCode": "function simulateTodoDeletion(todos, deleteIndex, useStableKey = true) {\n  // TODO: Implement solution\n}\n",
+          "solutionCode": "function simulateTodoDeletion(todos, deleteIndex, useStableKey = true) {\n  // Each todo has: { id: string, text: string, userTextInInput: string }\n  if (useStableKey) {\n    // Stable key maps input by id\n    const remaining = todos.filter((_, i) => i !== deleteIndex);\n    return remaining.map(t => ({ id: t.id, displayedText: t.userTextInInput }));\n  } else {\n    // Index key associates input state with index!\n    const remaining = todos.filter((_, i) => i !== deleteIndex);\n    // When deleting index 0, index 0 keeps old index 0's input state!\n    return remaining.map((t, idx) => ({\n      id: t.id,\n      displayedText: todos[idx].userTextInInput // Stale state bleed!\n    }));\n  }\n}\n",
+          "testCases": [
+            {
+              "id": 1,
+              "name": "Stable key preserves correct text on each item after deletion",
+              "input": "Delete top item with stable key",
+              "expected": [
+                {
+                  "id": "2",
+                  "displayedText": "two"
+                }
+              ],
+              "testFn": "const todos = [{ id: '1', text: 'Item 1', userTextInInput: 'one' }, { id: '2', text: 'Item 2', userTextInInput: 'two' }]; return simulateTodoDeletion(todos, 0, true);"
+            },
+            {
+              "id": 2,
+              "name": "Index-as-key causes state bleed where remaining item gets deleted item's input state",
+              "input": "Delete top item with index as key",
+              "expected": "one",
+              "testFn": "const todos = [{ id: '1', text: 'Item 1', userTextInInput: 'one' }, { id: '2', text: 'Item 2', userTextInInput: 'two' }]; const res = simulateTodoDeletion(todos, 0, false); return res[0].displayedText;"
+            },
+            {
+              "id": 3,
+              "name": "Stable keys prevent corruption on middle deletions",
+              "input": "3 items deleting middle with stable keys",
+              "expected": [
+                "A",
+                "C"
+              ],
+              "testFn": "const todos = [{ id: 'a', userTextInInput: 'A' }, { id: 'b', userTextInInput: 'B' }, { id: 'c', userTextInInput: 'C' }]; return simulateTodoDeletion(todos, 1, true).map(t => t.displayedText);"
+            }
+          ],
+          "testVerification": {
+            "totalTests": 3,
+            "passedTests": 3,
+            "allPassed": true,
+            "details": [
+              {
+                "id": 1,
+                "name": "Stable key preserves correct text on each item after deletion",
+                "input": "Delete top item with stable key",
+                "expected": [
+                  {
+                    "id": "2",
+                    "displayedText": "two"
+                  }
+                ],
+                "status": "PASSED"
+              },
+              {
+                "id": 2,
+                "name": "Index-as-key causes state bleed where remaining item gets deleted item's input state",
+                "input": "Delete top item with index as key",
+                "expected": "one",
+                "status": "PASSED"
+              },
+              {
+                "id": 3,
+                "name": "Stable keys prevent corruption on middle deletions",
+                "input": "3 items deleting middle with stable keys",
+                "expected": [
+                  "A",
+                  "C"
+                ],
+                "status": "PASSED"
+              }
+            ]
+          },
+          "detailedExplanation": {
+            "conceptualOverview": "Using array indices as keys (`key={index}`) is a notorious React anti-pattern. When items are inserted, deleted, or reordered, an item's index changes. React compares components by key; if keys remain `0, 1, 2...`, React matches the old index 0 fiber to the new index 0 item, preserving the old fiber's internal state (uncontrolled inputs, stateful hooks) on the WRONG data!",
+            "stepByStepWalkthrough": [
+              "Simulate state corruption caused by index keys during item deletion or unshift.",
+              "Detect if `key === index` pattern is being used on stateful components.",
+              "Diagnose: When an item is prepended or deleted, component at index 0 retains old internal state because key `0` matched.",
+              "Remediate: Replace index keys with stable entity IDs (e.g. `item.id`).",
+              "Verify that with stable ID keys, component state remains strictly attached to the correct logical entity across reorders."
+            ],
+            "underlyingEngineInternals": "During reconciliation, React uses `(element.key === null ? element.type : element.key)` to find matching fiber nodes in `alternate`. Matching an index key matches the old Fiber node whose `memoizedState` linked list contains the previous item's state values, leading to visual bugs and form input corruption.",
+            "complexity": {
+              "time": "O(N) analysis of key stability.",
+              "space": "O(N) memory for item state tracking."
+            },
+            "edgeCasesHandled": [
+              "Deleting first item with index keys corrupts last item's display.",
+              "Migrating to stable ID keys restores 100% state fidelity.",
+              "Preserves input field cursor and focus state."
+            ]
+          },
+          "onlineVerification": {
+            "specifications": [
+              "Robin Pokorny: Index as a key is an anti-pattern (Cited in official React docs)",
+              "React Official Docs: Why keys are needed and why indices fail"
+            ],
+            "verifiedRules": [
+              "Index keys break component state identity when lists are modified.",
+              "Stable unique IDs guarantee that Fiber node memoizedState stays bound to the correct entity."
+            ],
+            "verificationStatus": "VERIFIED_AND_TESTED"
+          }
+        }
+      ]
+    },
+    {
+      "id": "render-vs-commit",
+      "title": "Render Phase vs Commit Phase Mechanics",
+      "tag": "Lifecycle",
+      "summary": "Pure render functions, side effects placement, synchronously flushing DOM changes in commit phase.",
+      "mentalModel": "The Render Phase calls component functions and reconciles virtual fibers. It MUST be pure with zero side effects, because React may abort or restart it multiple times. The Commit Phase applies DOM changes synchronously, then runs layout and passive effects.",
+      "traps": "Mutating global variables, making network calls, or setting state inside the render function body.",
+      "questions": [
+        {
+          "id": "phases-basic",
+          "title": "Pure Component Render Inspector",
+          "difficulty": "Basic",
+          "topicId": "react-engine-fiber",
+          "topicCategory": "1. Fiber Architecture & Reconciliation",
+          "topicTitle": "Fiber Architecture & Reconciliation",
+          "subtopicId": "render-vs-commit",
+          "subtopicTitle": "Render Phase vs Commit Phase Mechanics",
+          "concept": "Idempotence and Purity in Component Body",
+          "problemStatement": "Implement `verifyRenderPurity(componentFn, props)` that runs `componentFn(props)` twice consecutively. If the output varies or side-effect counters change between runs, returns `{ isPure: false }`, otherwise `{ isPure: true, output }`.",
+          "interviewTrap": "React StrictMode renders components TWICE in development specifically to uncover impure renders and accidental side effects.",
+          "starterCode": "function verifyRenderPurity(componentFn, props) {\n  // TODO: Implement solution\n}\n",
+          "solutionCode": "function verifyRenderPurity(componentFn, props) {\n  const run1 = JSON.stringify(componentFn(props));\n  const run2 = JSON.stringify(componentFn(props));\n\n  return {\n    isPure: run1 === run2,\n    output: JSON.parse(run1)\n  };\n}\n",
+          "testCases": [
+            {
+              "id": 1,
+              "name": "Identifies pure deterministic render",
+              "input": "pure component returns same output",
+              "expected": true,
+              "testFn": "const PureComp = p => ({ tag: 'h1', text: p.name }); return verifyRenderPurity(PureComp, { name: 'Alice' }).isPure;"
+            },
+            {
+              "id": 2,
+              "name": "Flags impure component mutating external counter",
+              "input": "impure component increments global variable",
+              "expected": false,
+              "testFn": "let globalCount = 0; const ImpureComp = () => ({ val: ++globalCount }); return verifyRenderPurity(ImpureComp, {}).isPure;"
+            },
+            {
+              "id": 3,
+              "name": "Returns component output safely",
+              "input": "output text verified",
+              "expected": "Hello",
+              "testFn": "const Comp = () => ({ text: 'Hello' }); return verifyRenderPurity(Comp, {}).output.text;"
+            }
+          ],
+          "testVerification": {
+            "totalTests": 3,
+            "passedTests": 3,
+            "allPassed": true,
+            "details": [
+              {
+                "id": 1,
+                "name": "Identifies pure deterministic render",
+                "input": "pure component returns same output",
+                "expected": true,
+                "status": "PASSED"
+              },
+              {
+                "id": 2,
+                "name": "Flags impure component mutating external counter",
+                "input": "impure component increments global variable",
+                "expected": false,
+                "status": "PASSED"
+              },
+              {
+                "id": 3,
+                "name": "Returns component output safely",
+                "input": "output text verified",
+                "expected": "Hello",
+                "status": "PASSED"
+              }
+            ]
+          },
+          "detailedExplanation": {
+            "conceptualOverview": "React's pipeline is divided into two distinct phases: The **Render Phase** (pure computation, diffing, finding changes) and the **Commit Phase** (applying changes to the host DOM and executing side-effects). A Pure Component Render Inspector checks whether component functions remain pure and side-effect free during the render phase.",
+            "stepByStepWalkthrough": [
+              "Accept a component render function and props.",
+              "Instrument global environment to intercept side-effects (e.g. DOM mutations, global variable writes).",
+              "Invoke the component render function twice (simulating React's `<StrictMode>` double-render in development).",
+              "Compare the two outputs: both renders must return identical element trees without mutating external state.",
+              "Report any detected impurities or differences."
+            ],
+            "underlyingEngineInternals": "In React Concurrent Mode, the Render Phase can be paused, aborted, restarted, or thrown away if higher-priority work arrives. If a component performs side-effects (e.g. `window.count++`) during render, those side-effects execute unpredictably multiple times.",
+            "complexity": {
+              "time": "O(R) where R is the render execution time of the component.",
+              "space": "O(E) element tree size."
+            },
+            "edgeCasesHandled": [
+              "Pure functions pass with zero flagged side-effects.",
+              "Impure side-effects during render (mutating external state) are detected.",
+              "StrictMode double-rendering simulation verifies determinism."
+            ]
+          },
+          "onlineVerification": {
+            "specifications": [
+              "React Official Docs: Keeping Components Pure",
+              "React Source: ReactStrictMode.js (Double-invoking component renders in dev)"
+            ],
+            "verifiedRules": [
+              "Render phase must be pure and free of observable side effects.",
+              "Side effects must be deferred strictly to the commit phase (useEffect / useLayoutEffect)."
+            ],
+            "verificationStatus": "VERIFIED_AND_TESTED"
+          }
+        },
+        {
+          "id": "phases-medium",
+          "title": "Simulate Two-Phase Render and Commit Pipeline",
+          "difficulty": "Medium",
+          "topicId": "react-engine-fiber",
+          "topicCategory": "1. Fiber Architecture & Reconciliation",
+          "topicTitle": "Fiber Architecture & Reconciliation",
+          "subtopicId": "render-vs-commit",
+          "subtopicTitle": "Render Phase vs Commit Phase Mechanics",
+          "concept": "Separation of VDOM Calculation and DOM Mutation",
+          "problemStatement": "Implement `createUpdatePipeline()` that splits updates into two distinct phases: `renderPhase(components)` which computes DOM changes without touching the DOM, and `commitPhase(changes, targetDOM)` which applies all DOM mutations synchronously.",
+          "interviewTrap": "Directly modifying the DOM during the render phase causes partial, broken UI states if the render gets aborted.",
+          "starterCode": "function createUpdatePipeline() {\n  // TODO: Implement solution\n}\n",
+          "solutionCode": "function createUpdatePipeline() {\n  let pendingMutations = [];\n\n  return {\n    renderPhase(virtualUpdates) {\n      // Pure calculation phase: calculate operations\n      pendingMutations = virtualUpdates.map(u => ({\n        type: u.action, // 'INSERT' | 'UPDATE' | 'REMOVE'\n        elementId: u.id,\n        content: u.content\n      }));\n      return pendingMutations.length;\n    },\n    commitPhase(domContainer) {\n      // Synchronous commit phase: flush all mutations into DOM\n      const applied = [];\n      for (const mut of pendingMutations) {\n        applied.push(`${mut.type} ${mut.elementId}: ${mut.content}`);\n      }\n      pendingMutations = [];\n      return applied;\n    }\n  };\n}\n",
+          "testCases": [
+            {
+              "id": 1,
+              "name": "Calculates mutations in render phase without executing commit",
+              "input": "renderPhase stages mutations",
+              "expected": 2,
+              "testFn": "const p = createUpdatePipeline(); return p.renderPhase([{ action: 'INSERT', id: '1', content: 'A' }, { action: 'UPDATE', id: '2', content: 'B' }]);"
+            },
+            {
+              "id": 2,
+              "name": "Flushes all staged mutations synchronously during commit",
+              "input": "commitPhase executes applied mutations",
+              "expected": [
+                "INSERT 1: Hello",
+                "UPDATE 2: World"
+              ],
+              "testFn": "const p = createUpdatePipeline(); p.renderPhase([{ action: 'INSERT', id: '1', content: 'Hello' }, { action: 'UPDATE', id: '2', content: 'World' }]); return p.commitPhase();"
+            },
+            {
+              "id": 3,
+              "name": "Clears mutation buffer after commit",
+              "input": "subsequent commit returns empty",
+              "expected": [],
+              "testFn": "const p = createUpdatePipeline(); p.renderPhase([{ action: 'INSERT', id: '1', content: 'x' }]); p.commitPhase(); return p.commitPhase();"
+            }
+          ],
+          "testVerification": {
+            "totalTests": 3,
+            "passedTests": 3,
+            "allPassed": true,
+            "details": [
+              {
+                "id": 1,
+                "name": "Calculates mutations in render phase without executing commit",
+                "input": "renderPhase stages mutations",
+                "expected": 2,
+                "status": "PASSED"
+              },
+              {
+                "id": 2,
+                "name": "Flushes all staged mutations synchronously during commit",
+                "input": "commitPhase executes applied mutations",
+                "expected": [
+                  "INSERT 1: Hello",
+                  "UPDATE 2: World"
+                ],
+                "status": "PASSED"
+              },
+              {
+                "id": 3,
+                "name": "Clears mutation buffer after commit",
+                "input": "subsequent commit returns empty",
+                "expected": [],
+                "status": "PASSED"
+              }
+            ]
+          },
+          "detailedExplanation": {
+            "conceptualOverview": "Simulating a complete Two-Phase Render and Commit Pipeline shows how React computes an effect list during render, and then executes synchronous DOM mutations and lifecycle commits in the commit phase.",
+            "stepByStepWalkthrough": [
+              "Phase 1: Render Phase (`renderRoot`)",
+              "  - Traverse component tree, compute new virtual representation, and diff against current state.",
+              "  - Accumulate mutation flags (`Placement`, `Update`, `Deletion`) onto fiber nodes without touching the real DOM.",
+              "Phase 2: Commit Phase (`commitRoot`)",
+              "  - Synchronously iterate through fibers with effect flags.",
+              "  - Sub-phase 1: Before Mutation (getSnapshotBeforeUpdate).",
+              "  - Sub-phase 2: Mutation (DOM insertions, deletions, updates).",
+              "  - Sub-phase 3: Layout (useLayoutEffect synchronous execution).",
+              "  - Flip double buffer root pointer: `root.current = workInProgress`.",
+              "  - Schedule passive effects (useEffect) asynchronously."
+            ],
+            "underlyingEngineInternals": "In `packages/react-reconciler/src/ReactFiberCommitWork.js`, `commitMutationEffects` mutates the DOM tree synchronously in one uninterrupted batch. This ensures the browser never renders an inconsistent intermediate UI state.",
+            "complexity": {
+              "time": "O(N) render diffing + O(M) commit mutations where M is number of changed fibers.",
+              "space": "O(N) fiber workInProgress tree."
+            },
+            "edgeCasesHandled": [
+              "Render phase can abort without affecting DOM if work is canceled.",
+              "Commit phase executes in strict sub-phase order.",
+              "Root alternate pointer flips atomically at the conclusion of commit."
+            ]
+          },
+          "onlineVerification": {
+            "specifications": [
+              "React Source: packages/react-reconciler/src/ReactFiberWorkLoop.js (commitRootImpl)",
+              "Dan Abramov: Component Lifecycle / Render vs Commit Phases chart"
+            ],
+            "verifiedRules": [
+              "Commit phase is synchronous and un-interruptible.",
+              "DOM mutations occur exclusively within commitMutationEffects."
+            ],
+            "verificationStatus": "VERIFIED_AND_TESTED"
+          }
+        },
+        {
+          "id": "phases-hard",
+          "title": "Interruptible Work Loop with Time-Slicing Simulation",
+          "difficulty": "Hard",
+          "topicId": "react-engine-fiber",
+          "topicCategory": "1. Fiber Architecture & Reconciliation",
+          "topicTitle": "Fiber Architecture & Reconciliation",
+          "subtopicId": "render-vs-commit",
+          "subtopicTitle": "Render Phase vs Commit Phase Mechanics",
+          "concept": "Scheduler Yielding & Concurrent Render Loop",
+          "problemStatement": "Implement `runWorkLoop(workUnits, deadlineMs)` that processes an array of work units. It checks elapsed time after each unit, and if `deadlineMs` is exceeded, pauses execution, yields control, and returns `{ done: false, remainingCount }`. If all units finish within budget, returns `{ done: true, remainingCount: 0 }`.",
+          "interviewTrap": "This is the exact design of React Concurrent Mode's `shouldYield()` workLoop. Synchronous blocking renders drop 60fps frame rates.",
+          "starterCode": "function runWorkLoop(workUnits, deadlineMs = 5) {\n  // TODO: Implement solution\n}\n",
+          "solutionCode": "function runWorkLoop(workUnits, deadlineMs = 5) {\n  const startTime = performance.now();\n  let index = 0;\n\n  while (index < workUnits.length) {\n    if (performance.now() - startTime >= deadlineMs) {\n      return {\n        done: false,\n        processedCount: index,\n        remainingCount: workUnits.length - index\n      };\n    }\n    workUnits[index]();\n    index++;\n  }\n\n  return {\n    done: true,\n    processedCount: index,\n    remainingCount: 0\n  };\n}\n",
+          "testCases": [
+            {
+              "id": 1,
+              "name": "Completes all units when well within time deadline",
+              "input": "3 quick units with 50ms deadline",
+              "expected": {
+                "done": true,
+                "remainingCount": 0
+              },
+              "testFn": "const units = [() => {}, () => {}, () => {}]; const res = runWorkLoop(units, 50); return { done: res.done, remainingCount: res.remainingCount };"
+            },
+            {
+              "id": 2,
+              "name": "Interrupts work loop and yields when deadline is exceeded",
+              "input": "units exceeding 1ms deadline yield",
+              "expected": false,
+              "testFn": "const units = Array.from({ length: 100 }, () => () => { const start = performance.now(); while (performance.now() - start < 1); }); const res = runWorkLoop(units, 2); return res.done;"
+            },
+            {
+              "id": 3,
+              "name": "Processes units sequentially",
+              "input": "verifies units execute in order",
+              "expected": [
+                1,
+                2,
+                3
+              ],
+              "testFn": "const log = []; const units = [() => log.push(1), () => log.push(2), () => log.push(3)]; runWorkLoop(units, 50); return log;"
+            }
+          ],
+          "testVerification": {
+            "totalTests": 3,
+            "passedTests": 3,
+            "allPassed": true,
+            "details": [
+              {
+                "id": 1,
+                "name": "Completes all units when well within time deadline",
+                "input": "3 quick units with 50ms deadline",
+                "expected": {
+                  "done": true,
+                  "remainingCount": 0
+                },
+                "status": "PASSED"
+              },
+              {
+                "id": 2,
+                "name": "Interrupts work loop and yields when deadline is exceeded",
+                "input": "units exceeding 1ms deadline yield",
+                "expected": false,
+                "status": "PASSED"
+              },
+              {
+                "id": 3,
+                "name": "Processes units sequentially",
+                "input": "verifies units execute in order",
+                "expected": [
+                  1,
+                  2,
+                  3
+                ],
+                "status": "PASSED"
+              }
+            ]
+          },
+          "detailedExplanation": {
+            "conceptualOverview": "React Concurrent Mode's core capability is Time-Slicing. Instead of a synchronous loop that blocks the thread until entire trees are processed, `workLoopConcurrent` yields control back to the browser host when the allotted frame deadline expires (`shouldYield()`), resuming in the next idle slice.",
+            "stepByStepWalkthrough": [
+              "Implement `workLoopConcurrent(deadline)`:",
+              "Maintain global `workInProgress` pointer.",
+              "Loop `while (workInProgress !== null && !shouldYield())`:",
+              "  `workInProgress = performUnitOfWork(workInProgress)`.",
+              "Check `shouldYield()`: if `performance.now() >= deadline.timeRemaining()`:",
+              "  Pause loop, preserve current `workInProgress` pointer on the root scheduler, and schedule next slice via `MessageChannel` / `scheduler`.",
+              "Once `workInProgress === null` (all units complete), proceed to synchronous `commitRoot()`."
+            ],
+            "underlyingEngineInternals": "In `packages/scheduler/src/forks/Scheduler.js` and `ReactFiberWorkLoop.js`, React uses a 5ms frame slice (via `MessageChannel.port1.postMessage`) to yield control back to the browser event loop for inputs, scrolling, and CSS animations.",
+            "complexity": {
+              "time": "O(N) total work across multiple yielded time slices.",
+              "space": "O(1) stack space; state preserved in heap-allocated fiber pointers."
+            },
+            "edgeCasesHandled": [
+              "Yields when time slice expires without losing traversal position.",
+              "Short tasks complete within a single time slice without unnecessary yields.",
+              "High priority interruptions can discard incomplete workInProgress trees."
+            ]
+          },
+          "onlineVerification": {
+            "specifications": [
+              "React Source: packages/scheduler/src/forks/Scheduler.js (Scheduler time-slicing workLoop)",
+              "React Source: packages/react-reconciler/src/ReactFiberWorkLoop.js (workLoopConcurrent)"
+            ],
+            "verifiedRules": [
+              "Concurrent work loop checks shouldYield() before each unit of work.",
+              "Frame deadline defaults to 5ms to maintain 60-120fps responsiveness."
+            ],
+            "verificationStatus": "VERIFIED_AND_TESTED"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "id": "event-loop-medium",
+  "title": "Microtask Batcher (Coalesce Multiple Calls into Single Turn)",
+  "difficulty": "Medium",
+  "topicId": "async-concurrency",
+  "topicCategory": "2. Asynchronous JS & Concurrency",
+  "topicTitle": "Asynchronous JS & Concurrency",
+  "subtopicId": "event-loop-queues",
+  "subtopicTitle": "Event Loop: Microtasks vs Macrotasks",
+  "concept": "Event Loop Turn Coalescing & Batch Updating",
+  "problemStatement": "Build `createBatcher(flushCallback)` that batches multiple synchronous updates and triggers `flushCallback(accumulatedItems)` exactly ONCE in the microtask queue at the end of the current synchronous turn.",
+  "interviewTrap": "Calling the flush callback for every item or using `setTimeout` (which introduces a 4ms minimum delay and runs after UI rendering).",
+  "starterCode": "function createBatcher(flushCallback) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createBatcher(flushCallback) {\n  let batch = [];\n  let isScheduled = false;\n\n  return function add(item) {\n    batch.push(item);\n    \n    if (!isScheduled) {\n      isScheduled = true;\n      queueMicrotask(() => {\n        const itemsToFlush = [...batch];\n        batch = [];\n        isScheduled = false;\n        flushCallback(itemsToFlush);\n      });\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Batches multiple synchronous calls into one flush",
+      "input": "add(1), add(2), add(3) synchronously",
+      "expected": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "testFn": "const flushes = []; const batcher = createBatcher(items => flushes.push(items)); batcher(1); batcher(2); batcher(3); await Promise.resolve(); return flushes;"
+    },
+    {
+      "id": 2,
+      "name": "Subsequent turns trigger new independent batches",
+      "input": "batch in turn 1 and batch in turn 2",
+      "expected": [
+        [
+          10
+        ],
+        [
+          20
+        ]
+      ],
+      "testFn": "const flushes = []; const batcher = createBatcher(items => flushes.push(items)); batcher(10); await Promise.resolve(); batcher(20); await Promise.resolve(); return flushes;"
+    },
+    {
+      "id": 3,
+      "name": "Flush receives full item set in exact insertion order",
+      "input": "batch with strings ['a', 'b', 'c']",
+      "expected": [
+        "a",
+        "b",
+        "c"
+      ],
+      "testFn": "let res = null; const batcher = createBatcher(items => { res = items; }); batcher('a'); batcher('b'); batcher('c'); await Promise.resolve(); return res;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Batches multiple synchronous calls into one flush",
+        "input": "add(1), add(2), add(3) synchronously",
+        "expected": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Subsequent turns trigger new independent batches",
+        "input": "batch in turn 1 and batch in turn 2",
+        "expected": [
+          [
+            10
+          ],
+          [
+            20
+          ]
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Flush receives full item set in exact insertion order",
+        "input": "batch with strings ['a', 'b', 'c']",
+        "expected": [
+          "a",
+          "b",
+          "c"
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "A Microtask Batcher coalesces multiple synchronous calls made during the same event loop turn into a single batched flush executed in the subsequent microtask checkpoint, preventing redundant calculations or layout thrashing.",
+    "stepByStepWalkthrough": [
+      "Maintain an internal array `items = []` and a boolean `scheduled = false`.",
+      "When `add(item)` is called, push `item` into `items`.",
+      "If `!scheduled`, set `scheduled = true` and schedule a flush via `queueMicrotask(flush)`.",
+      "In `flush()`, reset `scheduled = false`, snapshot `const batch = items.slice()`, clear `items = []`, and call `flushCallback(batch)`.",
+      "Subsequent calls in the next turn initiate a fresh independent batch."
+    ],
+    "underlyingEngineInternals": "This is the exact mechanism React and Vue use for batching DOM updates and state setters. By leveraging `queueMicrotask` or `Promise.resolve()`, 100 synchronous state updates within one event turn collapse into exactly 1 re-render job.",
+    "complexity": {
+      "time": "O(1) per add operation; O(K) where K is batch size on flush.",
+      "space": "O(K) temporary queue space in memory."
+    },
+    "edgeCasesHandled": [
+      "Multiple synchronous calls in the same turn execute only 1 flush.",
+      "Items are preserved in exact insertion order.",
+      "New items added in subsequent turns trigger a new batch cleanly."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "HTML Living Standard §8.1.6 Event loops",
+      "React Architecture Docs: Batching state updates via microtasks"
+    ],
+    "verifiedRules": [
+      "Microtask coalescing aggregates synchronous operations into a single execution turn.",
+      "All synchronous script statements finish before the scheduled microtask executes."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

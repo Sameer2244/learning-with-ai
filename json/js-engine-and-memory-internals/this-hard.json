@@ -1,0 +1,109 @@
+{
+  "id": "this-hard",
+  "title": "Custom 'bind' Polyfill with 'new' Operator Support",
+  "difficulty": "Hard",
+  "topicId": "engine-internals",
+  "topicCategory": "1. JS Engine & Memory Internals",
+  "topicTitle": "JS Engine & Memory Internals",
+  "subtopicId": "this-binding",
+  "subtopicTitle": "'this' Keyword Mechanics & Binding Rules",
+  "concept": "Currying, Prototype Chaining, and new.target Resolution",
+  "problemStatement": "Implement `Function.prototype.myBind(thisArg, ...outerArgs)`. It must support partial application (currying), and when the bound function is invoked as a constructor using `new BoundFn()`, the provided `thisArg` MUST be ignored and a new instance inheriting from the original function's prototype must be created.",
+  "interviewTrap": "90% of candidates miss the `new` operator rule: when a bound function is called with `new`, the bound `thisArg` is completely ignored in favor of the newly instantiated object.",
+  "starterCode": "Function.prototype.myBind = function(thisArg, ...outerArgs) {\n  // TODO: Implement solution\n};\n",
+  "solutionCode": "Function.prototype.myBind = function(thisArg, ...outerArgs) {\n  if (typeof this !== 'function') {\n    throw new TypeError('myBind must be called on a function');\n  }\n\n  const originalFn = this;\n\n  function boundFn(...innerArgs) {\n    const isConstructorCall = this instanceof boundFn;\n    const finalContext = isConstructorCall ? this : thisArg;\n    return originalFn.apply(finalContext, [...outerArgs, ...innerArgs]);\n  }\n\n  // Preserve prototype chain for 'new' instantiation\n  if (originalFn.prototype) {\n    boundFn.prototype = Object.create(originalFn.prototype);\n  }\n\n  return boundFn;\n};\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Standard bound invocation with curried arguments",
+      "input": "add.myBind(null, 10)(20)",
+      "expected": 30,
+      "testFn": "function add(a, b) { return a + b; } const add10 = add.myBind(null, 10); return add10(20);"
+    },
+    {
+      "id": 2,
+      "name": "Maintains object this context",
+      "input": "fn.myBind(user)()",
+      "expected": "Alex",
+      "testFn": "const user = { name: 'Alex' }; function getName() { return this.name; } return getName.myBind(user)();"
+    },
+    {
+      "id": 3,
+      "name": "Supports 'new' operator correctly overriding thisArg",
+      "input": "new (Point.myBind({ x: 99 }, 5))(10)",
+      "expected": {
+        "x": 5,
+        "y": 10,
+        "isInstance": true
+      },
+      "testFn": "function Point(x, y) { this.x = x; this.y = y; } const BoundPoint = Point.myBind({ x: 99 }, 5); const pt = new BoundPoint(10); return { x: pt.x, y: pt.y, isInstance: pt instanceof Point };"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Standard bound invocation with curried arguments",
+        "input": "add.myBind(null, 10)(20)",
+        "expected": 30,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Maintains object this context",
+        "input": "fn.myBind(user)()",
+        "expected": "Alex",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Supports 'new' operator correctly overriding thisArg",
+        "input": "new (Point.myBind({ x: 99 }, 5))(10)",
+        "expected": {
+          "x": 5,
+          "y": 10,
+          "isInstance": true
+        },
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "A complete polyfill for `Function.prototype.myBind` must not only bind `this` and partially apply arguments (currying), but also support being used with the `new` operator. When a bound function is constructed (`new boundFn()`), the bound `this` must be IGNORED and a fresh instance of the original constructor must be created instead.",
+    "stepByStepWalkthrough": [
+      "Capture target function: `const targetFn = this`.",
+      "Capture bound arguments: `const boundArgs = Array.prototype.slice.call(arguments, 1)`.",
+      "Define the bound function: `function bound(...) { ... }`.",
+      "Check if called via `new`: `this instanceof bound` (or `new.target`).",
+      "If called via `new`, use `this` (the newly instantiated object); otherwise, use the originally supplied `boundThis`.",
+      "Concatenate boundArgs with invocation arguments.",
+      "Inherit prototype chain: Set `bound.prototype = Object.create(targetFn.prototype)` so instances pass `instanceof targetFn` checks.",
+      "Execute `targetFn.apply(effectiveThis, allArgs)` and return result (handling constructor object returns)."
+    ],
+    "underlyingEngineInternals": "ECMA-262 §10.4.1.1 specifies `[[Construct]]` on Bound Function Exotic Objects. When constructed via `new`, the bound function delegates to the original constructor's `[[Construct]]`, completely bypassing `[[BoundThis]]`. Our polyfill replicates this specification requirement faithfully.",
+    "complexity": {
+      "time": "O(1) creation; O(1) dispatch per call.",
+      "space": "O(A) space for bound arguments array."
+    },
+    "edgeCasesHandled": [
+      "Constructor usage (`new boundFn()`) ignores `boundThis` and instantiates target prototype.",
+      "Partial application (currying) combines initial arguments with runtime arguments.",
+      "Instanceof operator works for both bound and original constructor."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §10.4.1.1 [[Construct]] on Bound Function Exotic Objects",
+      "ECMA-262 §20.2.3.2 Function.prototype.bind",
+      "MDN Web Docs: Function.prototype.bind polyfill specification"
+    ],
+    "verifiedRules": [
+      "new operator overrides bound thisArg per ECMA-262 §10.4.1.1.",
+      "Prototype link must preserve instanceof operator validity."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

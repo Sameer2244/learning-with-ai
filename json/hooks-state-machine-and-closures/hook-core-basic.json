@@ -1,0 +1,100 @@
+{
+  "id": "hook-core-basic",
+  "title": "Simulate useState Hook in Pure JS",
+  "difficulty": "Basic",
+  "topicId": "react-hooks-state-machine",
+  "topicCategory": "2. Hooks State Machine & Closures",
+  "topicTitle": "Hooks State Machine & Closures",
+  "subtopicId": "hooks-under-the-hood",
+  "subtopicTitle": "Hooks Linked List & Rules of Hooks",
+  "concept": "Hook State Holder and Setter Dispatcher",
+  "problemStatement": "Implement `createSimpleUseState(initialValue)` that returns a pair `[getState, setState]`. Calling `setState(newValueOrFn)` updates state, and `getState()` returns the current value.",
+  "interviewTrap": "Not supporting functional updates `setState(prev => prev + 1)`.",
+  "starterCode": "function createSimpleUseState(initialValue) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createSimpleUseState(initialValue) {\n  let state = typeof initialValue === 'function' ? initialValue() : initialValue;\n\n  function getState() {\n    return state;\n  }\n\n  function setState(action) {\n    if (typeof action === 'function') {\n      state = action(state);\n    } else {\n      state = action;\n    }\n  }\n\n  return [getState, setState];\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Initializes and updates with direct values",
+      "input": "setState(42)",
+      "expected": 42,
+      "testFn": "const [get, set] = createSimpleUseState(0); set(42); return get();"
+    },
+    {
+      "id": 2,
+      "name": "Supports functional updater syntax",
+      "input": "set(prev => prev + 5)",
+      "expected": 15,
+      "testFn": "const [get, set] = createSimpleUseState(10); set(prev => prev + 5); return get();"
+    },
+    {
+      "id": 3,
+      "name": "Supports lazy initial state function",
+      "input": "createSimpleUseState(() => 'computed')",
+      "expected": "computed",
+      "testFn": "const [get] = createSimpleUseState(() => 'computed'); return get();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Initializes and updates with direct values",
+        "input": "setState(42)",
+        "expected": 42,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Supports functional updater syntax",
+        "input": "set(prev => prev + 5)",
+        "expected": 15,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Supports lazy initial state function",
+        "input": "createSimpleUseState(() => 'computed')",
+        "expected": "computed",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React Hooks do not use magic; they are implemented using an array or singly-linked list associated with the currently rendering Fiber. A pure JS simulation of `useState` reveals how a pointer index and persistent state array track state across repeated render calls.",
+    "stepByStepWalkthrough": [
+      "Maintain module-level `hooks = []` state storage array and `hookIndex = 0` pointer.",
+      "Define `useState(initialValue)`:",
+      "  - Capture `currentIndex = hookIndex`.",
+      "  - If `hooks[currentIndex] === undefined`, initialize `hooks[currentIndex] = (typeof initialValue === 'function' ? initialValue() : initialValue)`.",
+      "  - Create setter: `setState = (newValue) => { hooks[currentIndex] = (typeof newValue === 'function' ? newValue(hooks[currentIndex]) : newValue); triggerRender(); }`.",
+      "  - Increment `hookIndex++`.",
+      "  - Return `[hooks[currentIndex], setState]`.",
+      "Before each render pass, reset `hookIndex = 0`."
+    ],
+    "underlyingEngineInternals": "In real React (`packages/react-reconciler/src/ReactFiberHooks.js`), each fiber has a `memoizedState` property pointing to the head of a linked list of Hook objects (`{ memoizedState, next, queue }`). Calling `useState` advances `workInProgressHook = workInProgressHook.next`.",
+    "complexity": {
+      "time": "O(1) state read and dispatch.",
+      "space": "O(H) heap memory where H is the number of hooks in the component."
+    },
+    "edgeCasesHandled": [
+      "Lazy initial state functions `useState(() => compute())` executed only on first mount.",
+      "Functional state updaters `setCount(prev => prev + 1)` receive the freshest state value.",
+      "Pointer reset guarantees identical hook matching across multiple renders."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Source: packages/react-reconciler/src/ReactFiberHooks.js (mountState & updateState)",
+      "Overreacted (Dan Abramov): How Does React Know Which Component Called A Hook?"
+    ],
+    "verifiedRules": [
+      "Hooks are tracked sequentially by invocation order on the fiber's memoizedState.",
+      "Resetting the cursor before each render is mandatory for hook synchronization."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

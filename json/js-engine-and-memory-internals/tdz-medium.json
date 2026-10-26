@@ -1,0 +1,110 @@
+{
+  "id": "tdz-medium",
+  "title": "Parameter Scope TDZ Resolver",
+  "difficulty": "Medium",
+  "topicId": "engine-internals",
+  "topicCategory": "1. JS Engine & Memory Internals",
+  "topicTitle": "JS Engine & Memory Internals",
+  "subtopicId": "hoisting-tdz",
+  "subtopicTitle": "Hoisting & Temporal Dead Zone (TDZ)",
+  "concept": "Default Parameter Temporal Dead Zone & Scope Boundary",
+  "problemStatement": "When default parameters reference each other (e.g. `(a = b, b = 2)`), accessing `b` before its evaluation produces a TDZ ReferenceError. Implement `safeDefaultResolver(params, evaluator)` which receives parameter declarations in order and returns an object `{ valid: boolean, errorParam?: string }` detecting whether any parameter references an uninitialized following parameter.",
+  "interviewTrap": "Parameter scopes evaluate from left to right. A default parameter can reference previously initialized parameters to its left, but referencing a parameter to its right throws a TDZ ReferenceError.",
+  "starterCode": "function safeDefaultResolver(paramOrder, references) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function safeDefaultResolver(paramOrder, references) {\n  // paramOrder: Array of string param names in evaluation order: ['a', 'b', 'c']\n  // references: Map of param -> array of dependencies: { a: ['b'], b: [] }\n  const initialized = new Set();\n  \n  for (const param of paramOrder) {\n    const deps = references[param] || [];\n    for (const dep of deps) {\n      if (!initialized.has(dep)) {\n        return { valid: false, errorParam: dep };\n      }\n    }\n    initialized.add(param);\n  }\n  return { valid: true };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Valid left-to-right default parameter reference",
+      "input": "b depends on a: valid",
+      "expected": {
+        "valid": true
+      },
+      "testFn": "return safeDefaultResolver(['a', 'b'], { a: [], b: ['a'] });"
+    },
+    {
+      "id": 2,
+      "name": "TDZ error when referencing right-hand parameter",
+      "input": "a depends on b before b is initialized",
+      "expected": {
+        "valid": false,
+        "errorParam": "b"
+      },
+      "testFn": "return safeDefaultResolver(['a', 'b'], { a: ['b'], b: [] });"
+    },
+    {
+      "id": 3,
+      "name": "Independent parameters evaluate safely",
+      "input": "['x', 'y', 'z'] with no dependencies",
+      "expected": {
+        "valid": true
+      },
+      "testFn": "return safeDefaultResolver(['x', 'y', 'z'], { x: [], y: [], z: [] });"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Valid left-to-right default parameter reference",
+        "input": "b depends on a: valid",
+        "expected": {
+          "valid": true
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "TDZ error when referencing right-hand parameter",
+        "input": "a depends on b before b is initialized",
+        "expected": {
+          "valid": false,
+          "errorParam": "b"
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Independent parameters evaluate safely",
+        "input": "['x', 'y', 'z'] with no dependencies",
+        "expected": {
+          "valid": true
+        },
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "When a function has default parameter values, ECMAScript creates an intermediate Parameter Environment Record distinct from the function body environment record. Parameters are evaluated from left to right, and earlier parameters cannot reference later parameters due to TDZ.",
+    "stepByStepWalkthrough": [
+      "Function parameters initialize in left-to-right order inside the parameter scope.",
+      "A default parameter `(a = b, b = 1)` throws `ReferenceError` because `b` is evaluated while still in TDZ.",
+      "Conversely, `(b = 1, a = b)` succeeds because `b` is already initialized when `a` is evaluated.",
+      "Implement resolver function that validates parameter dependency topological ordering to resolve TDZ conflicts safely."
+    ],
+    "underlyingEngineInternals": "ECMA-262 §10.2.11 specifies `FunctionDeclarationInstantiation`. If parameter list contains default expressions, an independent Declarative Environment Record is created for parameters before the body's VariableEnvironment is created. Evaluating an uninitialized parameter slot triggers V8's hole check.",
+    "complexity": {
+      "time": "O(P) where P is the number of parameters to evaluate and resolve.",
+      "space": "O(P) space for dependency tracking."
+    },
+    "edgeCasesHandled": [
+      "Forward references `(a = b, b = 2)` correctly detected as TDZ violations.",
+      "Valid backward references `(a = 2, b = a)` evaluate smoothly.",
+      "Explicit arguments override defaults and avoid TDZ evaluation."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §10.2.11 FunctionDeclarationInstantiation (Parameter Scope vs Body Scope)",
+      "Babel / TC39 Notes on Parameter Scope and Default Parameters"
+    ],
+    "verifiedRules": [
+      "Parameters with default values form an intermediate lexical scope.",
+      "Referencing a downstream default parameter causes a TDZ ReferenceError."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

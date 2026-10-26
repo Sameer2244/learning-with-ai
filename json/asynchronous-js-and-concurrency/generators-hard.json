@@ -1,0 +1,98 @@
+{
+  "id": "generators-hard",
+  "title": "Implement 'co' / asyncToGenerator Coroutine Runner",
+  "difficulty": "Hard",
+  "topicId": "async-concurrency",
+  "topicCategory": "2. Asynchronous JS & Concurrency",
+  "topicTitle": "Asynchronous JS & Concurrency",
+  "subtopicId": "async-await-under-the-hood",
+  "subtopicTitle": "Async/Await as Generators + Promise Runners",
+  "concept": "Transpilation of Async/Await to Generators",
+  "problemStatement": "Implement `runCoroutine(generatorFactory)` which takes a generator function yielding Promises, steps through each yield sequentially passing resolved values into `.next(val)` and rejected errors into `.throw(err)`, and returns a Promise resolving to the generator's final return value.",
+  "interviewTrap": "This is the exact polyfill Babel generates for `async/await`. Candidates often fail to handle generator `.throw(err)` when a yielded promise rejects.",
+  "starterCode": "function runCoroutine(genFactory) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function runCoroutine(genFactory) {\n  return new Promise((resolve, reject) => {\n    const gen = genFactory();\n\n    function step(nextFn) {\n      let result;\n      try {\n        result = nextFn();\n      } catch (err) {\n        return reject(err);\n      }\n\n      if (result.done) {\n        return resolve(result.value);\n      }\n\n      Promise.resolve(result.value)\n        .then(value => step(() => gen.next(value)))\n        .catch(err => step(() => gen.throw(err)));\n    }\n\n    step(() => gen.next());\n  });\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Steps through yielded promises sequentially",
+      "input": "yield promise -> yield promise -> return sum",
+      "expected": 30,
+      "testFn": "return runCoroutine(function* () { const a = yield Promise.resolve(10); const b = yield Promise.resolve(20); return a + b; });"
+    },
+    {
+      "id": 2,
+      "name": "Catches thrown errors inside generator try/catch",
+      "input": "yield rejecting promise caught by generator try/catch",
+      "expected": "caught-error",
+      "testFn": "return runCoroutine(function* () { try { yield Promise.reject(new Error('fail')); } catch (e) { return 'caught-error'; } });"
+    },
+    {
+      "id": 3,
+      "name": "Propagates unhandled rejection to returned promise",
+      "input": "unhandled rejected yield rejects coroutine promise",
+      "expected": "unhandled-boom",
+      "testFn": "try { await runCoroutine(function* () { yield Promise.reject(new Error('unhandled-boom')); }); return 'FAIL'; } catch (e) { return e.message; }"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Steps through yielded promises sequentially",
+        "input": "yield promise -> yield promise -> return sum",
+        "expected": 30,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Catches thrown errors inside generator try/catch",
+        "input": "yield rejecting promise caught by generator try/catch",
+        "expected": "caught-error",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Propagates unhandled rejection to returned promise",
+        "input": "unhandled rejected yield rejects coroutine promise",
+        "expected": "unhandled-boom",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Before `async`/`await` was standardized in ES2017, libraries like TJ Holowaychuk's `co` implemented async coroutines using generators and promises. `async`/`await` is syntactic sugar over generator coroutine runners (demonstrated by Babel's `asyncToGenerator` transform).",
+    "stepByStepWalkthrough": [
+      "Implement `co(generatorFn)`: return a Promise.",
+      "Instantiate the generator: `const gen = generatorFn()`.",
+      "Define step runner: `function step(nextFn) { let res; try { res = nextFn(); } catch (err) { return reject(err); } if (res.done) return resolve(res.value); Promise.resolve(res.value).then(val => step(() => gen.next(val)), err => step(() => gen.throw(err))); }`.",
+      "Start execution with initial `step(() => gen.next())`.",
+      "If a yielded promise rejects, `gen.throw(err)` injects the error back into the generator's `try...catch` block!"
+    ],
+    "underlyingEngineInternals": "When a generator yields a promise, execution suspends. The runner attaches `.then` callbacks to that promise. When resolved, `gen.next(value)` resumes the generator, passing the resolved value into the LHS expression `const x = yield promise`. If rejected, `gen.throw(error)` raises an exception at the exact `yield` expression line.",
+    "complexity": {
+      "time": "O(P) where P is the number of yielded promises + execution time of coroutine.",
+      "space": "O(1) runner overhead beyond generator state."
+    },
+    "edgeCasesHandled": [
+      "Yielding non-promise primitive values wrapped automatically via `Promise.resolve()`.",
+      "Errors thrown inside generator or rejected promises propagate to `gen.throw()` or reject the returned promise.",
+      "Return values from generator fulfill the outer promise."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §27.7 AsyncFunction Objects (Formal specification of async function evaluation as coroutine)",
+      "Babel Specification: babel-plugin-transform-async-to-generator",
+      "TJ Holowaychuk's co library source architecture"
+    ],
+    "verifiedRules": [
+      "async/await evaluates according to generator + promise reaction loop semantics.",
+      "gen.throw() faithfully injects exceptions into generator try/catch blocks."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

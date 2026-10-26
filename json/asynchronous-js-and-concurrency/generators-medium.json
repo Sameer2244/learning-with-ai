@@ -1,0 +1,111 @@
+{
+  "id": "generators-medium",
+  "title": "Async Pipeline Generator",
+  "difficulty": "Medium",
+  "topicId": "async-concurrency",
+  "topicCategory": "2. Asynchronous JS & Concurrency",
+  "topicTitle": "Asynchronous JS & Concurrency",
+  "subtopicId": "async-await-under-the-hood",
+  "subtopicTitle": "Async/Await as Generators + Promise Runners",
+  "concept": "Pipelining Asynchronous Generator Streams",
+  "problemStatement": "Implement an async generator `asyncTransformStream(items, transformFn)` that consumes an array of items, applies async `transformFn(item)` to each sequentially, and yields each result.",
+  "interviewTrap": "Using `items.forEach(async ...)` inside an async generator does not pause generator iteration properly.",
+  "starterCode": "async function* asyncTransformStream(items, transformFn) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "async function* asyncTransformStream(items, transformFn) {\n  for (const item of items) {\n    const transformed = await transformFn(item);\n    yield transformed;\n  }\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Transforms and yields items sequentially",
+      "input": "async double [1, 2, 3]",
+      "expected": [
+        2,
+        4,
+        6
+      ],
+      "testFn": "const res = []; for await (const val of asyncTransformStream([1, 2, 3], async x => x * 2)) { res.push(val); } return res;"
+    },
+    {
+      "id": 2,
+      "name": "Handles empty array stream",
+      "input": "empty array",
+      "expected": [],
+      "testFn": "const res = []; for await (const val of asyncTransformStream([], async x => x)) { res.push(val); } return res;"
+    },
+    {
+      "id": 3,
+      "name": "Handles async delays between yields",
+      "input": "async delayed transform",
+      "expected": [
+        "A",
+        "B"
+      ],
+      "testFn": "const res = []; const delay = ms => new Promise(r => setTimeout(r, ms)); for await (const v of asyncTransformStream(['a', 'b'], async s => { await delay(5); return s.toUpperCase(); })) { res.push(v); } return res;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Transforms and yields items sequentially",
+        "input": "async double [1, 2, 3]",
+        "expected": [
+          2,
+          4,
+          6
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Handles empty array stream",
+        "input": "empty array",
+        "expected": [],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles async delays between yields",
+        "input": "async delayed transform",
+        "expected": [
+          "A",
+          "B"
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "An Async Pipeline Generator combines async generators (`async function*`) with streaming data transformations. It yields items asynchronously, consuming upstream asynchronous data feeds with backpressure.",
+    "stepByStepWalkthrough": [
+      "Define `async function* asyncPipeline(asyncIterable, ...transformFns)`.",
+      "Iterate over input stream using `for await (const item of asyncIterable)`.",
+      "Pipe the item sequentially through each transformation function: `let val = item; for (const fn of transformFns) val = await fn(val)`.",
+      "Yield the transformed value `yield val`.",
+      "Consumers pull transformed values one-by-one, pausing the upstream pipeline until requested."
+    ],
+    "underlyingEngineInternals": "Async generators implement the AsyncIterator protocol (`[Symbol.asyncIterator]`), returning promises for each `{ value, done }` iteration step. This natively supports backpressure: if a downstream consumer is slow, the upstream generator waits at `yield` before pulling more data.",
+    "complexity": {
+      "time": "O(N * M) where N is item count and M is number of transform stages.",
+      "space": "O(1) buffer space (streaming item-by-item processing)."
+    },
+    "edgeCasesHandled": [
+      "Empty stream produces zero yields and terminates with `{ done: true }`.",
+      "Asynchronous delays inside transform functions are properly awaited.",
+      "Errors in transforms reject downstream consumers safely."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §27.6 AsyncGeneratorFunction Objects and AsyncIterator Protocol",
+      "WHATWG Streams Standard (Stream backpressure principles)"
+    ],
+    "verifiedRules": [
+      "Async iterators return a Promise resolving to an IteratorResult.",
+      "Execution only advances when downstream invokes .next(), providing natural backpressure."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

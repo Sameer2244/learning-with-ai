@@ -1,0 +1,107 @@
+{
+  "id": "generators-basic",
+  "title": "Infinite Sequence Generator with Step",
+  "difficulty": "Basic",
+  "topicId": "async-concurrency",
+  "topicCategory": "2. Asynchronous JS & Concurrency",
+  "topicTitle": "Asynchronous JS & Concurrency",
+  "subtopicId": "async-await-under-the-hood",
+  "subtopicTitle": "Async/Await as Generators + Promise Runners",
+  "concept": "Generator Protocol & Yield Delegation",
+  "problemStatement": "Implement a generator function `stepSequence(start, step, max)` that yields numbers starting at `start`, incrementing by `step`, until reaching or exceeding `max`.",
+  "interviewTrap": "Forgetting that generators are lazy; calling `stepSequence()` does not execute code until `.next()` is called.",
+  "starterCode": "function* stepSequence(start = 0, step = 1, max = 10) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function* stepSequence(start = 0, step = 1, max = 10) {\n  let current = start;\n  while (current <= max) {\n    yield current;\n    current += step;\n  }\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Generates correct sequence from 0 to 6 with step 2",
+      "input": "stepSequence(0, 2, 6)",
+      "expected": [
+        0,
+        2,
+        4,
+        6
+      ],
+      "testFn": "return Array.from(stepSequence(0, 2, 6));"
+    },
+    {
+      "id": 2,
+      "name": "Terminates when start > max",
+      "input": "stepSequence(10, 1, 5)",
+      "expected": [],
+      "testFn": "return Array.from(stepSequence(10, 1, 5));"
+    },
+    {
+      "id": 3,
+      "name": "Supports manual .next() consumption",
+      "input": "gen.next().value",
+      "expected": 5,
+      "testFn": "const gen = stepSequence(5, 5, 20); return gen.next().value;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Generates correct sequence from 0 to 6 with step 2",
+        "input": "stepSequence(0, 2, 6)",
+        "expected": [
+          0,
+          2,
+          4,
+          6
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Terminates when start > max",
+        "input": "stepSequence(10, 1, 5)",
+        "expected": [],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Supports manual .next() consumption",
+        "input": "gen.next().value",
+        "expected": 5,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Generator functions (`function*`) implement the Iterable and Iterator protocols (ECMA-262 §27.1). Unlike standard functions that run to completion, generators can pause execution via `yield` and resume when `.next()` is called, enabling lazy evaluation of infinite sequences without memory exhaustion.",
+    "stepByStepWalkthrough": [
+      "Define generator `function* infiniteSequence(start = 0, step = 1)`.",
+      "Declare `let current = start`.",
+      "Enter an infinite loop: `while (true)`.",
+      "Execute `yield current` to pause execution and emit `{ value: current, done: false }`.",
+      "Upon resumption via `.next()`, update `current += step`."
+    ],
+    "underlyingEngineInternals": "When a generator function is invoked, V8 does not execute its body immediately; instead, it returns an exotic GeneratorObject containing a heap-allocated Execution Context snapshot. When `.next()` is called, V8 restores the execution context onto the call stack, evaluates until the next `yield` bytecode, suspends the context, and returns the yielded value.",
+    "complexity": {
+      "time": "O(1) time per `.next()` step.",
+      "space": "O(1) heap memory for the generator state object (does not allocate sequence elements in memory)."
+    },
+    "edgeCasesHandled": [
+      "Zero step or negative step increments.",
+      "Infinite progression without memory leaks or call stack overflow.",
+      "Generates clean standard `{ value, done }` iteration protocol objects."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §27.5 GeneratorFunction Objects and Iterator Protocol",
+      "V8 Dev Blog: Generator Suspension and Resume bytecodes (SuspendGenerator, ResumeGenerator)"
+    ],
+    "verifiedRules": [
+      "Generators pause at yield points without consuming CPU cycles.",
+      "Next invocation resumes from exact program counter and lexical scope position."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

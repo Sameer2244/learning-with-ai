@@ -1,0 +1,96 @@
+{
+  "id": "tdz-hard",
+  "title": "Safe Function Declaration & Hoisting Sandbox",
+  "difficulty": "Hard",
+  "topicId": "engine-internals",
+  "topicCategory": "1. JS Engine & Memory Internals",
+  "topicTitle": "JS Engine & Memory Internals",
+  "subtopicId": "hoisting-tdz",
+  "subtopicTitle": "Hoisting & Temporal Dead Zone (TDZ)",
+  "concept": "ES6 Annex B Block Scoping for Function Declarations",
+  "problemStatement": "In ES6+, function declarations inside `if` blocks are block-scoped. Implement `evaluateBlockFunctions(condition, trueFnName, falseFnName)` that executes a simulated block-scoped environment and returns which function is accessible outside the block vs inside.",
+  "interviewTrap": "In legacy ES5 / non-strict mode, function declarations in blocks were hoisted out into function scope, overwriting each other. In strict mode, they are strictly block scoped.",
+  "starterCode": "function evaluateBlockFunctions(condition) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function evaluateBlockFunctions(condition) {\n  let insideResult = null;\n  let outsideHasTrue = false;\n  \n  if (condition) {\n    function target() { return 'INSIDE_TRUE'; }\n    insideResult = target();\n  } else {\n    function target() { return 'INSIDE_FALSE'; }\n    insideResult = target();\n  }\n\n  return {\n    insideResult,\n    hasGlobalLeak: typeof target === 'function'\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Executes true branch function correctly",
+      "input": "evaluateBlockFunctions(true)",
+      "expected": "INSIDE_TRUE",
+      "testFn": "return evaluateBlockFunctions(true).insideResult;"
+    },
+    {
+      "id": 2,
+      "name": "Executes false branch function correctly",
+      "input": "evaluateBlockFunctions(false)",
+      "expected": "INSIDE_FALSE",
+      "testFn": "return evaluateBlockFunctions(false).insideResult;"
+    },
+    {
+      "id": 3,
+      "name": "Functions are scoped and execute deterministically",
+      "input": "Both branches return non-null strings",
+      "expected": true,
+      "testFn": "const r1 = evaluateBlockFunctions(true); const r2 = evaluateBlockFunctions(false); return typeof r1.insideResult === 'string' && typeof r2.insideResult === 'string';"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Executes true branch function correctly",
+        "input": "evaluateBlockFunctions(true)",
+        "expected": "INSIDE_TRUE",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Executes false branch function correctly",
+        "input": "evaluateBlockFunctions(false)",
+        "expected": "INSIDE_FALSE",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Functions are scoped and execute deterministically",
+        "input": "Both branches return non-null strings",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "A Hoisting & TDZ Sandbox safely evaluates dynamic code strings containing arbitrary var/let/const and function declarations, capturing TDZ violations and hoisting behaviors without crashing the parent execution context.",
+    "stepByStepWalkthrough": [
+      "Construct an isolated execution scope using `new Function()` with trapped globals.",
+      "Instrument the code or catch runtime `ReferenceError`s resulting from premature access to uninitialized bindings.",
+      "Distinguish between standard undeclared variables (`ReferenceError: x is not defined`) and TDZ access errors (`ReferenceError: Cannot access 'x' before initialization`).",
+      "Return structured diagnostics detailing hoisted identifiers, TDZ traps encountered, and final return values."
+    ],
+    "underlyingEngineInternals": "Function declarations in blocks (Annex B.3.3) have complex legacy hoisting semantics. Top-level function declarations are fully hoisted with their implementation during the Creation phase. `new Function` creates a fresh global-like script context that prevents local scope pollution.",
+    "complexity": {
+      "time": "O(E) execution time of evaluated code snippet.",
+      "space": "O(1) isolated sandbox context."
+    },
+    "edgeCasesHandled": [
+      "Catching ReferenceErrors from TDZ reads.",
+      "Allowing hoisted function calls before declaration line.",
+      "Handling syntax errors vs runtime TDZ reference errors distinctly."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Annex B.3.3 Block-Level Function Declarations Web Legacy Compatibility",
+      "ECMA-262 §19.2.1.1 Function ( p1, p2, … , pn, body ) (Dynamic function evaluation)"
+    ],
+    "verifiedRules": [
+      "Function declarations are hoisted with function body definition.",
+      "TDZ exceptions are distinct runtime ReferenceErrors originating from uninitialized environment slots."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "id": "phases-medium",
+  "title": "Simulate Two-Phase Render and Commit Pipeline",
+  "difficulty": "Medium",
+  "topicId": "react-engine-fiber",
+  "topicCategory": "1. Fiber Architecture & Reconciliation",
+  "topicTitle": "Fiber Architecture & Reconciliation",
+  "subtopicId": "render-vs-commit",
+  "subtopicTitle": "Render Phase vs Commit Phase Mechanics",
+  "concept": "Separation of VDOM Calculation and DOM Mutation",
+  "problemStatement": "Implement `createUpdatePipeline()` that splits updates into two distinct phases: `renderPhase(components)` which computes DOM changes without touching the DOM, and `commitPhase(changes, targetDOM)` which applies all DOM mutations synchronously.",
+  "interviewTrap": "Directly modifying the DOM during the render phase causes partial, broken UI states if the render gets aborted.",
+  "starterCode": "function createUpdatePipeline() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createUpdatePipeline() {\n  let pendingMutations = [];\n\n  return {\n    renderPhase(virtualUpdates) {\n      // Pure calculation phase: calculate operations\n      pendingMutations = virtualUpdates.map(u => ({\n        type: u.action, // 'INSERT' | 'UPDATE' | 'REMOVE'\n        elementId: u.id,\n        content: u.content\n      }));\n      return pendingMutations.length;\n    },\n    commitPhase(domContainer) {\n      // Synchronous commit phase: flush all mutations into DOM\n      const applied = [];\n      for (const mut of pendingMutations) {\n        applied.push(`${mut.type} ${mut.elementId}: ${mut.content}`);\n      }\n      pendingMutations = [];\n      return applied;\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Calculates mutations in render phase without executing commit",
+      "input": "renderPhase stages mutations",
+      "expected": 2,
+      "testFn": "const p = createUpdatePipeline(); return p.renderPhase([{ action: 'INSERT', id: '1', content: 'A' }, { action: 'UPDATE', id: '2', content: 'B' }]);"
+    },
+    {
+      "id": 2,
+      "name": "Flushes all staged mutations synchronously during commit",
+      "input": "commitPhase executes applied mutations",
+      "expected": [
+        "INSERT 1: Hello",
+        "UPDATE 2: World"
+      ],
+      "testFn": "const p = createUpdatePipeline(); p.renderPhase([{ action: 'INSERT', id: '1', content: 'Hello' }, { action: 'UPDATE', id: '2', content: 'World' }]); return p.commitPhase();"
+    },
+    {
+      "id": 3,
+      "name": "Clears mutation buffer after commit",
+      "input": "subsequent commit returns empty",
+      "expected": [],
+      "testFn": "const p = createUpdatePipeline(); p.renderPhase([{ action: 'INSERT', id: '1', content: 'x' }]); p.commitPhase(); return p.commitPhase();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Calculates mutations in render phase without executing commit",
+        "input": "renderPhase stages mutations",
+        "expected": 2,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Flushes all staged mutations synchronously during commit",
+        "input": "commitPhase executes applied mutations",
+        "expected": [
+          "INSERT 1: Hello",
+          "UPDATE 2: World"
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Clears mutation buffer after commit",
+        "input": "subsequent commit returns empty",
+        "expected": [],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Simulating a complete Two-Phase Render and Commit Pipeline shows how React computes an effect list during render, and then executes synchronous DOM mutations and lifecycle commits in the commit phase.",
+    "stepByStepWalkthrough": [
+      "Phase 1: Render Phase (`renderRoot`)",
+      "  - Traverse component tree, compute new virtual representation, and diff against current state.",
+      "  - Accumulate mutation flags (`Placement`, `Update`, `Deletion`) onto fiber nodes without touching the real DOM.",
+      "Phase 2: Commit Phase (`commitRoot`)",
+      "  - Synchronously iterate through fibers with effect flags.",
+      "  - Sub-phase 1: Before Mutation (getSnapshotBeforeUpdate).",
+      "  - Sub-phase 2: Mutation (DOM insertions, deletions, updates).",
+      "  - Sub-phase 3: Layout (useLayoutEffect synchronous execution).",
+      "  - Flip double buffer root pointer: `root.current = workInProgress`.",
+      "  - Schedule passive effects (useEffect) asynchronously."
+    ],
+    "underlyingEngineInternals": "In `packages/react-reconciler/src/ReactFiberCommitWork.js`, `commitMutationEffects` mutates the DOM tree synchronously in one uninterrupted batch. This ensures the browser never renders an inconsistent intermediate UI state.",
+    "complexity": {
+      "time": "O(N) render diffing + O(M) commit mutations where M is number of changed fibers.",
+      "space": "O(N) fiber workInProgress tree."
+    },
+    "edgeCasesHandled": [
+      "Render phase can abort without affecting DOM if work is canceled.",
+      "Commit phase executes in strict sub-phase order.",
+      "Root alternate pointer flips atomically at the conclusion of commit."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Source: packages/react-reconciler/src/ReactFiberWorkLoop.js (commitRootImpl)",
+      "Dan Abramov: Component Lifecycle / Render vs Commit Phases chart"
+    ],
+    "verifiedRules": [
+      "Commit phase is synchronous and un-interruptible.",
+      "DOM mutations occur exclusively within commitMutationEffects."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

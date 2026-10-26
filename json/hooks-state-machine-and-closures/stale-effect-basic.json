@@ -1,0 +1,95 @@
+{
+  "id": "stale-effect-basic",
+  "title": "Async State Updater Guard",
+  "difficulty": "Basic",
+  "topicId": "react-hooks-state-machine",
+  "topicCategory": "2. Hooks State Machine & Closures",
+  "topicTitle": "Hooks State Machine & Closures",
+  "subtopicId": "stale-closures-effect",
+  "subtopicTitle": "Stale Closures & Functional State Updates",
+  "concept": "Avoiding Stale Snapshots in Asynchronous Callbacks",
+  "problemStatement": "Implement `createSafeAsyncAccumulator(initialVal)` that provides `addAsync(amount)`: it simulates an asynchronous API delay, then safely adds `amount` to the current state using a functional updater pattern.",
+  "interviewTrap": "Reading `state + amount` after the await delay will drop any concurrent updates that finished while the promise was pending.",
+  "starterCode": "function createSafeAsyncAccumulator(initialVal = 0) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createSafeAsyncAccumulator(initialVal = 0) {\n  let state = initialVal;\n\n  function update(fn) {\n    state = fn(state);\n  }\n\n  async function addAsync(amount, delayMs = 10) {\n    await new Promise(r => setTimeout(r, delayMs));\n    update(prev => prev + amount);\n    return state;\n  }\n\n  return {\n    getState: () => state,\n    addAsync\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Safely aggregates concurrent async updates without losing data",
+      "input": "addAsync(10) and addAsync(20) fired concurrently",
+      "expected": 30,
+      "testFn": "const acc = createSafeAsyncAccumulator(0); await Promise.all([acc.addAsync(10, 20), acc.addAsync(20, 10)]); return acc.getState();"
+    },
+    {
+      "id": 2,
+      "name": "Maintains initial value",
+      "input": "starts at 100",
+      "expected": 100,
+      "testFn": "const acc = createSafeAsyncAccumulator(100); return acc.getState();"
+    },
+    {
+      "id": 3,
+      "name": "Handles sequential updates",
+      "input": "add 5 then add 10",
+      "expected": 15,
+      "testFn": "const acc = createSafeAsyncAccumulator(0); await acc.addAsync(5, 5); await acc.addAsync(10, 5); return acc.getState();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Safely aggregates concurrent async updates without losing data",
+        "input": "addAsync(10) and addAsync(20) fired concurrently",
+        "expected": 30,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Maintains initial value",
+        "input": "starts at 100",
+        "expected": 100,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles sequential updates",
+        "input": "add 5 then add 10",
+        "expected": 15,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "A Stale Closure occurs when a function or asynchronous callback captures a variable from an older render pass's lexical scope. If state changes, the older callback still references the stale value. An Async State Updater Guard ensures state updates are dispatched safely using functional updaters.",
+    "stepByStepWalkthrough": [
+      "Demonstrate stale closure problem: `setTimeout(() => setCount(count + 1), 1000)` captures `count = 0` at timer creation time; three concurrent clicks resolve to `1` instead of `3`.",
+      "Implement guard using functional state updater: `setCount(prev => prev + 1)`.",
+      "Functional updaters bypass the closed-over outer variable and read directly from React's internal pending update queue (`updateQueue`), guaranteeing monotonic accumulator increments."
+    ],
+    "underlyingEngineInternals": "In `ReactFiberHooks.js`, updates are pushed onto a circular linked list `queue.pending`. When evaluated during the update phase, React loops through all pending update actions sequentially: `newState = action(currentState)`. Passing a function evaluates against the latest reduced accumulator value, completely circumventing closure capture.",
+    "complexity": {
+      "time": "O(1) state dispatch.",
+      "space": "O(1) update action object."
+    },
+    "edgeCasesHandled": [
+      "Multiple rapid asynchronous updates (e.g. 5 concurrent delayed updates) correctly produce 5.",
+      "Sequential and interleaved updates preserve accurate running totals.",
+      "Eliminates race conditions between asynchronous network responses and current state."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Official Docs: Queueing a Series of State Updates",
+      "Overreacted (Dan Abramov): A Complete Guide to useEffect (Stale closures section)"
+    ],
+    "verifiedRules": [
+      "Functional updates read from the reducer queue, not the component closure.",
+      "Direct state value references in async callbacks are inherently vulnerable to stale closures."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

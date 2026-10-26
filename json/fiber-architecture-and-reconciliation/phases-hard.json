@@ -1,0 +1,113 @@
+{
+  "id": "phases-hard",
+  "title": "Interruptible Work Loop with Time-Slicing Simulation",
+  "difficulty": "Hard",
+  "topicId": "react-engine-fiber",
+  "topicCategory": "1. Fiber Architecture & Reconciliation",
+  "topicTitle": "Fiber Architecture & Reconciliation",
+  "subtopicId": "render-vs-commit",
+  "subtopicTitle": "Render Phase vs Commit Phase Mechanics",
+  "concept": "Scheduler Yielding & Concurrent Render Loop",
+  "problemStatement": "Implement `runWorkLoop(workUnits, deadlineMs)` that processes an array of work units. It checks elapsed time after each unit, and if `deadlineMs` is exceeded, pauses execution, yields control, and returns `{ done: false, remainingCount }`. If all units finish within budget, returns `{ done: true, remainingCount: 0 }`.",
+  "interviewTrap": "This is the exact design of React Concurrent Mode's `shouldYield()` workLoop. Synchronous blocking renders drop 60fps frame rates.",
+  "starterCode": "function runWorkLoop(workUnits, deadlineMs = 5) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function runWorkLoop(workUnits, deadlineMs = 5) {\n  const startTime = performance.now();\n  let index = 0;\n\n  while (index < workUnits.length) {\n    if (performance.now() - startTime >= deadlineMs) {\n      return {\n        done: false,\n        processedCount: index,\n        remainingCount: workUnits.length - index\n      };\n    }\n    workUnits[index]();\n    index++;\n  }\n\n  return {\n    done: true,\n    processedCount: index,\n    remainingCount: 0\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Completes all units when well within time deadline",
+      "input": "3 quick units with 50ms deadline",
+      "expected": {
+        "done": true,
+        "remainingCount": 0
+      },
+      "testFn": "const units = [() => {}, () => {}, () => {}]; const res = runWorkLoop(units, 50); return { done: res.done, remainingCount: res.remainingCount };"
+    },
+    {
+      "id": 2,
+      "name": "Interrupts work loop and yields when deadline is exceeded",
+      "input": "units exceeding 1ms deadline yield",
+      "expected": false,
+      "testFn": "const units = Array.from({ length: 100 }, () => () => { const start = performance.now(); while (performance.now() - start < 1); }); const res = runWorkLoop(units, 2); return res.done;"
+    },
+    {
+      "id": 3,
+      "name": "Processes units sequentially",
+      "input": "verifies units execute in order",
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "testFn": "const log = []; const units = [() => log.push(1), () => log.push(2), () => log.push(3)]; runWorkLoop(units, 50); return log;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Completes all units when well within time deadline",
+        "input": "3 quick units with 50ms deadline",
+        "expected": {
+          "done": true,
+          "remainingCount": 0
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Interrupts work loop and yields when deadline is exceeded",
+        "input": "units exceeding 1ms deadline yield",
+        "expected": false,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Processes units sequentially",
+        "input": "verifies units execute in order",
+        "expected": [
+          1,
+          2,
+          3
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React Concurrent Mode's core capability is Time-Slicing. Instead of a synchronous loop that blocks the thread until entire trees are processed, `workLoopConcurrent` yields control back to the browser host when the allotted frame deadline expires (`shouldYield()`), resuming in the next idle slice.",
+    "stepByStepWalkthrough": [
+      "Implement `workLoopConcurrent(deadline)`:",
+      "Maintain global `workInProgress` pointer.",
+      "Loop `while (workInProgress !== null && !shouldYield())`:",
+      "  `workInProgress = performUnitOfWork(workInProgress)`.",
+      "Check `shouldYield()`: if `performance.now() >= deadline.timeRemaining()`:",
+      "  Pause loop, preserve current `workInProgress` pointer on the root scheduler, and schedule next slice via `MessageChannel` / `scheduler`.",
+      "Once `workInProgress === null` (all units complete), proceed to synchronous `commitRoot()`."
+    ],
+    "underlyingEngineInternals": "In `packages/scheduler/src/forks/Scheduler.js` and `ReactFiberWorkLoop.js`, React uses a 5ms frame slice (via `MessageChannel.port1.postMessage`) to yield control back to the browser event loop for inputs, scrolling, and CSS animations.",
+    "complexity": {
+      "time": "O(N) total work across multiple yielded time slices.",
+      "space": "O(1) stack space; state preserved in heap-allocated fiber pointers."
+    },
+    "edgeCasesHandled": [
+      "Yields when time slice expires without losing traversal position.",
+      "Short tasks complete within a single time slice without unnecessary yields.",
+      "High priority interruptions can discard incomplete workInProgress trees."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Source: packages/scheduler/src/forks/Scheduler.js (Scheduler time-slicing workLoop)",
+      "React Source: packages/react-reconciler/src/ReactFiberWorkLoop.js (workLoopConcurrent)"
+    ],
+    "verifiedRules": [
+      "Concurrent work loop checks shouldYield() before each unit of work.",
+      "Frame deadline defaults to 5ms to maintain 60-120fps responsiveness."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

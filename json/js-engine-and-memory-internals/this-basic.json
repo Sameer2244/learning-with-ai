@@ -1,0 +1,97 @@
+{
+  "id": "this-basic",
+  "title": "Method Callback Context Binder",
+  "difficulty": "Basic",
+  "topicId": "engine-internals",
+  "topicCategory": "1. JS Engine & Memory Internals",
+  "topicTitle": "JS Engine & Memory Internals",
+  "subtopicId": "this-binding",
+  "subtopicTitle": "'this' Keyword Mechanics & Binding Rules",
+  "concept": "Preserving Object Context when Passing Callbacks",
+  "problemStatement": "When an object method is passed as a callback (e.g., `setTimeout(obj.method)`), implicit `this` is lost. Implement `bindMethod(obj, methodName)` that returns a wrapper function guaranteeing that `methodName` always executes with `obj` as `this`, preserving any forwarded arguments.",
+  "interviewTrap": "Extracting a method `const fn = obj.method; fn()` invokes `fn` with default binding (undefined in strict mode), losing all object properties.",
+  "starterCode": "/**\n * Binds an object's method to its owner object.\n */\nfunction bindMethod(obj, methodName) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Binds an object's method to its owner object.\n */\nfunction bindMethod(obj, methodName) {\n  return function(...args) {\n    return obj[methodName].apply(obj, args);\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Preserves object property access",
+      "input": "bound method accesses this.name",
+      "expected": "Antigravity",
+      "testFn": "const user = { name: 'Antigravity', getName() { return this.name; } }; const bound = bindMethod(user, 'getName'); return bound();"
+    },
+    {
+      "id": 2,
+      "name": "Forwards arguments properly to bound method",
+      "input": "bound method passes greeting and punctuation",
+      "expected": "Hello, Antigravity!",
+      "testFn": "const user = { name: 'Antigravity', greet(prefix, suffix) { return `${prefix}, ${this.name}${suffix}`; } }; const bound = bindMethod(user, 'greet'); return bound('Hello', '!');"
+    },
+    {
+      "id": 3,
+      "name": "Maintains binding even when assigned to another variable",
+      "input": "const detached = bound; detached()",
+      "expected": 42,
+      "testFn": "const calc = { value: 42, getVal() { return this.value; } }; const detached = bindMethod(calc, 'getVal'); return detached();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Preserves object property access",
+        "input": "bound method accesses this.name",
+        "expected": "Antigravity",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Forwards arguments properly to bound method",
+        "input": "bound method passes greeting and punctuation",
+        "expected": "Hello, Antigravity!",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Maintains binding even when assigned to another variable",
+        "input": "const detached = bound; detached()",
+        "expected": 42,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "In JavaScript, the value of `this` is determined at call-time by how a function is called (the Call-Site), not where it is declared. Passing an object method as a callback detaches the function from its receiver object, resulting in `this` reverting to `undefined` (in strict mode) or the global object.",
+    "stepByStepWalkthrough": [
+      "A callback context binder takes an object and a method name (or function) and returns a bound function.",
+      "Use `method.bind(context)` or an arrow wrapper `(...args) => target.apply(context, args)`.",
+      "When the callback is invoked by a third party (e.g. event listener or array method), `this` is hard-bound to the specified context object.",
+      "Return the bound callback."
+    ],
+    "underlyingEngineInternals": "When invoking `obj.method()`, the MemberExpression produces a Reference Record with base `obj`. The call operation extracts `this` from the Reference base. When passed as a value `callback = obj.method`, the Reference Record is evaluated (GetValue), dropping the base. Binding creates an exotic bound function object storing `[[BoundTargetFunction]]` and `[[BoundThis]]`.",
+    "complexity": {
+      "time": "O(1) creation time; O(1) invocation overhead.",
+      "space": "O(1) memory for the bound function wrapper."
+    },
+    "edgeCasesHandled": [
+      "Preserves passed arguments forwarded to the bound function.",
+      "Guarantees correct `this` even when called with `undefined` or different receiver.",
+      "Supports methods relying on object state."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §10.4.1.2 Bound Function Exotic Objects",
+      "ECMA-262 §13.3.7.1 Runtime Semantics: Evaluation (Call-site reference resolution)",
+      "MDN Web Docs: this keyword mechanics"
+    ],
+    "verifiedRules": [
+      "Passing methods as un-bound callbacks strips the reference record base.",
+      "Bound function exotic objects override call-site receiver resolution."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

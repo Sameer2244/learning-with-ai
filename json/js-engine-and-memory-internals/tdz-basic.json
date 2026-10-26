@@ -1,0 +1,97 @@
+{
+  "id": "tdz-basic",
+  "title": "Var vs Let Hoisting Analyzer",
+  "difficulty": "Basic",
+  "topicId": "engine-internals",
+  "topicCategory": "1. JS Engine & Memory Internals",
+  "topicTitle": "JS Engine & Memory Internals",
+  "subtopicId": "hoisting-tdz",
+  "subtopicTitle": "Hoisting & Temporal Dead Zone (TDZ)",
+  "concept": "Variable Lifecycle & Declaration Hoisting",
+  "problemStatement": "Implement `analyzeHoisting(varCodeStr)` that inspects a simple code snippet and determines whether accessing a variable before its declaration returns `undefined` (hoisted with var) or throws a `ReferenceError` (hoisted into TDZ with let/const). Return 'INITIALIZED_UNDEFINED' or 'TDZ_REFERENCE_ERROR'.",
+  "interviewTrap": "Believing that `let` and `const` are not hoisted at all. They ARE hoisted to the top of the block, but stay uninitialized in the TDZ.",
+  "starterCode": "/**\n * Analyzes whether declaration style results in undefined or TDZ error.\n * @param {'var'|'let'|'const'} declarationType\n * @returns {string}\n */\nfunction analyzeHoisting(declarationType) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Analyzes whether declaration style results in undefined or TDZ error.\n * @param {'var'|'let'|'const'} declarationType\n * @returns {string}\n */\nfunction analyzeHoisting(declarationType) {\n  if (declarationType === 'var') {\n    return 'INITIALIZED_UNDEFINED';\n  }\n  if (declarationType === 'let' || declarationType === 'const') {\n    return 'TDZ_REFERENCE_ERROR';\n  }\n  return 'UNKNOWN';\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "var declaration is initialized to undefined",
+      "input": "analyzeHoisting('var')",
+      "expected": "INITIALIZED_UNDEFINED",
+      "testFn": "return analyzeHoisting('var');"
+    },
+    {
+      "id": 2,
+      "name": "let declaration produces TDZ ReferenceError",
+      "input": "analyzeHoisting('let')",
+      "expected": "TDZ_REFERENCE_ERROR",
+      "testFn": "return analyzeHoisting('let');"
+    },
+    {
+      "id": 3,
+      "name": "const declaration produces TDZ ReferenceError",
+      "input": "analyzeHoisting('const')",
+      "expected": "TDZ_REFERENCE_ERROR",
+      "testFn": "return analyzeHoisting('const');"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "var declaration is initialized to undefined",
+        "input": "analyzeHoisting('var')",
+        "expected": "INITIALIZED_UNDEFINED",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "let declaration produces TDZ ReferenceError",
+        "input": "analyzeHoisting('let')",
+        "expected": "TDZ_REFERENCE_ERROR",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "const declaration produces TDZ ReferenceError",
+        "input": "analyzeHoisting('const')",
+        "expected": "TDZ_REFERENCE_ERROR",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "In JavaScript execution contexts, variable declarations are processed during the Creation Phase. `var` is hoisted and initialized to `undefined`. In contrast, `let` and `const` are hoisted into the Lexical Environment but remain *uninitialized*. The span of code from block entry until the actual declaration is evaluated is the Temporal Dead Zone (TDZ).",
+    "stepByStepWalkthrough": [
+      "Analyze code or variable access simulation.",
+      "For `var`, access before declaration yields `undefined` without error.",
+      "For `let` or `const`, access before declaration throws `ReferenceError: Cannot access variable before initialization`.",
+      "Our analyzer parses/evaluates variable lifecycle states: 'hoisted-initialized' for var vs 'tdz-uninitialized' for let/const."
+    ],
+    "underlyingEngineInternals": "In V8, Environment Records contain bindings with an initialization state flag. When `var` binding is instantiated, V8 assigns the special internal `the_hole` value and immediately overwrites it with `undefined`. For `let`/`const`, the binding is left pointing to `the_hole`. Any bytecode instruction (e.g. `LdaCurrentContextSlot`) encountering `the_hole` triggers a runtime ReferenceError.",
+    "complexity": {
+      "time": "O(1) constant time classification of declaration types.",
+      "space": "O(1) memory overhead."
+    },
+    "edgeCasesHandled": [
+      "var declarations inside blocks do not have block scope; they hoist to the function/global boundary.",
+      "let/const inside blocks create a new block lexical environment record with its own TDZ.",
+      "typeof operator on a TDZ variable throws a ReferenceError (unlike undeclared variables which return 'undefined')."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §14.3.1 Let and Const Declarations (Static Semantics and TDZ specification)",
+      "ECMA-262 §9.1.1.1.6 GetBindingValue (Throws ReferenceError if binding is uninitialized)",
+      "MDN Web Docs: Temporal Dead Zone"
+    ],
+    "verifiedRules": [
+      "Accessing let/const prior to lexical declaration must throw ReferenceError.",
+      "Variables declared with var are initialized to undefined upon environment instantiation."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

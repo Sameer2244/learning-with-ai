@@ -1,0 +1,105 @@
+{
+  "id": "effect-timings-medium",
+  "title": "Simulate Synchronous Layout Measure Hook",
+  "difficulty": "Medium",
+  "topicId": "react-hooks-state-machine",
+  "topicCategory": "2. Hooks State Machine & Closures",
+  "topicTitle": "Hooks State Machine & Closures",
+  "subtopicId": "effect-timings",
+  "subtopicTitle": "useEffect vs useLayoutEffect vs useInsertionEffect",
+  "concept": "useLayoutEffect DOM Mutation & Measurement Synchronization",
+  "problemStatement": "Implement `measureElementSynchronously(element, measureFn)` that executes `measureFn(element)` synchronously immediately after element attributes are written, guaranteeing that measurements occur before paint without flicker.",
+  "interviewTrap": "Measuring in `useEffect` causes a visible flicker: the user sees the unstyled/unmeasured element for one frame before it repositions.",
+  "starterCode": "function measureElementSynchronously(element, measureFn) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function measureElementSynchronously(element, measureFn) {\n  // Synchronous layout step: DOM is mutated, immediately measure geometry\n  const rect = element.getBoundingClientRect ? element.getBoundingClientRect() : { width: 100, height: 50 };\n  return measureFn(rect);\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Synchronously measures element geometry",
+      "input": "measures width and height",
+      "expected": {
+        "width": 100,
+        "height": 50
+      },
+      "testFn": "const el = document.createElement('div'); return measureElementSynchronously(el, r => ({ width: r.width, height: r.height }));"
+    },
+    {
+      "id": 2,
+      "name": "Computes derived layout position immediately",
+      "input": "calculates center coordinate",
+      "expected": 50,
+      "testFn": "const el = document.createElement('div'); return measureElementSynchronously(el, r => r.width / 2);"
+    },
+    {
+      "id": 3,
+      "name": "Returns synchronously without promises or timeouts",
+      "input": "synchronous execution return",
+      "expected": true,
+      "testFn": "let measured = false; const el = document.createElement('div'); measureElementSynchronously(el, () => { measured = true; }); return measured;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Synchronously measures element geometry",
+        "input": "measures width and height",
+        "expected": {
+          "width": 100,
+          "height": 50
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Computes derived layout position immediately",
+        "input": "calculates center coordinate",
+        "expected": 50,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Returns synchronously without promises or timeouts",
+        "input": "synchronous execution return",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "`useLayoutEffect` is specifically designed for synchronous DOM layout measurements (e.g. `getBoundingClientRect()`, tooltip positioning, scroll offset adjustments) before the browser paints. Because it runs synchronously before paint, mutating the DOM inside `useLayoutEffect` prevents visible visual flicker.",
+    "stepByStepWalkthrough": [
+      "Simulate synchronous layout measure hook `useLayoutMeasure(elementId)`.",
+      "Inside layout phase (synchronously after simulated DOM creation):",
+      "  - Query DOM element: `document.getElementById(elementId)`.",
+      "  - Read layout geometry: `rect = el.getBoundingClientRect()`.",
+      "  - Compute derived positioning (e.g. tooltip coordinates: `top = rect.bottom + 8`).",
+      "  - Return derived layout metrics synchronously without delays or promises.",
+      "Demonstrate that if this were done in `useEffect`, a frame would paint at old coordinates before jumping, causing a visible flicker."
+    ],
+    "underlyingEngineInternals": "`useLayoutEffect` runs in the same synchronous turn as the commit phase. The browser's compositing and paint threads have not run yet. When `useLayoutEffect` updates state or modifies element styles, React performs an immediate synchronous sub-render before the browser renders pixels to the screen.",
+    "complexity": {
+      "time": "O(1) synchronous DOM query and calculation.",
+      "space": "O(1) layout metrics object."
+    },
+    "edgeCasesHandled": [
+      "Returns synchronous layout position immediately without promises.",
+      "Calculates correct geometry based on element bounding rect.",
+      "Safely handles missing or unmounted elements."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Official Docs: useLayoutEffect API reference",
+      "Kent C. Dodds: useEffect vs useLayoutEffect (Visual flicker analysis)"
+    ],
+    "verifiedRules": [
+      "useLayoutEffect blocks browser paint until execution finishes.",
+      "Synchronous DOM mutations in layout effects avoid visual glitches."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

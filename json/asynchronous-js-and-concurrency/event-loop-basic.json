@@ -1,0 +1,111 @@
+{
+  "id": "event-loop-basic",
+  "title": "Microtask Runner with queueMicrotask",
+  "difficulty": "Basic",
+  "topicId": "async-concurrency",
+  "topicCategory": "2. Asynchronous JS & Concurrency",
+  "topicTitle": "Asynchronous JS & Concurrency",
+  "subtopicId": "event-loop-queues",
+  "subtopicTitle": "Event Loop: Microtasks vs Macrotasks",
+  "concept": "Microtask Dispatch Order vs Synchronous Execution",
+  "problemStatement": "Implement `runMicrotaskBatch(tasks)` that accepts an array of functions, executes them strictly as microtasks, and returns a Promise that resolves with an array of their results in order.",
+  "interviewTrap": "Assuming `queueMicrotask` executes in the next macrotask turn like `setTimeout`. Microtasks execute immediately upon completion of the current call stack.",
+  "starterCode": "/**\n * Schedules each task in the microtask queue and gathers results.\n */\nfunction runMicrotaskBatch(tasks) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Schedules each task in the microtask queue and gathers results.\n */\nfunction runMicrotaskBatch(tasks) {\n  return new Promise((resolve) => {\n    const results = [];\n    let completed = 0;\n    \n    if (tasks.length === 0) return resolve([]);\n\n    tasks.forEach((task, index) => {\n      queueMicrotask(() => {\n        results[index] = task();\n        completed++;\n        if (completed === tasks.length) {\n          resolve(results);\n        }\n      });\n    });\n  });\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Executes microtasks in parallel and returns results",
+      "input": "tasks = [() => 1, () => 2, () => 3]",
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "testFn": "return runMicrotaskBatch([() => 1, () => 2, () => 3]);"
+    },
+    {
+      "id": 2,
+      "name": "Handles empty task list",
+      "input": "tasks = []",
+      "expected": [],
+      "testFn": "return runMicrotaskBatch([]);"
+    },
+    {
+      "id": 3,
+      "name": "Executes before setTimeout(0)",
+      "input": "microtask order check",
+      "expected": [
+        "microtask",
+        "timeout"
+      ],
+      "testFn": "const log = []; await new Promise(r => { setTimeout(() => { log.push('timeout'); r(); }, 0); queueMicrotask(() => log.push('microtask')); }); return log;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Executes microtasks in parallel and returns results",
+        "input": "tasks = [() => 1, () => 2, () => 3]",
+        "expected": [
+          1,
+          2,
+          3
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Handles empty task list",
+        "input": "tasks = []",
+        "expected": [],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Executes before setTimeout(0)",
+        "input": "microtask order check",
+        "expected": [
+          "microtask",
+          "timeout"
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "The JavaScript event loop processes tasks in phases: Synchronous code runs first to completion on the Call Stack, followed immediately by draining the entire Microtask Queue (Promises, queueMicrotask, MutationObserver), before the event loop advances to the Macrotask Queue (setTimeout, setInterval, setImmediate, I/O).",
+    "stepByStepWalkthrough": [
+      "Accept a callback function to run as a microtask.",
+      "Invoke `queueMicrotask(callback)` to enqueue the task into the microtask queue.",
+      "If `queueMicrotask` is unavailable, fallback to `Promise.resolve().then(callback)`.",
+      "Observe that the microtask executes immediately after the current synchronous script turn and BEFORE any macrotask (`setTimeout(0)`)."
+    ],
+    "underlyingEngineInternals": "In the HTML Event Loop specification (§8.1.6.3), the 'perform a microtask checkpoint' step runs whenever the JavaScript call stack becomes empty. The runtime loops over the microtask queue until it is completely drained, even if executing microtasks enqueue additional microtasks.",
+    "complexity": {
+      "time": "O(1) enqueue overhead.",
+      "space": "O(1) allocation in the engine microtask FIFO queue."
+    },
+    "edgeCasesHandled": [
+      "Executes ahead of macrotasks scheduled with `setTimeout(fn, 0)`.",
+      "Drains synchronously right after the enclosing synchronous execution block completes.",
+      "Errors inside microtasks are dispatched to global error handlers without halting queue draining."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "HTML Living Standard §8.1.6.3 Perform a microtask checkpoint",
+      "ECMA-262 §9.5.4 Jobs and Job Queues (PromiseJobs queue)",
+      "MDN Web Docs: Using microtasks in JavaScript"
+    ],
+    "verifiedRules": [
+      "Microtasks execute at the end of the current task before yielding to rendering or macrotasks.",
+      "queueMicrotask is the standard explicit API for scheduling microtasks."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

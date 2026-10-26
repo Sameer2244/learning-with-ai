@@ -1,0 +1,109 @@
+{
+  "id": "effect-timings-basic",
+  "title": "Effect Phase Order Logger",
+  "difficulty": "Basic",
+  "topicId": "react-hooks-state-machine",
+  "topicCategory": "2. Hooks State Machine & Closures",
+  "topicTitle": "Hooks State Machine & Closures",
+  "subtopicId": "effect-timings",
+  "subtopicTitle": "useEffect vs useLayoutEffect vs useInsertionEffect",
+  "concept": "Hook Lifecycle Timing Sequence",
+  "problemStatement": "Implement `logLifecyclePhases()` that returns an array with the exact execution order of: `'useInsertionEffect'`, `'DOM Mutation'`, `'useLayoutEffect'`, `'Browser Paint'`, and `'useEffect'`.",
+  "interviewTrap": "`useEffect` is passive and deferred until after paint. `useLayoutEffect` blocks painting.",
+  "starterCode": "function logLifecyclePhases() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function logLifecyclePhases() {\n  return [\n    'useInsertionEffect',\n    'DOM Mutation',\n    'useLayoutEffect',\n    'Browser Paint',\n    'useEffect'\n  ];\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Returns correct lifecycle sequence",
+      "input": "logLifecyclePhases()",
+      "expected": [
+        "useInsertionEffect",
+        "DOM Mutation",
+        "useLayoutEffect",
+        "Browser Paint",
+        "useEffect"
+      ],
+      "testFn": "return logLifecyclePhases();"
+    },
+    {
+      "id": 2,
+      "name": "useLayoutEffect runs before Browser Paint",
+      "input": "layout effect precedes paint",
+      "expected": true,
+      "testFn": "const p = logLifecyclePhases(); return p.indexOf('useLayoutEffect') < p.indexOf('Browser Paint');"
+    },
+    {
+      "id": 3,
+      "name": "useEffect runs strictly after Browser Paint",
+      "input": "useEffect follows paint",
+      "expected": true,
+      "testFn": "const p = logLifecyclePhases(); return p.indexOf('useEffect') > p.indexOf('Browser Paint');"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Returns correct lifecycle sequence",
+        "input": "logLifecyclePhases()",
+        "expected": [
+          "useInsertionEffect",
+          "DOM Mutation",
+          "useLayoutEffect",
+          "Browser Paint",
+          "useEffect"
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "useLayoutEffect runs before Browser Paint",
+        "input": "layout effect precedes paint",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "useEffect runs strictly after Browser Paint",
+        "input": "useEffect follows paint",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React provides three distinct effect hooks that run at different stages of the commit phase: `useInsertionEffect` (runs first, synchronously before DOM mutations for CSS-in-JS libraries), `useLayoutEffect` (runs second, synchronously after DOM mutations before browser paint), and `useEffect` (runs third, asynchronously after browser paint).",
+    "stepByStepWalkthrough": [
+      "Construct an Effect Phase Order Logger that executes simulated components.",
+      "Log each lifecycle step: Render -> Insertion Effects -> DOM Mutated -> Layout Effects -> Browser Paint -> Passive Effects.",
+      "Demonstrate that `useInsertionEffect` executes first, then `useLayoutEffect`, and finally `useEffect` asynchronously.",
+      "Verify cleanup execution order during unmounts and updates."
+    ],
+    "underlyingEngineInternals": "In `ReactFiberCommitWork.js`, `commitMutationEffects` mutates the DOM. Immediately prior, `commitInsertionEffectOnFiber` fires `useInsertionEffect`. Immediately following, `commitLayoutEffects` fires `useLayoutEffect`. Then control yields to the browser paint engine. After paint, `flushPassiveEffects` drains `useEffect` queues.",
+    "complexity": {
+      "time": "O(E) where E is total count of effects across components.",
+      "space": "O(E) phase log records."
+    },
+    "edgeCasesHandled": [
+      "Strict lifecycle sequence verification across all 3 hook types.",
+      "Effect cleanups run prior to re-execution in corresponding phases.",
+      "Passive effects defer execution until after paint."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Official Docs: Synchronizing with Effects vs Layout Effects vs Insertion Effects",
+      "React Source: packages/react-reconciler/src/ReactFiberCommitWork.js"
+    ],
+    "verifiedRules": [
+      "useInsertionEffect runs synchronously before DOM mutations.",
+      "useLayoutEffect runs synchronously after DOM mutations and blocks paint.",
+      "useEffect runs asynchronously after browser paint."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

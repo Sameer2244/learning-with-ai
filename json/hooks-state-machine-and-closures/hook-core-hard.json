@@ -1,0 +1,99 @@
+{
+  "id": "hook-core-hard",
+  "title": "Rules of Hooks Dynamic Validator",
+  "difficulty": "Hard",
+  "topicId": "react-hooks-state-machine",
+  "topicCategory": "2. Hooks State Machine & Closures",
+  "topicTitle": "Hooks State Machine & Closures",
+  "subtopicId": "hooks-under-the-hood",
+  "subtopicTitle": "Hooks Linked List & Rules of Hooks",
+  "concept": "Detecting Conditional or Shuffled Hook Calls",
+  "problemStatement": "Implement `validateHookSequence(mountHooks, updateHooks)` that compares the sequence of hook types called on mount vs update. If update calls fewer hooks, more hooks, or a different hook type at any index, throws an Error detailing the exact violation.",
+  "interviewTrap": "This is the exact runtime error React throws: 'Rendered fewer hooks than expected. This may be caused by an accidental early return statement.'",
+  "starterCode": "function validateHookSequence(mountHookTypes, updateHookTypes) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function validateHookSequence(mountHookTypes, updateHookTypes) {\n  if (mountHookTypes.length !== updateHookTypes.length) {\n    throw new Error(`Rendered fewer or more hooks than expected. Mounted: ${mountHookTypes.length}, Updated: ${updateHookTypes.length}`);\n  }\n\n  for (let i = 0; i < mountHookTypes.length; i++) {\n    if (mountHookTypes[i] !== updateHookTypes[i]) {\n      throw new Error(`Hook type mismatch at slot ${i}: expected ${mountHookTypes[i]}, received ${updateHookTypes[i]}`);\n    }\n  }\n\n  return { valid: true };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Validates identical hook sequences across renders",
+      "input": "['useState', 'useEffect'] -> ['useState', 'useEffect']",
+      "expected": true,
+      "testFn": "return validateHookSequence(['useState', 'useEffect'], ['useState', 'useEffect']).valid;"
+    },
+    {
+      "id": 2,
+      "name": "Throws error when hook count changes between renders",
+      "input": "mount 3 hooks, update 2 hooks throws Error",
+      "expected": true,
+      "testFn": "try { validateHookSequence(['useState', 'useRef', 'useEffect'], ['useState', 'useEffect']); return false; } catch (e) { return true; }"
+    },
+    {
+      "id": 3,
+      "name": "Throws error when hook type order is transposed",
+      "input": "swapped hooks throws type mismatch error",
+      "expected": true,
+      "testFn": "try { validateHookSequence(['useState', 'useEffect'], ['useEffect', 'useState']); return false; } catch (e) { return e.message.includes('Hook type mismatch'); }"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Validates identical hook sequences across renders",
+        "input": "['useState', 'useEffect'] -> ['useState', 'useEffect']",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Throws error when hook count changes between renders",
+        "input": "mount 3 hooks, update 2 hooks throws Error",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Throws error when hook type order is transposed",
+        "input": "swapped hooks throws type mismatch error",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "The fundamental Rule of Hooks ('Only Call Hooks at the Top Level — do not call inside loops, conditions, or nested functions') exists because React relies exclusively on the sequential call order of hooks to match state. A dynamic validator detects hook count or type mismatches across renders and throws an error.",
+    "stepByStepWalkthrough": [
+      "Maintain record of hooks called during initial mount: `expectedHookSequence = ['state', 'effect', 'state']`.",
+      "On subsequent re-renders, track each hook call index and type.",
+      "If a conditional statement omits a hook or changes the order (e.g. calling 'effect' when 'state' was expected):",
+      "  Immediately detect mismatch: `Rendered fewer hooks than expected` or `Hook type mismatch at index i`.",
+      "Throw descriptive error matching React's internal invariant violation.",
+      "Validator confirms strict obedience to the Rules of Hooks."
+    ],
+    "underlyingEngineInternals": "In React's `ReactFiberHooks.js`, if `updateWorkInProgressHook` finds that `nextHook` is null while the component is still executing hooks, React throws: `Error: Rendered more hooks than during the previous render`. If the component finishes with unvisited hooks left over, it throws: `Error: Rendered fewer hooks than during the previous render`.",
+    "complexity": {
+      "time": "O(H) validation over H hook calls.",
+      "space": "O(H) history tracking buffer."
+    },
+    "edgeCasesHandled": [
+      "Detecting conditionally omitted hooks.",
+      "Detecting hook type order swaps across renders.",
+      "Successful validation when hook sequences match identically."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Official Docs: Rules of Hooks",
+      "React Source: packages/react-reconciler/src/ReactFiberHooks.js (renderWithHooks invariant checks)",
+      "ESLint Plugin: eslint-plugin-react-hooks"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in the exact same order on every render.",
+      "Violating call order corrupts internal linked list pointers and throws invariant errors."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

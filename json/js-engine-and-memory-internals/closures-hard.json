@@ -1,0 +1,115 @@
+{
+  "id": "closures-hard",
+  "title": "Advanced Multi-Key Memoizer with Capacity & TTL",
+  "difficulty": "Hard",
+  "topicId": "engine-internals",
+  "topicCategory": "1. JS Engine & Memory Internals",
+  "topicTitle": "JS Engine & Memory Internals",
+  "subtopicId": "lexical-scope-closures",
+  "subtopicTitle": "Scope Chain, Lexical Scoping & Closures",
+  "concept": "Lexical Cache Management & Memory Eviction",
+  "problemStatement": "Implement `memoize(fn, { maxAge, maxSize })` which returns a memoized version of `fn`. It must serialize multiple arguments into a deterministic key, respect `maxSize` (LRU eviction when full), and expire entries after `maxAge` milliseconds if provided.",
+  "interviewTrap": "Using simple objects as caches causes memory leaks over time because entries are never evicted. Using Map with LRU deletion and TTL prevents unbounded memory growth.",
+  "starterCode": "function memoize(fn, options = {}) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function memoize(fn, options = {}) {\n  const { maxAge = Infinity, maxSize = Infinity } = options;\n  const cache = new Map(); // key -> { value, expiry }\n\n  return function(...args) {\n    const key = JSON.stringify(args);\n    const now = Date.now();\n\n    if (cache.has(key)) {\n      const entry = cache.get(key);\n      if (now < entry.expiry) {\n        // Refresh position for LRU\n        cache.delete(key);\n        cache.set(key, entry);\n        return entry.value;\n      } else {\n        cache.delete(key);\n      }\n    }\n\n    const result = fn.apply(this, args);\n\n    if (cache.size >= maxSize) {\n      const oldestKey = cache.keys().next().value;\n      cache.delete(oldestKey);\n    }\n\n    cache.set(key, { value: result, expiry: now + maxAge });\n    return result;\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Caches computation across repeated calls",
+      "input": "memoizedFn called twice only executes target once",
+      "expected": {
+        "calls": 1,
+        "result": 25
+      },
+      "testFn": "let calls = 0; const square = memoize((x) => { calls++; return x * x; }); const r1 = square(5); const r2 = square(5); return { calls, result: r2 };"
+    },
+    {
+      "id": 2,
+      "name": "Evicts oldest entry when maxSize is exceeded",
+      "input": "maxSize = 2, adding 3rd evicts 1st",
+      "expected": {
+        "calls": 4
+      },
+      "testFn": "let calls = 0; const fn = memoize((x) => { calls++; return x; }, { maxSize: 2 }); fn(1); fn(2); fn(3); fn(1); return { calls };"
+    },
+    {
+      "id": 3,
+      "name": "Correctly handles multiple arguments",
+      "input": "add(2, 3) vs add(3, 2)",
+      "expected": [
+        5,
+        5
+      ],
+      "testFn": "let calls = 0; const add = memoize((a, b) => { calls++; return a + b; }); return [add(2, 3), add(3, 2)];"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Caches computation across repeated calls",
+        "input": "memoizedFn called twice only executes target once",
+        "expected": {
+          "calls": 1,
+          "result": 25
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Evicts oldest entry when maxSize is exceeded",
+        "input": "maxSize = 2, adding 3rd evicts 1st",
+        "expected": {
+          "calls": 4
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Correctly handles multiple arguments",
+        "input": "add(2, 3) vs add(3, 2)",
+        "expected": [
+          5,
+          5
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "An advanced multi-key memoizer caches function call results keyed by serialized arguments, implementing both a Maximum Size (LRU eviction policy) and a Time-To-Live (TTL / maxAge) expiration policy.",
+    "stepByStepWalkthrough": [
+      "Enclose a private `Map` holding `{ value, expiry }` objects indexed by serialized string argument keys.",
+      "On call, compute `key = JSON.stringify(args)` and check `cache.has(key)`.",
+      "If entry exists and `now < entry.expiry`: delete and re-insert the key to update its recency position in the Map (Map preserves insertion order), then return `entry.value`.",
+      "If entry expired, delete it from the cache.",
+      "Execute underlying function `fn.apply(this, args)`.",
+      "If `cache.size >= maxSize`, evict the least recently used entry (`cache.keys().next().value`).",
+      "Set `cache.set(key, { value: result, expiry: now + maxAge })` and return result."
+    ],
+    "underlyingEngineInternals": "JavaScript `Map` maintains insertion order according to ECMA-262 §24.1.3. Deleting and immediately re-inserting a key promotes it to the most recently used position in O(1) time. Deleting `cache.keys().next().value` evicts the oldest entry in O(1) time without requiring a doubly-linked list.",
+    "complexity": {
+      "time": "O(1) average lookup, insertion, and LRU eviction (plus argument serialization time).",
+      "space": "O(maxSize) strictly bounded heap memory, preventing unbounded memory leaks."
+    },
+    "edgeCasesHandled": [
+      "Evicts oldest entry when `maxSize` is reached, ensuring memory bounds.",
+      "Expired entries past `maxAge` are treated as cache misses and purged.",
+      "Multiple arguments with different orderings/types produce distinct cache keys."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §24.1.3 Map.prototype.keys (Guarantee of deterministic insertion-order iteration)",
+      "V8 Dev Blog: Optimizing Hash Tables and Map collections in V8"
+    ],
+    "verifiedRules": [
+      "Map key iteration order is strictly insertion-ordered per ECMA-262.",
+      "Deleting and re-inserting provides an O(1) LRU cache implementation without secondary data structures."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

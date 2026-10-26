@@ -1,0 +1,97 @@
+{
+  "id": "phases-basic",
+  "title": "Pure Component Render Inspector",
+  "difficulty": "Basic",
+  "topicId": "react-engine-fiber",
+  "topicCategory": "1. Fiber Architecture & Reconciliation",
+  "topicTitle": "Fiber Architecture & Reconciliation",
+  "subtopicId": "render-vs-commit",
+  "subtopicTitle": "Render Phase vs Commit Phase Mechanics",
+  "concept": "Idempotence and Purity in Component Body",
+  "problemStatement": "Implement `verifyRenderPurity(componentFn, props)` that runs `componentFn(props)` twice consecutively. If the output varies or side-effect counters change between runs, returns `{ isPure: false }`, otherwise `{ isPure: true, output }`.",
+  "interviewTrap": "React StrictMode renders components TWICE in development specifically to uncover impure renders and accidental side effects.",
+  "starterCode": "function verifyRenderPurity(componentFn, props) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function verifyRenderPurity(componentFn, props) {\n  const run1 = JSON.stringify(componentFn(props));\n  const run2 = JSON.stringify(componentFn(props));\n\n  return {\n    isPure: run1 === run2,\n    output: JSON.parse(run1)\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Identifies pure deterministic render",
+      "input": "pure component returns same output",
+      "expected": true,
+      "testFn": "const PureComp = p => ({ tag: 'h1', text: p.name }); return verifyRenderPurity(PureComp, { name: 'Alice' }).isPure;"
+    },
+    {
+      "id": 2,
+      "name": "Flags impure component mutating external counter",
+      "input": "impure component increments global variable",
+      "expected": false,
+      "testFn": "let globalCount = 0; const ImpureComp = () => ({ val: ++globalCount }); return verifyRenderPurity(ImpureComp, {}).isPure;"
+    },
+    {
+      "id": 3,
+      "name": "Returns component output safely",
+      "input": "output text verified",
+      "expected": "Hello",
+      "testFn": "const Comp = () => ({ text: 'Hello' }); return verifyRenderPurity(Comp, {}).output.text;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Identifies pure deterministic render",
+        "input": "pure component returns same output",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Flags impure component mutating external counter",
+        "input": "impure component increments global variable",
+        "expected": false,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Returns component output safely",
+        "input": "output text verified",
+        "expected": "Hello",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React's pipeline is divided into two distinct phases: The **Render Phase** (pure computation, diffing, finding changes) and the **Commit Phase** (applying changes to the host DOM and executing side-effects). A Pure Component Render Inspector checks whether component functions remain pure and side-effect free during the render phase.",
+    "stepByStepWalkthrough": [
+      "Accept a component render function and props.",
+      "Instrument global environment to intercept side-effects (e.g. DOM mutations, global variable writes).",
+      "Invoke the component render function twice (simulating React's `<StrictMode>` double-render in development).",
+      "Compare the two outputs: both renders must return identical element trees without mutating external state.",
+      "Report any detected impurities or differences."
+    ],
+    "underlyingEngineInternals": "In React Concurrent Mode, the Render Phase can be paused, aborted, restarted, or thrown away if higher-priority work arrives. If a component performs side-effects (e.g. `window.count++`) during render, those side-effects execute unpredictably multiple times.",
+    "complexity": {
+      "time": "O(R) where R is the render execution time of the component.",
+      "space": "O(E) element tree size."
+    },
+    "edgeCasesHandled": [
+      "Pure functions pass with zero flagged side-effects.",
+      "Impure side-effects during render (mutating external state) are detected.",
+      "StrictMode double-rendering simulation verifies determinism."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Official Docs: Keeping Components Pure",
+      "React Source: ReactStrictMode.js (Double-invoking component renders in dev)"
+    ],
+    "verifiedRules": [
+      "Render phase must be pure and free of observable side effects.",
+      "Side effects must be deferred strictly to the commit phase (useEffect / useLayoutEffect)."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "id": "stale-effect-medium",
+  "title": "Implement useInterval (Dan Abramov Pattern)",
+  "difficulty": "Medium",
+  "topicId": "react-hooks-state-machine",
+  "topicCategory": "2. Hooks State Machine & Closures",
+  "topicTitle": "Hooks State Machine & Closures",
+  "subtopicId": "stale-closures-effect",
+  "subtopicTitle": "Stale Closures & Functional State Updates",
+  "concept": "Mutable Saved Callback Ref to Eliminate Interval Teardowns",
+  "problemStatement": "Implement `createUseIntervalManager()` that accepts an interval callback and delay. Whenever the callback changes, update the internal saved reference WITHOUT restarting the interval timer.",
+  "interviewTrap": "Setting `callback` in the `useEffect` dependency array restarts the interval on every render, resetting the timer tick.",
+  "starterCode": "function createUseIntervalManager() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createUseIntervalManager() {\n  let savedCallback = null;\n  let timerId = null;\n\n  function setCallback(fn) {\n    savedCallback = fn;\n  }\n\n  function start(delayMs) {\n    if (timerId !== null) clearInterval(timerId);\n    if (delayMs !== null && delayMs !== undefined) {\n      timerId = setInterval(() => {\n        if (savedCallback) savedCallback();\n      }, delayMs);\n    }\n  }\n\n  function stop() {\n    if (timerId !== null) {\n      clearInterval(timerId);\n      timerId = null;\n    }\n  }\n\n  return { setCallback, start, stop };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Invokes the freshest callback without restarting the timer",
+      "input": "update callback mid-flight",
+      "expected": "fresh-callback",
+      "testFn": "const manager = createUseIntervalManager(); let calledWith = ''; manager.setCallback(() => { calledWith = 'old'; }); manager.start(20); manager.setCallback(() => { calledWith = 'fresh-callback'; }); await new Promise(r => setTimeout(r, 35)); manager.stop(); return calledWith;"
+    },
+    {
+      "id": 2,
+      "name": "stop() halts timer ticks cleanly",
+      "input": "ticks stop after calling stop()",
+      "expected": 1,
+      "testFn": "const manager = createUseIntervalManager(); let count = 0; manager.setCallback(() => count++); manager.start(15); await new Promise(r => setTimeout(r, 25)); manager.stop(); await new Promise(r => setTimeout(r, 30)); return count;"
+    },
+    {
+      "id": 3,
+      "name": "Does not start timer if delay is null",
+      "input": "start(null) pauses timer",
+      "expected": 0,
+      "testFn": "const manager = createUseIntervalManager(); let count = 0; manager.setCallback(() => count++); manager.start(null); await new Promise(r => setTimeout(r, 30)); return count;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Invokes the freshest callback without restarting the timer",
+        "input": "update callback mid-flight",
+        "expected": "fresh-callback",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "stop() halts timer ticks cleanly",
+        "input": "ticks stop after calling stop()",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Does not start timer if delay is null",
+        "input": "start(null) pauses timer",
+        "expected": 0,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Standard `setInterval` does not play well with React because it captures closures from when the interval was established. Dan Abramov's canonical `useInterval` pattern solves this using a mutable ref (`savedCallback`) that is updated on every render, allowing the interval to invoke the freshest callback without resetting the timer.",
+    "stepByStepWalkthrough": [
+      "Define `useInterval(callback, delay)`.",
+      "Create a mutable reference: `const savedCallback = useRef()`.",
+      "In `useEffect`, update the ref on every render: `savedCallback.current = callback`.",
+      "In a secondary `useEffect` dependent only on `[delay]`:",
+      "  - If `delay !== null && delay !== undefined`:",
+      "      Setup timer: `const id = setInterval(() => savedCallback.current(), delay)`.",
+      "      Return cleanup function: `clearInterval(id)`.",
+      "Provide a `stop()` method to set delay to null or clear the interval."
+    ],
+    "underlyingEngineInternals": "`useRef` returns a stable object `{ current: value }` whose reference identity never changes across renders. Mutating `ref.current` updates the value in-place without triggering re-renders and without changing the dependency array of the interval effect. The interval closure calls `savedCallback.current()`, reading the fresh function reference dynamically.",
+    "complexity": {
+      "time": "O(1) setup and tick invocation.",
+      "space": "O(1) memory for ref object."
+    },
+    "edgeCasesHandled": [
+      "Dynamic callbacks with closed-over state always execute with latest state.",
+      "Changing `delay` dynamically adjusts interval timing cleanly.",
+      "Passing `delay: null` pauses the interval without unmounting.",
+      "Calling `stop()` halts interval ticks immediately."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "Dan Abramov: Making setInterval Declarative with React Hooks (Overreacted.io)",
+      "React Official Docs: Referencing Values with Refs"
+    ],
+    "verifiedRules": [
+      "Refs provide a mutable escape hatch across renders without re-triggering effects.",
+      "Separating callback storage from timer lifecycle prevents timer reset thrashing."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

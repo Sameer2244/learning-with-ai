@@ -1,0 +1,105 @@
+{
+  "id": "fiber-tree-basic",
+  "title": "Fiber Node Factory for React Elements",
+  "difficulty": "Basic",
+  "topicId": "react-engine-fiber",
+  "topicCategory": "1. Fiber Architecture & Reconciliation",
+  "topicTitle": "Fiber Architecture & Reconciliation",
+  "subtopicId": "fiber-nodes-trees",
+  "subtopicTitle": "Fiber Tree & Linked List Traversal",
+  "concept": "Fiber Node Structure & Pointers",
+  "problemStatement": "Implement `createFiber(tag, type, props)` that creates a standard React Fiber node with initialized `child: null`, `sibling: null`, `return: null`, `memoizedState: null`, and `pendingProps`.",
+  "interviewTrap": "Confusing React elements (ephemeral, plain JS objects) with Fiber nodes (stateful, long-lived runtime nodes).",
+  "starterCode": "function createFiber(tag, type, props = {}) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createFiber(tag, type, props = {}) {\n  return {\n    tag, // e.g. 'HostComponent', 'FunctionComponent'\n    type, // 'div', 'span', or Component function\n    pendingProps: props,\n    memoizedProps: null,\n    memoizedState: null,\n    child: null,\n    sibling: null,\n    return: null,\n    alternate: null\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Creates fiber with null relational pointers",
+      "input": "createFiber('HostComponent', 'div')",
+      "expected": {
+        "child": null,
+        "sibling": null,
+        "return": null
+      },
+      "testFn": "const f = createFiber('HostComponent', 'div'); return { child: f.child, sibling: f.sibling, return: f.return };"
+    },
+    {
+      "id": 2,
+      "name": "Stores pendingProps accurately",
+      "input": "createFiber with className prop",
+      "expected": "btn-primary",
+      "testFn": "const f = createFiber('HostComponent', 'button', { className: 'btn-primary' }); return f.pendingProps.className;"
+    },
+    {
+      "id": 3,
+      "name": "Prepares alternate slot for double buffering",
+      "input": "alternate property is null",
+      "expected": null,
+      "testFn": "const f = createFiber('FunctionComponent', () => {}); return f.alternate;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Creates fiber with null relational pointers",
+        "input": "createFiber('HostComponent', 'div')",
+        "expected": {
+          "child": null,
+          "sibling": null,
+          "return": null
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Stores pendingProps accurately",
+        "input": "createFiber with className prop",
+        "expected": "btn-primary",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Prepares alternate slot for double buffering",
+        "input": "alternate property is null",
+        "expected": null,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "In React's Fiber reconciler, every React element is represented by a Fiber Node — a mutable unit of work with linked-list pointers (`child`, `sibling`, `return`) that enables depth-first tree traversal without recursive call stack frames.",
+    "stepByStepWalkthrough": [
+      "Define a factory function `createFiberNode(tag, pendingProps, key)`.",
+      "Initialize structural linked-list pointers: `child = null`, `sibling = null`, `return = null` (parent pointer).",
+      "Initialize state and work tracking properties: `stateNode = null`, `type = null`, `memoizedProps = null`, `memoizedState = null`.",
+      "Initialize reconciler flags and lane scheduling: `flags = 0`, `subtreeFlags = 0`, `alternate = null` (for double buffering).",
+      "Return the constructed Fiber node."
+    ],
+    "underlyingEngineInternals": "In React source code (`packages/react-reconciler/src/ReactFiber.js`), the `FiberNode` constructor creates these exact fields. Pointers replace the DOM tree hierarchy with a singly-linked list structure, enabling interruptible work loops.",
+    "complexity": {
+      "time": "O(1) constant time allocation per Fiber node.",
+      "space": "O(1) memory per Fiber node."
+    },
+    "edgeCasesHandled": [
+      "Null or missing keys default to `null`.",
+      "Correct initialization of both `pendingProps` and null `memoizedProps`.",
+      "Correct pointer defaults for tree linking."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Source: packages/react-reconciler/src/ReactInternalTypes.js (Fiber type definition)",
+      "React Architecture Docs: A Deep Dive into React Fiber (Andrew Clark)"
+    ],
+    "verifiedRules": [
+      "Fiber trees use child, sibling, and return pointers to represent hierarchical relationships.",
+      "Every fiber maintains an alternate pointer pointing to its counterpart during work."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

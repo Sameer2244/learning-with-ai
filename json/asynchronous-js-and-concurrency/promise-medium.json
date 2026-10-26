@@ -1,0 +1,131 @@
+{
+  "id": "promise-medium",
+  "title": "Implement Custom Promise.allSettled",
+  "difficulty": "Medium",
+  "topicId": "async-concurrency",
+  "topicCategory": "2. Asynchronous JS & Concurrency",
+  "topicTitle": "Asynchronous JS & Concurrency",
+  "subtopicId": "promise-mechanics",
+  "subtopicTitle": "Promise Internals & Concurrency Combinators",
+  "concept": "Concurrency Aggregation & Error Resilience",
+  "problemStatement": "Implement `myPromiseAllSettled(promises)` without using native `Promise.allSettled`. It takes an iterable of promises (or non-promise values) and returns a promise that resolves with an array of objects `{ status: 'fulfilled', value }` or `{ status: 'rejected', reason }` after ALL promises settle.",
+  "interviewTrap": "Using `Promise.all` which short-circuits on the first rejection. `allSettled` must wait for every promise regardless of success or failure.",
+  "starterCode": "function myPromiseAllSettled(promises) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function myPromiseAllSettled(promises) {\n  const items = Array.from(promises);\n  if (items.length === 0) return Promise.resolve([]);\n\n  return new Promise((resolve) => {\n    const results = [];\n    let completed = 0;\n\n    items.forEach((item, index) => {\n      Promise.resolve(item)\n        .then(value => {\n          results[index] = { status: 'fulfilled', value };\n        })\n        .catch(reason => {\n          results[index] = { status: 'rejected', reason };\n        })\n        .finally(() => {\n          completed++;\n          if (completed === items.length) {\n            resolve(results);\n          }\n        });\n    });\n  });\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Handles mix of resolved and rejected promises",
+      "input": "[Promise.resolve(1), Promise.reject('err'), 3]",
+      "expected": [
+        {
+          "status": "fulfilled",
+          "value": 1
+        },
+        {
+          "status": "rejected",
+          "reason": "err"
+        },
+        {
+          "status": "fulfilled",
+          "value": 3
+        }
+      ],
+      "testFn": "return myPromiseAllSettled([Promise.resolve(1), Promise.reject('err'), 3]);"
+    },
+    {
+      "id": 2,
+      "name": "Handles empty array immediately",
+      "input": "[]",
+      "expected": [],
+      "testFn": "return myPromiseAllSettled([]);"
+    },
+    {
+      "id": 3,
+      "name": "Preserves exact order of input results",
+      "input": "[slow promise, fast promise]",
+      "expected": [
+        "slow",
+        "fast"
+      ],
+      "testFn": "const p1 = new Promise(r => setTimeout(() => r('slow'), 30)); const p2 = new Promise(r => setTimeout(() => r('fast'), 5)); const res = await myPromiseAllSettled([p1, p2]); return res.map(r => r.value);"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Handles mix of resolved and rejected promises",
+        "input": "[Promise.resolve(1), Promise.reject('err'), 3]",
+        "expected": [
+          {
+            "status": "fulfilled",
+            "value": 1
+          },
+          {
+            "status": "rejected",
+            "reason": "err"
+          },
+          {
+            "status": "fulfilled",
+            "value": 3
+          }
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Handles empty array immediately",
+        "input": "[]",
+        "expected": [],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Preserves exact order of input results",
+        "input": "[slow promise, fast promise]",
+        "expected": [
+          "slow",
+          "fast"
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Implementing `Promise.allSettled` requires waiting for all promises in an iterable to settle (either fulfill or reject), returning an array of settlement descriptor objects in original order: `{ status: 'fulfilled', value }` or `{ status: 'rejected', reason }`.",
+    "stepByStepWalkthrough": [
+      "Convert input iterable to an array `promises = Array.from(iterable)`.",
+      "If the array is empty, immediately resolve with `[]`.",
+      "Initialize an array `results = new Array(promises.length)` and `settledCount = 0`.",
+      "Iterate over promises with index `i`: wrap with `Promise.resolve(promises[i])` to handle non-promise values.",
+      "Attach `.then(value => { results[i] = { status: 'fulfilled', value }; checkDone(); }, reason => { results[i] = { status: 'rejected', reason }; checkDone(); })`.",
+      "In `checkDone()`, increment `settledCount++`. If `settledCount === promises.length`, resolve outer promise with `results`."
+    ],
+    "underlyingEngineInternals": "Unlike `Promise.all` which fast-fails on the first rejection, `Promise.allSettled` never rejects. Results must maintain input indexing order even if promise 3 settles before promise 1.",
+    "complexity": {
+      "time": "O(N) where N is the number of promises.",
+      "space": "O(N) to store result descriptors."
+    },
+    "edgeCasesHandled": [
+      "Empty iterable resolves immediately with empty array.",
+      "Mix of fulfilled and rejected promises completes without short-circuiting.",
+      "Mix of raw values (primitives) and Promises handled safely via `Promise.resolve()`.",
+      "Preserves exact input order regardless of resolution timing."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §27.2.4.2 Promise.allSettled",
+      "TC39 Proposal for Promise.allSettled (Championed by Mathias Bynens)"
+    ],
+    "verifiedRules": [
+      "Promise.allSettled never rejects.",
+      "Result objects adhere strictly to { status: 'fulfilled', value } and { status: 'rejected', reason } shapes."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

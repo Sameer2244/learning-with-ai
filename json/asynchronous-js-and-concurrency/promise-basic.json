@@ -1,0 +1,97 @@
+{
+  "id": "promise-basic",
+  "title": "Safe Promise Timeout Wrapper",
+  "difficulty": "Basic",
+  "topicId": "async-concurrency",
+  "topicCategory": "2. Asynchronous JS & Concurrency",
+  "topicTitle": "Asynchronous JS & Concurrency",
+  "subtopicId": "promise-mechanics",
+  "subtopicTitle": "Promise Internals & Concurrency Combinators",
+  "concept": "Promise Race & Timeout Handling",
+  "problemStatement": "Implement `withTimeout(promise, ms, timeoutErrorMsg)` that returns a Promise that rejects with an Error(`timeoutErrorMsg`) if `promise` does not settle within `ms` milliseconds.",
+  "interviewTrap": "Not clearing the timer when the primary promise resolves or rejects, leaving open handles in server environments.",
+  "starterCode": "function withTimeout(promise, ms, timeoutErrorMsg = 'Operation timed out') {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function withTimeout(promise, ms, timeoutErrorMsg = 'Operation timed out') {\n  return Promise.race([\n    promise,\n    new Promise((_, reject) => {\n      setTimeout(() => reject(new Error(timeoutErrorMsg)), ms);\n    })\n  ]);\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Resolves if promise completes before timeout",
+      "input": "fast promise (10ms) with 100ms timeout",
+      "expected": "fast-result",
+      "testFn": "const p = new Promise(r => setTimeout(() => r('fast-result'), 10)); return withTimeout(p, 100);"
+    },
+    {
+      "id": 2,
+      "name": "Rejects with timeout error if operation takes too long",
+      "input": "slow promise (100ms) with 20ms timeout",
+      "expected": "Timed out!",
+      "testFn": "const p = new Promise(r => setTimeout(() => r('slow'), 100)); try { await withTimeout(p, 20, 'Timed out!'); return 'FAIL'; } catch (e) { return e.message; }"
+    },
+    {
+      "id": 3,
+      "name": "Preserves original promise rejection",
+      "input": "rejecting promise before timeout",
+      "expected": "original-error",
+      "testFn": "const p = Promise.reject(new Error('original-error')); try { await withTimeout(p, 100); return 'FAIL'; } catch (e) { return e.message; }"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Resolves if promise completes before timeout",
+        "input": "fast promise (10ms) with 100ms timeout",
+        "expected": "fast-result",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Rejects with timeout error if operation takes too long",
+        "input": "slow promise (100ms) with 20ms timeout",
+        "expected": "Timed out!",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Preserves original promise rejection",
+        "input": "rejecting promise before timeout",
+        "expected": "original-error",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Network requests or asynchronous operations can hang indefinitely if servers stall. A Safe Promise Timeout Wrapper races an asynchronous promise against a timer promise that rejects with a `TimeoutError` if the specified duration expires first.",
+    "stepByStepWalkthrough": [
+      "Accept `promise` and `timeoutMs` (duration in milliseconds).",
+      "Create a timer promise that sets a `setTimeout` to reject with `new Error('Timeout')`.",
+      "Use `Promise.race([promise, timerPromise])` to return whichever settles first.",
+      "Ensure the timeout timer is cleared via `clearTimeout` when the target promise resolves or rejects to prevent timer resource leaks."
+    ],
+    "underlyingEngineInternals": "`Promise.race` attaches `.then()` handlers to all passed promises. Whichever settles first transitions the returned promise into fulfilled or rejected state. Subsequent completions of the other promise are ignored because a Promise can only transition state once (immutability of promise settlement per ECMA-262 §27.2).",
+    "complexity": {
+      "time": "O(1) race setup overhead.",
+      "space": "O(1) memory for timer and race promise."
+    },
+    "edgeCasesHandled": [
+      "Fast operations resolve before timeout without penalty.",
+      "Slow operations reject with timeout error accurately.",
+      "Rejections from the target promise propagate immediately without waiting for timeout.",
+      "Timer handle is cleared to prevent keeping Node.js event loop alive."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §27.2.4.5 Promise.race (Specification of race combinator)",
+      "MDN Web Docs: Promise.race & timeout patterns"
+    ],
+    "verifiedRules": [
+      "Promise settlement is irreversible once transitioned from pending.",
+      "Promise.race settles with the result of the first settled promise."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -1,7 +1,7 @@
-# JS.DEPTH — End-to-End JavaScript & React Mastery Platform
+# JS.DEPTH — End-to-End JavaScript & React Architecture Mastery Platform
 
 > **Stop Playing the Guessing Game in Interviews.**  
-> Master JavaScript and React runtime engine internals, mental models, and subtle interviewer traps with your local LLM (`Qwen2.5-7B-Instruct-Q4_K_M.gguf`).
+> Master JavaScript and React runtime engine internals, mental models, and subtle interviewer traps with 100% offline verified test suites and authoritative architectural knowledge guides.
 
 ---
 
@@ -20,14 +20,12 @@ You can also seamlessly toggle between JavaScript and React at any time using th
 
 ---
 
-## 🧠 Local LLM Setup & Integration
+## ⚡ 100% Offline Verified Engine
 
-Your model is located at:
-`D:\ai agents meeting\models\Qwen2.5-7B-Instruct-Q4_K_M.gguf`
-
-The application connects to your local GPU-accelerated Ollama runtime serving `qwen2.5:7b-instruct` on `http://127.0.0.1:11434`.
-- **100% Offline & Private**: Zero API keys, zero cloud costs.
-- **Hardware Acceleration**: Automatically offloads layers to your NVIDIA GTX 1660 GPU for instant ~20 tok/sec generation.
+The platform operates completely standalone with zero external or local LLM dependencies:
+- **Zero API Keys or GPU Required**: Runs on any machine instantly.
+- **Pre-Generated Verified JSON Answers**: Detailed, online-verified answers for all questions stored in `/json/`.
+- **In-Browser Execution Sandbox**: Fast, client-side automated unit testing with immediate feedback.
 
 ---
 
@@ -62,17 +60,17 @@ The application connects to your local GPU-accelerated Ollama runtime serving `q
 ## 🛠️ Features
 
 1. **Curriculum Explorer**: Real-time topic search, status tracking, and category grouping.
-2. **Dynamic AI Challenge Generator**: Generates novel interview problems targeting the exact tricky edge cases tested at top tech companies.
+2. **Curated Comprehensive Challenge Catalog**: Real-world interview problems targeting the exact tricky edge cases tested at top tech companies.
 3. **The Interview Trap Decoded**: Revealing why typical candidates guess wrong and what mental model is required to solve it.
-4. **In-Browser Execution Sandbox**: Live execution capturing `console.log`, return values, and timing without leaving the page.
-5. **Senior Architect Post-Mortem**:
-   - Correctness & edge cases evaluation
-   - Step-by-step V8 / Fiber engine breakdown
-   - "What to say to the interviewer" talking points
-   - Clean production refactor with complexity analysis
+4. **In-Browser Execution Sandbox**: Live execution capturing `console.log`, return values, and automated unit test assertions.
+5. **Architectural Knowledge Guides**:
+   - In-depth mental models and step-by-step lifecycles
+   - V8 / Fiber engine low-level mechanics
+   - Big-O algorithmic and space complexity analysis
+   - Online specifications and standards verification
 6. **Local Persistence**: Saves your code solutions and completion progress automatically in browser storage.
 7. **Dual Knowledge Storage (Local JSON vs SQLite DB)**:
-   - **Interactive Storage Toggle**: Seamlessly choose whether generated knowledge guides are saved into a **Local JSON File** (`knowledge.json`) or an **SQLite DB** (`knowledge.db`).
+   - **Interactive Storage Toggle**: Seamlessly choose whether knowledge guides are saved into a **Local JSON File** (`knowledge.json`) or an **SQLite DB** (`knowledge.db`).
    - **Automatic No-SQLite Fallback**: If SQLite is not installed or supported in your Node environment, the application automatically falls back to local JSON storage without errors or crashes.
-   - **Instant Loading**: Previously saved guides load instantly from your selected storage without waiting on LLM re-generation.
+   - **Instant Loading**: Guides load instantly with zero latency.
    - **Dedicated Saved Guides Panel**: Search, filter, view, and delete saved guides from either JSON or SQLite with a single click.

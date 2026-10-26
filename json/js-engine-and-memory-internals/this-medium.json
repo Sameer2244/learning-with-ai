@@ -1,0 +1,99 @@
+{
+  "id": "this-medium",
+  "title": "Implement Custom Function.prototype.myCall & myApply",
+  "difficulty": "Medium",
+  "topicId": "engine-internals",
+  "topicCategory": "1. JS Engine & Memory Internals",
+  "topicTitle": "JS Engine & Memory Internals",
+  "subtopicId": "this-binding",
+  "subtopicTitle": "'this' Keyword Mechanics & Binding Rules",
+  "concept": "Explicit Context Invocation via Property Binding",
+  "problemStatement": "Implement `myCall(thisArg, ...args)` on `Function.prototype` without using native `.call()`, `.apply()`, or `.bind()`. It must handle null/undefined `thisArg` (falling back to globalThis/window), wrap primitives, and avoid colliding with existing properties on `thisArg` using `Symbol()`.",
+  "interviewTrap": "Using a plain string key like `context.__fn__ = this` can overwrite existing properties on the target object. Using `Symbol()` guarantees zero key collision.",
+  "starterCode": "Function.prototype.myCall = function(thisArg, ...args) {\n  // TODO: Implement solution\n};\n",
+  "solutionCode": "Function.prototype.myCall = function(thisArg, ...args) {\n  if (typeof this !== 'function') {\n    throw new TypeError('myCall must be called on a function');\n  }\n  \n  const context = (thisArg === null || thisArg === undefined)\n    ? globalThis\n    : Object(thisArg);\n\n  const fnKey = Symbol('fnKey');\n  context[fnKey] = this;\n\n  try {\n    const result = context[fnKey](...args);\n    return result;\n  } finally {\n    delete context[fnKey];\n  }\n};\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Invokes function with explicit object context",
+      "input": "greet.myCall({ name: 'Bob' }, 'Hi')",
+      "expected": "Hi Bob",
+      "testFn": "function greet(greeting) { return greeting + ' ' + this.name; } return greet.myCall({ name: 'Bob' }, 'Hi');"
+    },
+    {
+      "id": 2,
+      "name": "Cleans up temporary property after invocation",
+      "input": "Verify no lingering properties left on context",
+      "expected": 0,
+      "testFn": "const ctx = {}; function test() { return 1; } test.myCall(ctx); return Object.getOwnPropertySymbols(ctx).length;"
+    },
+    {
+      "id": 3,
+      "name": "Handles primitive numbers or strings as thisArg",
+      "input": "getLen.myCall('hello')",
+      "expected": 5,
+      "testFn": "function getLen() { return this.length; } return getLen.myCall('hello');"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Invokes function with explicit object context",
+        "input": "greet.myCall({ name: 'Bob' }, 'Hi')",
+        "expected": "Hi Bob",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Cleans up temporary property after invocation",
+        "input": "Verify no lingering properties left on context",
+        "expected": 0,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles primitive numbers or strings as thisArg",
+        "input": "getLen.myCall('hello')",
+        "expected": 5,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Implementing custom polyfills for `Function.prototype.myCall` and `Function.prototype.myApply` requires invoking the target function with an explicit `thisContext` without using native `.call()` or `.apply()`.",
+    "stepByStepWalkthrough": [
+      "Attach `myCall(context, ...args)` and `myApply(context, argsArray)` to `Function.prototype`.",
+      "Default `context` to `globalThis` if `context` is `null` or `undefined` (in non-strict semantics), or coerce primitives to objects via `Object(context)`.",
+      "Create a unique property on the context object using `const fnKey = Symbol('fn')` to prevent overwriting existing keys.",
+      "Assign the function to that property: `context[fnKey] = this`.",
+      "Invoke the function via property access: `const result = context[fnKey](...args)` (or `...argsArray`).",
+      "Delete the temporary property `delete context[fnKey]` in a `try...finally` block to prevent object pollution, then return the result."
+    ],
+    "underlyingEngineInternals": "By executing `context[fnKey](...)`, the JavaScript engine constructs a Reference Record whose base is `context`. During evaluation of the call, `this` is automatically set to `context` according to standard property invocation semantics.",
+    "complexity": {
+      "time": "O(1) overhead plus execution time of the target function.",
+      "space": "O(1) temporary Symbol property on context."
+    },
+    "edgeCasesHandled": [
+      "Primitive contexts (numbers, strings, booleans) wrapped via `Object(context)`.",
+      "Null or undefined context defaults to `globalThis`.",
+      "`Symbol` property key prevents collisions with existing properties on `context`.",
+      "Exceptions during function execution still clean up the temporary property."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §20.2.3.1 Function.prototype.apply (Specification of thisArg coercion and arg list evaluation)",
+      "ECMA-262 §20.2.3.3 Function.prototype.call"
+    ],
+    "verifiedRules": [
+      "Non-strict thisArg defaults to global object if null/undefined.",
+      "Property call syntax sets `this` to the base of the reference record."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

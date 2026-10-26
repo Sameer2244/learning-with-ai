@@ -1,0 +1,117 @@
+{
+  "id": "hook-core-medium",
+  "title": "Multi-Hook Linked List Runner",
+  "difficulty": "Medium",
+  "topicId": "react-hooks-state-machine",
+  "topicCategory": "2. Hooks State Machine & Closures",
+  "topicTitle": "Hooks State Machine & Closures",
+  "subtopicId": "hooks-under-the-hood",
+  "subtopicTitle": "Hooks Linked List & Rules of Hooks",
+  "concept": "Fiber memoizedState Linked List & Sequential Traversal",
+  "problemStatement": "Implement `createHookRunner()` that supports multiple calls to `useState()` across consecutive render passes, storing them in a linked-list structure and maintaining state continuity.",
+  "interviewTrap": "React does not use key names for hooks! It relies 100% on execution call order to pair each hook with its corresponding slot in the linked list.",
+  "starterCode": "function createHookRunner() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createHookRunner() {\n  let firstHook = null;\n  let currentHook = null;\n  let isMount = true;\n\n  function useState(initialState) {\n    let hook;\n\n    if (isMount) {\n      hook = {\n        memoizedState: typeof initialState === 'function' ? initialState() : initialState,\n        next: null\n      };\n      if (!firstHook) {\n        firstHook = hook;\n      } else {\n        currentHook.next = hook;\n      }\n      currentHook = hook;\n    } else {\n      hook = currentHook;\n      currentHook = currentHook.next;\n    }\n\n    const setState = (action) => {\n      hook.memoizedState = typeof action === 'function' ? action(hook.memoizedState) : action;\n    };\n\n    return [hook.memoizedState, setState];\n  }\n\n  function prepareRender() {\n    isMount = firstHook === null;\n    currentHook = firstHook;\n  }\n\n  return { useState, prepareRender };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Maintains multiple independent hook states in order",
+      "input": "useState('name') and useState('age')",
+      "expected": [
+        "Alice",
+        25
+      ],
+      "testFn": "const r = createHookRunner(); r.prepareRender(); const [name] = r.useState('Alice'); const [age] = r.useState(25); return [name, age];"
+    },
+    {
+      "id": 2,
+      "name": "Preserves updated values across multiple renders",
+      "input": "setState updates state on next render pass",
+      "expected": [
+        "Bob",
+        26
+      ],
+      "testFn": "const r = createHookRunner(); r.prepareRender(); const [, setName] = r.useState('Alice'); const [, setAge] = r.useState(25); setName('Bob'); setAge(prev => prev + 1); r.prepareRender(); const [name2] = r.useState(); const [age2] = r.useState(); return [name2, age2];"
+    },
+    {
+      "id": 3,
+      "name": "Handles 3 or more hooks in strict sequence",
+      "input": "3 hooks preserved accurately",
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "testFn": "const r = createHookRunner(); r.prepareRender(); r.useState(1); r.useState(2); r.useState(3); r.prepareRender(); return [r.useState()[0], r.useState()[0], r.useState()[0]];"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Maintains multiple independent hook states in order",
+        "input": "useState('name') and useState('age')",
+        "expected": [
+          "Alice",
+          25
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Preserves updated values across multiple renders",
+        "input": "setState updates state on next render pass",
+        "expected": [
+          "Bob",
+          26
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles 3 or more hooks in strict sequence",
+        "input": "3 hooks preserved accurately",
+        "expected": [
+          1,
+          2,
+          3
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Real React hooks are stored not in a flat array, but as a singly-linked list of Hook nodes on the Fiber: `fiber.memoizedState -> hook1 -> hook2 -> hook3 -> null`. Building a Multi-Hook Linked List Runner illustrates how `useState`, `useReducer`, and `useMemo` share the same linked list structure.",
+    "stepByStepWalkthrough": [
+      "Define Hook node structure: `{ memoizedState, next }`.",
+      "During mount (`mountWorkInProgressHook`): instantiate a new Hook node, append to tail of linked list.",
+      "During update (`updateWorkInProgressHook`): advance `workInProgressHook = currentHook.next`, reading `memoizedState`.",
+      "Support multiple hook invocations per component in strict sequential order.",
+      "Component re-render traverses the existing linked list node-by-node."
+    ],
+    "underlyingEngineInternals": "In `ReactFiberHooks.js`, `currentlyRenderingFiber` keeps track of the active fiber. Both `mount` and `update` phases execute different dispatchers: `HooksDispatcherOnMount` creates the nodes, while `HooksDispatcherOnUpdate` reads and updates existing nodes in the linked list.",
+    "complexity": {
+      "time": "O(1) access per hook call during render traversal.",
+      "space": "O(H) nodes where H is count of hooks."
+    },
+    "edgeCasesHandled": [
+      "Multiple hooks of different types (state, memo, reducer) coexist on same linked list.",
+      "Preserves correct individual hook state across multiple re-render passes.",
+      "Reaching end of linked list properly matches expected hook count."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Source: packages/react-reconciler/src/ReactFiberHooks.js (mountWorkInProgressHook vs updateWorkInProgressHook)",
+      "React Architecture Docs: Hooks Linked List Representation"
+    ],
+    "verifiedRules": [
+      "Fiber.memoizedState stores the head of the hook linked list.",
+      "Every hook node has a .next pointer pointing to the next hook."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

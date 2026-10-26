@@ -1,0 +1,116 @@
+{
+  "id": "effect-timings-hard",
+  "title": "Dual Queue Effect Scheduler (Layout Sync vs Passive Async)",
+  "difficulty": "Hard",
+  "topicId": "react-hooks-state-machine",
+  "topicCategory": "2. Hooks State Machine & Closures",
+  "topicTitle": "Hooks State Machine & Closures",
+  "subtopicId": "effect-timings",
+  "subtopicTitle": "useEffect vs useLayoutEffect vs useInsertionEffect",
+  "concept": "Scheduler Separation of Layout and Passive Effect Queues",
+  "problemStatement": "Implement `createEffectScheduler()` that maintains two effect queues: `layoutQueue` (executed synchronously during commit) and `passiveQueue` (executed asynchronously after a tick). Returns an object with `scheduleLayout(fn)`, `schedulePassive(fn)`, `flushLayout()`, and `flushPassive()`.",
+  "interviewTrap": "If layout effects throw errors, the commit fails synchronously. If passive effects throw errors, they are surfaced in the next turn of the event loop.",
+  "starterCode": "function createEffectScheduler() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createEffectScheduler() {\n  const layoutQueue = [];\n  const passiveQueue = [];\n\n  return {\n    scheduleLayout(fn) {\n      layoutQueue.push(fn);\n    },\n    schedulePassive(fn) {\n      passiveQueue.push(fn);\n    },\n    flushLayout() {\n      const executed = [];\n      while (layoutQueue.length > 0) {\n        const fn = layoutQueue.shift();\n        executed.push(fn());\n      }\n      return executed;\n    },\n    async flushPassive() {\n      // Yield to macrotask/microtask to simulate post-paint delivery\n      await new Promise(r => setTimeout(r, 0));\n      const executed = [];\n      while (passiveQueue.length > 0) {\n        const fn = passiveQueue.shift();\n        executed.push(fn());\n      }\n      return executed;\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Executes layout effects synchronously before passive effects",
+      "input": "layout effects run first",
+      "expected": [
+        "layout",
+        "passive"
+      ],
+      "testFn": "const s = createEffectScheduler(); const log = []; s.schedulePassive(() => log.push('passive')); s.scheduleLayout(() => log.push('layout')); s.flushLayout(); await s.flushPassive(); return log;"
+    },
+    {
+      "id": 2,
+      "name": "flushLayout clears all pending layout items",
+      "input": "layout queue is drained",
+      "expected": [
+        1,
+        2
+      ],
+      "testFn": "const s = createEffectScheduler(); s.scheduleLayout(() => 1); s.scheduleLayout(() => 2); return s.flushLayout();"
+    },
+    {
+      "id": 3,
+      "name": "flushPassive runs asynchronously after tick",
+      "input": "passive flush resolves with executed values",
+      "expected": [
+        "async-done"
+      ],
+      "testFn": "const s = createEffectScheduler(); s.schedulePassive(() => 'async-done'); return await s.flushPassive();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Executes layout effects synchronously before passive effects",
+        "input": "layout effects run first",
+        "expected": [
+          "layout",
+          "passive"
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "flushLayout clears all pending layout items",
+        "input": "layout queue is drained",
+        "expected": [
+          1,
+          2
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "flushPassive runs asynchronously after tick",
+        "input": "passive flush resolves with executed values",
+        "expected": [
+          "async-done"
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "A Dual Queue Effect Scheduler implements the two-tiered queuing architecture used by React: A Synchronous Layout Queue (processed immediately during commit) and an Asynchronous Passive Queue (processed in a microtask or message channel after paint).",
+    "stepByStepWalkthrough": [
+      "Create `EffectScheduler` with `layoutQueue = []` and `passiveQueue = []`.",
+      "Method `scheduleLayout(effectFn)` pushes to `layoutQueue`.",
+      "Method `schedulePassive(effectFn)` pushes to `passiveQueue`.",
+      "Method `flushCommit()`:",
+      "  - Synchronously drains and executes all effects in `layoutQueue`.",
+      "  - Schedules asynchronous draining of `passiveQueue` via `setTimeout(flushPassive, 0)` or `postMessage`.",
+      "Provide `flushPassive()` to drain passive effects.",
+      "Verify that layout effects always execute before passive effects, even if scheduled in reverse order."
+    ],
+    "underlyingEngineInternals": "In React source code (`packages/react-reconciler/src/ReactFiberWorkLoop.js`), `commitRoot` processes `commitLayoutEffects` directly. It then requests scheduling for `flushPassiveEffects` via `Scheduler_scheduleCallback(NormalSchedulerPriority, () => flushPassiveEffects())`.",
+    "complexity": {
+      "time": "O(L) synchronous layout flush + O(P) asynchronous passive flush.",
+      "space": "O(L + P) queue storage for scheduled effect thunks."
+    },
+    "edgeCasesHandled": [
+      "Strict priority guarantee: all layout effects finish before any passive effect starts.",
+      "Clean draining: queues are emptied upon execution.",
+      "Asynchronous passive execution allows browser paint tick in between."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Source: packages/react-reconciler/src/ReactFiberWorkLoop.js (flushPassiveEffects & commitLayoutEffects)",
+      "React Architecture: The Passive Effects Queue implementation"
+    ],
+    "verifiedRules": [
+      "Layout effects are flushed synchronously during the commit phase.",
+      "Passive effects are deferred to allow paint and prevent frame drops."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "id": "keys-hard",
+  "title": "Diagnose & Fix State Corruption from Index-as-Key",
+  "difficulty": "Hard",
+  "topicId": "react-engine-fiber",
+  "topicCategory": "1. Fiber Architecture & Reconciliation",
+  "topicTitle": "Fiber Architecture & Reconciliation",
+  "subtopicId": "reconciliation-keys",
+  "subtopicTitle": "Diffing Algorithm & The 'key' Prop Trap",
+  "concept": "Uncontrolled State Retention across Key Changes",
+  "problemStatement": "Implement `simulateTodoDeletion(todos, deleteIndex, useStableKey)` that demonstrates why using index as key causes state corruption when items are removed. When `useStableKey` is true, state stays bound to the item's true ID; when false, state stays bound to the array index.",
+  "interviewTrap": "This is the classic senior interview question: when deleting item 0, the input at index 0 still displays item 0's text if index was used as key!",
+  "starterCode": "function simulateTodoDeletion(todos, deleteIndex, useStableKey = true) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function simulateTodoDeletion(todos, deleteIndex, useStableKey = true) {\n  // Each todo has: { id: string, text: string, userTextInInput: string }\n  if (useStableKey) {\n    // Stable key maps input by id\n    const remaining = todos.filter((_, i) => i !== deleteIndex);\n    return remaining.map(t => ({ id: t.id, displayedText: t.userTextInInput }));\n  } else {\n    // Index key associates input state with index!\n    const remaining = todos.filter((_, i) => i !== deleteIndex);\n    // When deleting index 0, index 0 keeps old index 0's input state!\n    return remaining.map((t, idx) => ({\n      id: t.id,\n      displayedText: todos[idx].userTextInInput // Stale state bleed!\n    }));\n  }\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Stable key preserves correct text on each item after deletion",
+      "input": "Delete top item with stable key",
+      "expected": [
+        {
+          "id": "2",
+          "displayedText": "two"
+        }
+      ],
+      "testFn": "const todos = [{ id: '1', text: 'Item 1', userTextInInput: 'one' }, { id: '2', text: 'Item 2', userTextInInput: 'two' }]; return simulateTodoDeletion(todos, 0, true);"
+    },
+    {
+      "id": 2,
+      "name": "Index-as-key causes state bleed where remaining item gets deleted item's input state",
+      "input": "Delete top item with index as key",
+      "expected": "one",
+      "testFn": "const todos = [{ id: '1', text: 'Item 1', userTextInInput: 'one' }, { id: '2', text: 'Item 2', userTextInInput: 'two' }]; const res = simulateTodoDeletion(todos, 0, false); return res[0].displayedText;"
+    },
+    {
+      "id": 3,
+      "name": "Stable keys prevent corruption on middle deletions",
+      "input": "3 items deleting middle with stable keys",
+      "expected": [
+        "A",
+        "C"
+      ],
+      "testFn": "const todos = [{ id: 'a', userTextInInput: 'A' }, { id: 'b', userTextInInput: 'B' }, { id: 'c', userTextInInput: 'C' }]; return simulateTodoDeletion(todos, 1, true).map(t => t.displayedText);"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Stable key preserves correct text on each item after deletion",
+        "input": "Delete top item with stable key",
+        "expected": [
+          {
+            "id": "2",
+            "displayedText": "two"
+          }
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Index-as-key causes state bleed where remaining item gets deleted item's input state",
+        "input": "Delete top item with index as key",
+        "expected": "one",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Stable keys prevent corruption on middle deletions",
+        "input": "3 items deleting middle with stable keys",
+        "expected": [
+          "A",
+          "C"
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Using array indices as keys (`key={index}`) is a notorious React anti-pattern. When items are inserted, deleted, or reordered, an item's index changes. React compares components by key; if keys remain `0, 1, 2...`, React matches the old index 0 fiber to the new index 0 item, preserving the old fiber's internal state (uncontrolled inputs, stateful hooks) on the WRONG data!",
+    "stepByStepWalkthrough": [
+      "Simulate state corruption caused by index keys during item deletion or unshift.",
+      "Detect if `key === index` pattern is being used on stateful components.",
+      "Diagnose: When an item is prepended or deleted, component at index 0 retains old internal state because key `0` matched.",
+      "Remediate: Replace index keys with stable entity IDs (e.g. `item.id`).",
+      "Verify that with stable ID keys, component state remains strictly attached to the correct logical entity across reorders."
+    ],
+    "underlyingEngineInternals": "During reconciliation, React uses `(element.key === null ? element.type : element.key)` to find matching fiber nodes in `alternate`. Matching an index key matches the old Fiber node whose `memoizedState` linked list contains the previous item's state values, leading to visual bugs and form input corruption.",
+    "complexity": {
+      "time": "O(N) analysis of key stability.",
+      "space": "O(N) memory for item state tracking."
+    },
+    "edgeCasesHandled": [
+      "Deleting first item with index keys corrupts last item's display.",
+      "Migrating to stable ID keys restores 100% state fidelity.",
+      "Preserves input field cursor and focus state."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "Robin Pokorny: Index as a key is an anti-pattern (Cited in official React docs)",
+      "React Official Docs: Why keys are needed and why indices fail"
+    ],
+    "verifiedRules": [
+      "Index keys break component state identity when lists are modified.",
+      "Stable unique IDs guarantee that Fiber node memoizedState stays bound to the correct entity."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

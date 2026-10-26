@@ -340,7 +340,7 @@ function createCounter(initialValue = 0, step = 1) {
                 id: 2,
                 name: "Evicts oldest entry when maxSize is exceeded",
                 input: "maxSize = 2, adding 3rd evicts 1st",
-                expected: { calls: 3 },
+                expected: { calls: 4 },
                 testFn: "let calls = 0; const fn = memoize((x) => { calls++; return x; }, { maxSize: 2 }); fn(1); fn(2); fn(3); fn(1); return { calls };"
               },
               {

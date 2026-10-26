@@ -1,7 +1,7 @@
 {
   "name": "js-depth-mastery",
   "version": "1.0.0",
-  "description": "End-to-End JavaScript & React Mastery Platform with Local LLM",
+  "description": "End-to-End JavaScript & React Architecture Mastery Platform with Offline Verified Engine",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

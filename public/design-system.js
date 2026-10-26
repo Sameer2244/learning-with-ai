@@ -99,7 +99,7 @@
     }
   }
 
-  // Check Ollama LLM Health
+  // Check System Health
   async function checkHealth() {
     if (!modelStatusPill) return;
     try {
@@ -109,24 +109,18 @@
       const name = modelStatusPill.querySelector('.model-name');
 
       if (data.status === 'ok') {
-        indicator.className = 'status-indicator online';
-        name.textContent = `${data.model} (Ready)`;
-        modelStatusPill.title = `Connected to Ollama: ${data.model}`;
-      } else if (data.status === 'warning') {
-        indicator.className = 'status-indicator warning';
-        name.textContent = `${data.model} (Warning)`;
-        modelStatusPill.title = data.message || 'Model warning';
+        if (indicator) indicator.className = 'status-indicator online connected';
+        if (name) name.textContent = 'Verified Suite Ready';
+        modelStatusPill.title = 'Offline Verified Engine Ready';
       } else {
-        indicator.className = 'status-indicator offline';
-        name.textContent = 'Ollama Offline';
-        modelStatusPill.title = data.message || 'Cannot connect to Ollama';
+        if (indicator) indicator.className = 'status-indicator offline';
+        if (name) name.textContent = 'Server Offline';
       }
     } catch (err) {
       const indicator = modelStatusPill.querySelector('.status-indicator');
       const name = modelStatusPill.querySelector('.model-name');
-      indicator.className = 'status-indicator offline';
-      name.textContent = 'Ollama Offline';
-      modelStatusPill.title = 'Failed to connect to local backend';
+      if (indicator) indicator.className = 'status-indicator offline';
+      if (name) name.textContent = 'Server Offline';
     }
   }
 
@@ -524,7 +518,7 @@
     });
   }
 
-  // Generate In-Depth Topic Knowledge with Local LLM & Web Search
+  // Load In-Depth Topic Knowledge
   async function generateTopicKnowledge() {
     if (!state.selectedTopic) return;
 
@@ -533,17 +527,11 @@
     const originalText = btn.innerHTML;
     btn.disabled = true;
 
-    const useOnlineSearch = onlineSearchCheckbox ? onlineSearchCheckbox.checked : true;
-    const searchStatusText = useOnlineSearch 
-      ? '<span class="search-badge" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; color:#38bdf8;"><i class="fa-solid fa-magnifying-glass"></i> Searching live W3C DTCG specs & WCAG guidelines...</span>' 
-      : '';
-
     guideContent.innerHTML = `
       <div class="loading-knowledge" style="text-align:center; padding: 60px 20px;">
-        <i class="fa-solid fa-wand-magic-sparkles fa-bounce" style="font-size:36px; color:#f43f5e; margin-bottom:16px;"></i>
-        <h3 style="font-size:18px; margin-bottom:8px; color:var(--text-primary);">Synthesizing Senior Design System Knowledge Guide</h3>
-        <p style="color:var(--text-secondary); margin-bottom:12px;">Grounding with architectural mental models, 3-tier tokens, and WCAG 2.2 specs...</p>
-        ${searchStatusText}
+        <i class="fa-solid fa-book-open fa-bounce" style="font-size:36px; color:#f43f5e; margin-bottom:16px;"></i>
+        <h3 style="font-size:18px; margin-bottom:8px; color:var(--text-primary);">Loading Architectural Knowledge Guide</h3>
+        <p style="color:var(--text-secondary); margin-bottom:12px;">Grounding with architectural mental models, 3-tier tokens, and WCAG specs...</p>
       </div>
     `;
 
@@ -557,7 +545,6 @@
           questionTitle: state.selectedTopic.title,
           concept: state.selectedTopic.tag,
           problemDescription: `${state.selectedTopic.summary}\n${state.selectedTopic.importance || ''}`,
-          useOnlineSearch: useOnlineSearch,
           storageMode: state.storageMode
         })
       });

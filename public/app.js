@@ -160,23 +160,22 @@
     try {
       const res = await fetch('/api/health');
       const data = await res.json();
-      const indicator = modelStatusPill.querySelector('.status-indicator');
-      const label = modelStatusPill.querySelector('.model-name');
+      const indicator = modelStatusPill ? modelStatusPill.querySelector('.status-indicator') : null;
+      const label = modelStatusPill ? modelStatusPill.querySelector('.model-name') : null;
 
       if (data.status === 'ok') {
-        indicator.className = 'status-indicator connected';
-        label.textContent = `Local Qwen 2.5 Active`;
-        modelStatusPill.title = `Model: ${data.model} | GPU inference ready`;
+        if (indicator) indicator.className = 'status-indicator connected';
+        if (label) label.textContent = 'Verified Suite Ready';
+        if (modelStatusPill) modelStatusPill.title = 'Offline Verified Engine & Test Suite Ready';
       } else {
-        indicator.className = 'status-indicator offline';
-        label.textContent = 'LLM Offline';
-        modelStatusPill.title = data.message || 'Ollama not detected';
+        if (indicator) indicator.className = 'status-indicator offline';
+        if (label) label.textContent = 'Server Offline';
       }
     } catch (err) {
-      const indicator = modelStatusPill.querySelector('.status-indicator');
-      const label = modelStatusPill.querySelector('.model-name');
-      indicator.className = 'status-indicator offline';
-      label.textContent = 'LLM Disconnected';
+      const indicator = modelStatusPill ? modelStatusPill.querySelector('.status-indicator') : null;
+      const label = modelStatusPill ? modelStatusPill.querySelector('.model-name') : null;
+      if (indicator) indicator.className = 'status-indicator offline';
+      if (label) label.textContent = 'Server Offline';
     }
   }
 
@@ -480,14 +479,9 @@
           updateLineNumbers();
         }
 
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !e.shiftKey) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
           e.preventDefault();
           runCode();
-        }
-
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Enter') {
-          e.preventDefault();
-          evaluateSolution();
         }
       });
     }
@@ -588,10 +582,6 @@
 
       monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
         runCode();
-      });
-
-      monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-        evaluateSolution();
       });
     } catch (err) {
       console.warn('Monaco initialization failed, using textarea:', err);
@@ -784,41 +774,6 @@
     }
   }
 
-  // Generate New AI Question for Topic
-  async function generateAIQuestion() {
-    if (!state.selectedTopic) return;
-
-    const btn = generateQuestionBtn;
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Generating with Qwen 2.5...`;
-
-    try {
-      const res = await fetch('/api/generate-question', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          track: currentTrack,
-          topicId: state.selectedTopic.id,
-          topicTitle: state.selectedTopic.title,
-          difficulty: state.selectedDifficulty
-        })
-      });
-
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Generation failed');
-      }
-
-      setProblem(data.question);
-    } catch (err) {
-      alert(`Could not generate challenge from local LLM: ${err.message}\nMake sure Ollama is running.`);
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-    }
-  }
-
   // Sanitize Markdown
   function sanitizeMarkdown(text) {
     if (!text) return '';
@@ -887,38 +842,27 @@
     return `<div class="guide-card"><div class="guide-card-body">${marked.parse(cleaned)}</div></div>`;
   }
 
-  // Panel Tab Switching (Knowledge Guide vs Saved DB Guides vs AI Evaluation)
+  // Panel Tab Switching (Knowledge Guide vs Saved DB Guides)
   function switchPanelTab(tabName) {
-    if (tabName === 'knowledge') {
-      tabKnowledgeBtn.classList.add('active');
-      if (tabSavedGuidesBtn) tabSavedGuidesBtn.classList.remove('active');
-      tabEvalBtn.classList.remove('active');
-      knowledgePane.classList.add('active');
-      knowledgePane.style.display = 'block';
-      if (savedGuidesPane) savedGuidesPane.style.display = 'none';
-      evalPane.classList.remove('active');
-      evalPane.style.display = 'none';
-    } else if (tabName === 'saved') {
+    if (tabName === 'saved') {
       if (tabSavedGuidesBtn) tabSavedGuidesBtn.classList.add('active');
-      tabKnowledgeBtn.classList.remove('active');
-      tabEvalBtn.classList.remove('active');
+      if (tabKnowledgeBtn) tabKnowledgeBtn.classList.remove('active');
       if (savedGuidesPane) {
         savedGuidesPane.classList.add('active');
         savedGuidesPane.style.display = 'block';
       }
-      knowledgePane.classList.remove('active');
-      knowledgePane.style.display = 'none';
-      evalPane.classList.remove('active');
-      evalPane.style.display = 'none';
+      if (knowledgePane) {
+        knowledgePane.classList.remove('active');
+        knowledgePane.style.display = 'none';
+      }
       loadSavedGuidesList(savedGuidesSearch ? savedGuidesSearch.value : '');
     } else {
-      tabEvalBtn.classList.add('active');
-      tabKnowledgeBtn.classList.remove('active');
+      if (tabKnowledgeBtn) tabKnowledgeBtn.classList.add('active');
       if (tabSavedGuidesBtn) tabSavedGuidesBtn.classList.remove('active');
-      evalPane.classList.add('active');
-      evalPane.style.display = 'block';
-      knowledgePane.classList.remove('active');
-      knowledgePane.style.display = 'none';
+      if (knowledgePane) {
+        knowledgePane.classList.add('active');
+        knowledgePane.style.display = 'block';
+      }
       if (savedGuidesPane) savedGuidesPane.style.display = 'none';
     }
   }
@@ -1222,22 +1166,16 @@
     const btn = explainTopicBtn;
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Researching...`;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Loading...`;
 
     emptyKnowledgeState.style.display = 'none';
     knowledgeContent.style.display = 'block';
 
-    const useOnlineSearch = onlineSearchCheckbox ? onlineSearchCheckbox.checked : true;
-    const searchStatusText = useOnlineSearch 
-      ? '<span class="search-badge"><i class="fa-solid fa-magnifying-glass"></i> Searching live runtime specs & MDN...</span>' 
-      : '';
-
     knowledgeContent.innerHTML = `
       <div class="loading-knowledge">
-        <i class="fa-solid fa-brain fa-bounce"></i>
-        <h3>Synthesizing Deep Knowledge Guide</h3>
-        <p>Grounding with internal engine architecture and interview traps (${state.storageMode === 'json' ? 'Saving to Local JSON' : 'Saving to SQLite DB'})...</p>
-        ${searchStatusText}
+        <i class="fa-solid fa-book-open fa-bounce"></i>
+        <h3>Loading Verified Knowledge Guide</h3>
+        <p>Grounding with internal engine architecture and verified specs...</p>
       </div>
     `;
 
@@ -1251,7 +1189,6 @@
           questionTitle: state.currentQuestion ? state.currentQuestion.title : state.selectedTopic.title,
           concept: state.currentQuestion ? state.currentQuestion.concept : state.selectedTopic.tag,
           problemDescription: state.currentQuestion ? state.currentQuestion.description : state.selectedTopic.summary,
-          useOnlineSearch: useOnlineSearch,
           storageMode: state.storageMode
         })
       });
@@ -1416,61 +1353,6 @@
     }
   }
 
-  // AI Evaluation of Candidate Solution
-  async function evaluateSolution() {
-    if (!state.currentQuestion) return;
-
-    switchPanelTab('eval');
-
-    const btn = evaluateBtn;
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Analyzing...`;
-
-    evaluationContent.innerHTML = `
-      <div class="loading-knowledge">
-        <i class="fa-solid fa-brain fa-bounce"></i>
-        <h3>Evaluating Code</h3>
-        <p>Reviewing correctness, edge cases, and test results...</p>
-      </div>
-    `;
-
-    try {
-      const res = await fetch('/api/evaluate-solution', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          track: currentTrack,
-          topicTitle: state.selectedTopic?.title || 'Unknown Topic',
-          questionTitle: state.currentQuestion.title,
-          problemDescription: state.currentQuestion.description,
-          concept: state.currentQuestion.concept,
-          userCode: getCode(),
-          executionOutput: state.lastConsoleOutput
-        })
-      });
-
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Evaluation failed');
-      }
-
-      evaluationContent.innerHTML = marked.parse(data.evaluation);
-      Prism.highlightAllUnder(evaluationContent);
-    } catch (err) {
-      evaluationContent.innerHTML = `
-        <div class="empty-eval-state">
-          <i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-danger);"></i>
-          <h3>Evaluation Error</h3>
-          <p>${err.message}</p>
-        </div>
-      `;
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-    }
-  }
-
   // Toggle Mastery State
   function toggleMastery() {
     if (!state.selectedTopic) return;
@@ -1559,11 +1441,12 @@
       tabConsoleBtn.addEventListener('click', () => switchResultsTab('console'));
     }
 
-    // AI Challenge & Knowledge Guide
-    generateQuestionBtn.addEventListener('click', generateAIQuestion);
-    explainTopicBtn.addEventListener('click', () => {
-      openKnowledgeSection(false);
-    });
+    // Knowledge Guide
+    if (explainTopicBtn) {
+      explainTopicBtn.addEventListener('click', () => {
+        openKnowledgeSection(false);
+      });
+    }
 
     // Maximize / Minimize Window Controls
     if (toggleMaximizeBtn) {
@@ -1610,11 +1493,12 @@
     }
 
     // Right Panel Tabs
-    tabKnowledgeBtn.addEventListener('click', () => switchPanelTab('knowledge'));
+    if (tabKnowledgeBtn) {
+      tabKnowledgeBtn.addEventListener('click', () => switchPanelTab('knowledge'));
+    }
     if (tabSavedGuidesBtn) {
       tabSavedGuidesBtn.addEventListener('click', () => switchPanelTab('saved'));
     }
-    tabEvalBtn.addEventListener('click', () => switchPanelTab('eval'));
 
     // Saved Guides Actions
     if (refreshSavedGuidesBtn) {
@@ -1716,7 +1600,6 @@
     });
 
     runCodeBtn.addEventListener('click', runCode);
-    evaluateBtn.addEventListener('click', evaluateSolution);
 
     clearConsoleBtn.addEventListener('click', () => {
       consoleOutput.innerHTML = '<div class="console-placeholder">// Console cleared</div>';

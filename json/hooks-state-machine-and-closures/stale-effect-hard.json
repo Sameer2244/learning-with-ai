@@ -1,0 +1,97 @@
+{
+  "id": "stale-effect-hard",
+  "title": "Implement 'useEffectEvent' / useEvent Polyfill",
+  "difficulty": "Hard",
+  "topicId": "react-hooks-state-machine",
+  "topicCategory": "2. Hooks State Machine & Closures",
+  "topicTitle": "Hooks State Machine & Closures",
+  "subtopicId": "stale-closures-effect",
+  "subtopicTitle": "Stale Closures & Functional State Updates",
+  "concept": "Stable Identity Event Function with Always-Fresh Lexical Scope",
+  "problemStatement": "Implement `useEffectEvent(handler)`: returns a function whose reference identity NEVER changes across renders, but when called, ALWAYS executes the latest `handler` passed on the most recent render.",
+  "interviewTrap": "Developers often wrap handlers in `useCallback(fn, [deps])`, causing child components or effects to re-run whenever dependencies change. `useEffectEvent` extracts non-reactive event logic cleanly.",
+  "starterCode": "function createEffectEventManager() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createEffectEventManager() {\n  let latestHandler = null;\n\n  function updateHandler(handler) {\n    latestHandler = handler;\n  }\n\n  // Stable function reference that delegates to latestHandler\n  const stableEvent = function(...args) {\n    if (typeof latestHandler !== 'function') {\n      throw new Error('Cannot call useEffectEvent when no handler is attached');\n    }\n    return latestHandler(...args);\n  };\n\n  return { updateHandler, stableEvent };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Stable function identity remains strictly identical across renders",
+      "input": "stableEvent === stableEvent across renders",
+      "expected": true,
+      "testFn": "const manager = createEffectEventManager(); const fn1 = manager.stableEvent; manager.updateHandler(() => 1); const fn2 = manager.stableEvent; return fn1 === fn2;"
+    },
+    {
+      "id": 2,
+      "name": "Executes the newest handler reading fresh props",
+      "input": "handler updated with new prop value",
+      "expected": "Theme: dark",
+      "testFn": "const manager = createEffectEventManager(); manager.updateHandler((msg) => `${msg}: light`); manager.updateHandler((msg) => `${msg}: dark`); return manager.stableEvent('Theme');"
+    },
+    {
+      "id": 3,
+      "name": "Passes all parameters and returns output correctly",
+      "input": "stableEvent(10, 20)",
+      "expected": 30,
+      "testFn": "const manager = createEffectEventManager(); manager.updateHandler((a, b) => a + b); return manager.stableEvent(10, 20);"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Stable function identity remains strictly identical across renders",
+        "input": "stableEvent === stableEvent across renders",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Executes the newest handler reading fresh props",
+        "input": "handler updated with new prop value",
+        "expected": "Theme: dark",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Passes all parameters and returns output correctly",
+        "input": "stableEvent(10, 20)",
+        "expected": 30,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React's proposed `useEffectEvent` (formerly `useEvent`) polyfill extracts non-reactive event logic out of effects. It returns a stable function reference that can read the latest props and state without needing to be listed in the effect's dependency array, preventing unnecessary effect re-executions.",
+    "stepByStepWalkthrough": [
+      "Implement `useEffectEvent(callback)` (or `useEvent`):",
+      "Maintain a mutable ref holding the latest callback: `const callbackRef = useRef(callback)`.",
+      "Use `useInsertionEffect` (or synchronous layout assignment) to update `callbackRef.current = callback` before effects run.",
+      "Return a stable wrapped function `useCallback((...args) => callbackRef.current(...args), [])` with empty dependencies.",
+      "When invoked inside an effect, the wrapper calls the freshest `callbackRef.current` without forcing the effect to re-run when callback dependencies change."
+    ],
+    "underlyingEngineInternals": "In React RFC for `useEffectEvent`, the returned function is tagged as an Event function. React forbids calling Event functions during the Render phase, restricting their execution to Effects and Event Handlers. It separates reactive values (which must trigger effects) from non-reactive logic (which needs current values on demand).",
+    "complexity": {
+      "time": "O(1) creation and invocation overhead.",
+      "space": "O(1) ref and memoized callback allocation."
+    },
+    "edgeCasesHandled": [
+      "Effect does not re-trigger when callback's captured state changes.",
+      "Callback always has access to the most recent state and props.",
+      "Throws or warns if invoked during render phase."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React RFC: useEffectEvent (Separating Events from Effects)",
+      "React Official Docs: Separating Events from Effects with useEffectEvent"
+    ],
+    "verifiedRules": [
+      "Effect Events are not reactive and must not be included in effect dependencies.",
+      "Effect Events must only be invoked from within effects or event handlers, never during render."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "id": "closures-basic",
+  "title": "Private Counter Factory with Step",
+  "difficulty": "Basic",
+  "topicId": "engine-internals",
+  "topicCategory": "1. JS Engine & Memory Internals",
+  "topicTitle": "JS Engine & Memory Internals",
+  "subtopicId": "lexical-scope-closures",
+  "subtopicTitle": "Scope Chain, Lexical Scoping & Closures",
+  "concept": "Lexical Scoping & Variable Encapsulation",
+  "problemStatement": "Implement `createCounter(initialValue, step)` that encapsulates `initialValue` and `step` in a closure. It returns an object with `increment()`, `decrement()`, `getValue()`, and `reset()`.",
+  "interviewTrap": "Exposing internal variables directly or allowing external mutation without getters/setters.",
+  "starterCode": "/**\n * Encapsulates state within a closure.\n */\nfunction createCounter(initialValue = 0, step = 1) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Encapsulates state within a closure.\n */\nfunction createCounter(initialValue = 0, step = 1) {\n  let count = initialValue;\n  return {\n    increment() {\n      count += step;\n      return count;\n    },\n    decrement() {\n      count -= step;\n      return count;\n    },\n    getValue() {\n      return count;\n    },\n    reset() {\n      count = initialValue;\n      return count;\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Increments and decrements with step",
+      "input": "counter(10, 5) -> increment() -> 15",
+      "expected": 15,
+      "testFn": "const c = createCounter(10, 5); return c.increment();"
+    },
+    {
+      "id": 2,
+      "name": "Independent counters maintain isolated states",
+      "input": "c1.increment() does not affect c2",
+      "expected": [
+        1,
+        10
+      ],
+      "testFn": "const c1 = createCounter(0, 1); const c2 = createCounter(10, 2); c1.increment(); return [c1.getValue(), c2.getValue()];"
+    },
+    {
+      "id": 3,
+      "name": "Resets accurately to initial value",
+      "input": "increment 3 times then reset()",
+      "expected": 5,
+      "testFn": "const c = createCounter(5, 2); c.increment(); c.increment(); c.reset(); return c.getValue();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Increments and decrements with step",
+        "input": "counter(10, 5) -> increment() -> 15",
+        "expected": 15,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Independent counters maintain isolated states",
+        "input": "c1.increment() does not affect c2",
+        "expected": [
+          1,
+          10
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Resets accurately to initial value",
+        "input": "increment 3 times then reset()",
+        "expected": 5,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "A closure is the combination of a function bundled together with references to its surrounding lexical environment ([[Environment]]). A private counter factory uses closures to encapsulate state variables away from global scope, exposing only controlled modifier functions.",
+    "stepByStepWalkthrough": [
+      "Initialize private variable `count = initial` and `stepValue = step` inside factory function.",
+      "Return an object containing accessor and mutator methods: `increment()`, `decrement()`, `reset()`, and `get()`.",
+      "Each method maintains a live reference to `count` and `stepValue` through the outer lexical environment record.",
+      "Outside consumers cannot read or mutate `count` directly, ensuring information hiding."
+    ],
+    "underlyingEngineInternals": "In V8, variables referenced by an inner function that outlives the outer function call are allocated in a Heap Context rather than on the thread Call Stack. The returned methods hold an internal `[[Scopes]]` pointer referencing this Context object, preventing V8's Garbage Collector from reclaiming it.",
+    "complexity": {
+      "time": "O(1) for each method call (increment, decrement, reset, get).",
+      "space": "O(1) heap allocation for the shared Lexical Environment context."
+    },
+    "edgeCasesHandled": [
+      "Custom initial values and custom step increments (e.g. initial=10, step=5).",
+      "Multiple independent counters maintain separate isolated lexical contexts without cross-contamination.",
+      "Reset restores initial count state cleanly."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 §9.1.1 Declarative Environment Records (Lexical scoping and closure mechanics)",
+      "MDN Web Docs: Closures & Lexical Scoping"
+    ],
+    "verifiedRules": [
+      "Inner functions retain access to outer declarative environment records across ticks.",
+      "Variables in a closure escape stack allocation and are preserved in heap-allocated context objects."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

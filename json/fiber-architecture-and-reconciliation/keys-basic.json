@@ -1,0 +1,110 @@
+{
+  "id": "keys-basic",
+  "title": "Detect Missing or Duplicate Keys in Children",
+  "difficulty": "Basic",
+  "topicId": "react-engine-fiber",
+  "topicCategory": "1. Fiber Architecture & Reconciliation",
+  "topicTitle": "Fiber Architecture & Reconciliation",
+  "subtopicId": "reconciliation-keys",
+  "subtopicTitle": "Diffing Algorithm & The 'key' Prop Trap",
+  "concept": "Key Uniqueness Verification",
+  "problemStatement": "Implement `validateKeys(children)` that inspects an array of child objects `{ key, type }` and returns `{ valid: boolean, duplicateKeys: string[], missingCount: number }`.",
+  "interviewTrap": "Keys must be unique strictly among SIBLINGS, not across the entire application.",
+  "starterCode": "function validateKeys(children) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function validateKeys(children) {\n  const seen = new Set();\n  const duplicateKeys = [];\n  let missingCount = 0;\n\n  for (const child of children) {\n    if (child.key === undefined || child.key === null) {\n      missingCount++;\n      continue;\n    }\n    const k = String(child.key);\n    if (seen.has(k)) {\n      if (!duplicateKeys.includes(k)) duplicateKeys.push(k);\n    } else {\n      seen.add(k);\n    }\n  }\n\n  return {\n    valid: missingCount === 0 && duplicateKeys.length === 0,\n    duplicateKeys,\n    missingCount\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Validates list with unique stable keys",
+      "input": "children with keys 'a', 'b', 'c'",
+      "expected": {
+        "valid": true,
+        "missingCount": 0,
+        "duplicateCount": 0
+      },
+      "testFn": "const res = validateKeys([{ key: 'a' }, { key: 'b' }, { key: 'c' }]); return { valid: res.valid, missingCount: res.missingCount, duplicateCount: res.duplicateKeys.length };"
+    },
+    {
+      "id": 2,
+      "name": "Detects duplicate keys in sibling list",
+      "input": "children with duplicate key 'item-1'",
+      "expected": [
+        "item-1"
+      ],
+      "testFn": "const res = validateKeys([{ key: 'item-1' }, { key: 'item-2' }, { key: 'item-1' }]); return res.duplicateKeys;"
+    },
+    {
+      "id": 3,
+      "name": "Counts children with missing keys",
+      "input": "children missing keys",
+      "expected": 2,
+      "testFn": "const res = validateKeys([{ key: 'x' }, {}, { type: 'div' }]); return res.missingCount;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Validates list with unique stable keys",
+        "input": "children with keys 'a', 'b', 'c'",
+        "expected": {
+          "valid": true,
+          "missingCount": 0,
+          "duplicateCount": 0
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Detects duplicate keys in sibling list",
+        "input": "children with duplicate key 'item-1'",
+        "expected": [
+          "item-1"
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Counts children with missing keys",
+        "input": "children missing keys",
+        "expected": 2,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React's list reconciliation algorithm requires unique, stable `key` props on array children to identify which items have changed, been added, or been removed. Missing keys or duplicate keys trigger console warnings and cause severe DOM diffing bugs.",
+    "stepByStepWalkthrough": [
+      "Accept an array of React element children.",
+      "Initialize `seenKeys = new Set()` and diagnostic result object `{ missingCount: 0, duplicates: [] }`.",
+      "Iterate over children:",
+      "  - If child has no `key` property (or `key === null` or `key === undefined`), increment `missingCount++`.",
+      "  - If child has a key, check if `seenKeys.has(child.key)`: if already seen, push `child.key` to `duplicates`; else `seenKeys.add(child.key)`.",
+      "Return diagnostic report."
+    ],
+    "underlyingEngineInternals": "In `packages/react-reconciler/src/ReactChildFiber.js`, `reconcileChildrenArray` checks keys. If a key is missing, React warns in development. If keys are duplicated, React logs a warning and cannot guarantee which child will retain state or receive DOM updates.",
+    "complexity": {
+      "time": "O(N) single linear scan over children array.",
+      "space": "O(N) Set storage for distinct keys."
+    },
+    "edgeCasesHandled": [
+      "All unique keys report 0 missing and 0 duplicates.",
+      "Missing keys correctly tallied.",
+      "Multiple duplicates of the same key captured without crashing."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Official Docs: Preserving and Resetting State (Rules of Keys)",
+      "React Source: packages/react-reconciler/src/ReactChildFiber.js (warnOnInvalidKey)"
+    ],
+    "verifiedRules": [
+      "Keys must be unique among siblings.",
+      "Missing keys disable optimal child matching and force linear fallback diffing."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

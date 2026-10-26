@@ -1,0 +1,105 @@
+{
+  "id": "event-loop-hard",
+  "title": "Microtask Starvation Guard & Fair Task Scheduler",
+  "difficulty": "Hard",
+  "topicId": "async-concurrency",
+  "topicCategory": "2. Asynchronous JS & Concurrency",
+  "topicTitle": "Asynchronous JS & Concurrency",
+  "subtopicId": "event-loop-queues",
+  "subtopicTitle": "Event Loop: Microtasks vs Macrotasks",
+  "concept": "Microtask Starvation Prevention & Macrotask Interleaving",
+  "problemStatement": "If recursive microtasks continually schedule more microtasks, the event loop locks up and macrotasks/UI renders never run. Implement `fairScheduler(tasks, maxMicrotasksPerYield)` that executes tasks via microtasks, but yields to a macrotask (`setTimeout`) after `maxMicrotasksPerYield` tasks to prevent UI starvation.",
+  "interviewTrap": "Infinite microtasks (`while(true) queueMicrotask(...)`) cause complete page freeze because the event loop will never leave the microtask checkpoint to service browser renders or user clicks.",
+  "starterCode": "async function fairScheduler(tasks, maxMicrotasksPerYield = 5) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "async function fairScheduler(tasks, maxMicrotasksPerYield = 5) {\n  const results = [];\n  let processedInCurrentYield = 0;\n\n  for (let i = 0; i < tasks.length; i++) {\n    if (processedInCurrentYield >= maxMicrotasksPerYield) {\n      // Yield to macrotask queue to allow UI and timer processing\n      await new Promise(resolve => setTimeout(resolve, 0));\n      processedInCurrentYield = 0;\n    }\n    results.push(await tasks[i]());\n    processedInCurrentYield++;\n  }\n\n  return results;\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Processes small batch without yielding",
+      "input": "3 tasks with yield limit 5",
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "testFn": "const tasks = [() => 1, () => 2, () => 3]; return fairScheduler(tasks, 5);"
+    },
+    {
+      "id": 2,
+      "name": "Processes large batch correctly with yields",
+      "input": "10 tasks with yield limit 3",
+      "expected": 10,
+      "testFn": "const tasks = Array.from({ length: 10 }, (_, i) => () => i); const res = await fairScheduler(tasks, 3); return res.length;"
+    },
+    {
+      "id": 3,
+      "name": "Allows interleaved macrotask execution during yields",
+      "input": "Interleaved setTimeout fires during execution",
+      "expected": true,
+      "testFn": "let timerFired = false; setTimeout(() => { timerFired = true; }, 0); const tasks = Array.from({ length: 8 }, () => () => 1); await fairScheduler(tasks, 2); return timerFired;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Processes small batch without yielding",
+        "input": "3 tasks with yield limit 5",
+        "expected": [
+          1,
+          2,
+          3
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Processes large batch correctly with yields",
+        "input": "10 tasks with yield limit 3",
+        "expected": 10,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Allows interleaved macrotask execution during yields",
+        "input": "Interleaved setTimeout fires during execution",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Because the event loop drains the microtask queue until it is completely empty before running any macrotask or browser rendering, recursively queueing microtasks causes *Microtask Starvation* (freezing the UI and starving I/O). A Fair Task Scheduler interleaves large batches by voluntarily yielding to the macrotask queue or scheduler API.",
+    "stepByStepWalkthrough": [
+      "Process items in slices (chunk size, e.g. 10 items).",
+      "Process current slice synchronously.",
+      "If remaining items exist, check elapsed time or chunk limit.",
+      "Yield control to the macrotask queue using `await new Promise(resolve => setTimeout(resolve, 0))` or `scheduler.yield()`.",
+      "This allows interleaved macrotasks (user input, timeouts, UI rendering) to execute before resuming the batch."
+    ],
+    "underlyingEngineInternals": "The browser renders frames (requestAnimationFrame and Paint) between macrotask turns.Draining microtasks without yielding blocks the main thread completely. Yielding to a macrotask gives the browser event loop opportunity to process the UI and other tasks.",
+    "complexity": {
+      "time": "O(N) total processing time for N items.",
+      "space": "O(N) memory for queued task items."
+    },
+    "edgeCasesHandled": [
+      "Interleaving allows macrotasks scheduled concurrently to execute.",
+      "Large tasks (e.g. 1,000 items) finish completely without freezing the thread.",
+      "Graceful completion on empty or single-item queues."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "W3C Scheduling APIs: scheduler.yield() and Prioritized Task Scheduling",
+      "HTML Living Standard §8.1.6.2 Processing model (Macrotask vs Microtask starvation risks)"
+    ],
+    "verifiedRules": [
+      "Microtasks starve macrotasks if chained infinitely without yield.",
+      "Yielding via setTimeout(0) or scheduler.yield breaks synchronous task monopolization."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-10-26T14:06:43.451Z",
+  "totalTopics": 4,
+  "topics": [
+    {
+      "id": "engine-internals",
+      "title": "JS Engine & Memory Internals",
+      "fileName": "js-engine-and-memory-internals.json",
+      "folderName": "js-engine-and-memory-internals",
+      "questionCount": 12,
+      "subtopicsCount": 4
+    },
+    {
+      "id": "async-concurrency",
+      "title": "Asynchronous JS & Concurrency",
+      "fileName": "asynchronous-js-and-concurrency.json",
+      "folderName": "asynchronous-js-and-concurrency",
+      "questionCount": 9,
+      "subtopicsCount": 3
+    },
+    {
+      "id": "react-engine-fiber",
+      "title": "Fiber Architecture & Reconciliation",
+      "fileName": "fiber-architecture-and-reconciliation.json",
+      "folderName": "fiber-architecture-and-reconciliation",
+      "questionCount": 9,
+      "subtopicsCount": 3
+    },
+    {
+      "id": "react-hooks-state-machine",
+      "title": "Hooks State Machine & Closures",
+      "fileName": "hooks-state-machine-and-closures.json",
+      "folderName": "hooks-state-machine-and-closures",
+      "questionCount": 9,
+      "subtopicsCount": 3
+    }
+  ],
+  "totalQuestions": 39,
+  "allVerified": true,
+  "totalTestsVerified": 117
+}
