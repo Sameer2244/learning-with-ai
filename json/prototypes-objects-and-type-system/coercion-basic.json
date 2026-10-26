@@ -1,0 +1,98 @@
+{
+  "id": "coercion-basic",
+  "title": "Strict Type Coercion Formatter",
+  "difficulty": "Basic",
+  "topicId": "prototypes-and-types",
+  "topicCategory": "3. Prototypes, Objects & Type System",
+  "topicTitle": "Object Model",
+  "subtopicId": "type-coercion",
+  "subtopicTitle": "Implicit & Explicit Type Coercion Rules",
+  "concept": "Explicit Type Conversions & Truthiness",
+  "problemStatement": "Implement `safeCast(value, targetType)` that explicitly and safely converts `value` to `'string'`, `'number'`, or `'boolean'`. For `'number'`, if conversion results in NaN, return `0` instead.",
+  "interviewTrap": "Using `+value` or `parseInt` can cause subtle NaN or radix bugs. `Number(value)` with `Number.isNaN()` check is standard.",
+  "starterCode": "function safeCast(value, targetType) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function safeCast(value, targetType) {\n  switch (targetType) {\n    case 'string':\n      return String(value);\n    case 'boolean':\n      return Boolean(value);\n    case 'number': {\n      const num = Number(value);\n      return Number.isNaN(num) ? 0 : num;\n    }\n    default:\n      return value;\n  }\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Safely converts string to number with NaN fallback",
+      "input": "safeCast('invalid', 'number')",
+      "expected": 0,
+      "testFn": "return safeCast('invalid', 'number');"
+    },
+    {
+      "id": 2,
+      "name": "Casts valid numeric string to number",
+      "input": "safeCast('42', 'number')",
+      "expected": 42,
+      "testFn": "return safeCast('42', 'number');"
+    },
+    {
+      "id": 3,
+      "name": "Casts empty string and non-empty string to boolean",
+      "input": "safeCast('', 'boolean') vs safeCast('text', 'boolean')",
+      "expected": [
+        false,
+        true
+      ],
+      "testFn": "return [safeCast('', 'boolean'), safeCast('text', 'boolean')];"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Safely converts string to number with NaN fallback",
+        "input": "safeCast('invalid', 'number')",
+        "expected": 0,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Casts valid numeric string to number",
+        "input": "safeCast('42', 'number')",
+        "expected": 42,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Casts empty string and non-empty string to boolean",
+        "input": "safeCast('', 'boolean') vs safeCast('text', 'boolean')",
+        "expected": [
+          false,
+          true
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "The engine coerces primitives via internal algorithms. In loose equality (`==`), boolean values are first coerced to numbers, objects are coerced via `ToPrimitive(hint)`, and `null == undefined` is exclusively true.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Explicit Type Conversions & Truthiness.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Explicit Type Conversions & Truthiness is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Using `+value` or `parseInt` can cause subtle NaN or radix bugs. `Number(value)` with `Number.isNaN()` check is standard."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "id": "fiber-medium",
+  "title": "Simulate Fiber Child & Sibling Pointer Linker",
+  "difficulty": "Medium",
+  "topicId": "react-internals-js",
+  "topicCategory": "6. React Internals & Tricky Patterns",
+  "topicTitle": "React Bridge",
+  "subtopicId": "fiber-reconciliation",
+  "subtopicTitle": "Fiber Architecture & Reconciliation Mechanics",
+  "concept": "Fiber Tree Linking & Return Pointers",
+  "problemStatement": "Implement `linkFiberChildren(parentFiber, childElements)` that takes a parent Fiber node and an array of child element descriptors, converts them into Fiber nodes, links the parent's `child` to the first child, links each child to its next `sibling`, and sets every child's `return` pointer back to `parentFiber`.",
+  "interviewTrap": "Forgetting to set the `return` pointer on each sibling. The return pointer allows React to walk back up the tree without a call stack.",
+  "starterCode": "function linkFiberChildren(parentFiber, childElements) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function linkFiberChildren(parentFiber, childElements) {\n  if (!childElements || childElements.length === 0) {\n    parentFiber.child = null;\n    return;\n  }\n\n  let prevChild = null;\n\n  for (let i = 0; i < childElements.length; i++) {\n    const el = childElements[i];\n    const newFiber = {\n      type: el.type,\n      child: null,\n      sibling: null,\n      return: parentFiber\n    };\n\n    if (i === 0) {\n      parentFiber.child = newFiber;\n    } else {\n      prevChild.sibling = newFiber;\n    }\n    prevChild = newFiber;\n  }\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Links first child to parent.child",
+      "input": "parent.child points to first child",
+      "expected": "h1",
+      "testFn": "const parent = { type: 'div', child: null }; linkFiberChildren(parent, [{ type: 'h1' }, { type: 'p' }]); return parent.child.type;"
+    },
+    {
+      "id": 2,
+      "name": "Links siblings in order",
+      "input": "first.sibling points to second child",
+      "expected": "p",
+      "testFn": "const parent = { type: 'div', child: null }; linkFiberChildren(parent, [{ type: 'h1' }, { type: 'p' }]); return parent.child.sibling.type;"
+    },
+    {
+      "id": 3,
+      "name": "Sets return pointers on all children back to parent",
+      "input": "both children have return === parent",
+      "expected": true,
+      "testFn": "const parent = { type: 'div', child: null }; linkFiberChildren(parent, [{ type: 'h1' }, { type: 'p' }]); return parent.child.return === parent && parent.child.sibling.return === parent;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Links first child to parent.child",
+        "input": "parent.child points to first child",
+        "expected": "h1",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Links siblings in order",
+        "input": "first.sibling points to second child",
+        "expected": "p",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Sets return pointers on all children back to parent",
+        "input": "both children have return === parent",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React represents UI as a singly linked list of Fiber nodes (`child`, `sibling`, `return`). Render phase is interruptible and can be paused; commit phase is strictly synchronous.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Fiber Tree Linking & Return Pointers.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Fiber Tree Linking & Return Pointers is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Forgetting to set the `return` pointer on each sibling. The return pointer allows React to walk back up the tree without a call stack."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

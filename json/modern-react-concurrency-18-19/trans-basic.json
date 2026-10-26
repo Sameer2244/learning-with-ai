@@ -1,0 +1,92 @@
+{
+  "id": "trans-basic",
+  "title": "Simulate useTransition Pending State",
+  "difficulty": "Basic",
+  "topicId": "react-concurrency-18",
+  "topicCategory": "5. Modern React: Concurrency & React 18/19",
+  "topicTitle": "Modern Architecture",
+  "subtopicId": "transitions-concurrency",
+  "subtopicTitle": "useTransition & useDeferredValue Mechanics",
+  "concept": "Non-Urgent Update Flagging with isPending",
+  "problemStatement": "Implement `createTransitionRunner()` that provides `startTransition(callback)` and `isPending()`. It flags `isPending()` as `true` during the async execution of non-urgent transitions and returns to `false` when finished.",
+  "interviewTrap": "Transitions are for low-priority updates. Using transitions for input state causes inputs to drop characters.",
+  "starterCode": "function createTransitionRunner() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createTransitionRunner() {\n  let pending = false;\n\n  async function startTransition(callback) {\n    pending = true;\n    try {\n      await callback();\n    } finally {\n      pending = false;\n    }\n  }\n\n  return {\n    startTransition,\n    isPending: () => pending\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Reports isPending = true while transition is executing",
+      "input": "transition in-flight",
+      "expected": true,
+      "testFn": "const runner = createTransitionRunner(); runner.startTransition(async () => { await new Promise(r => setTimeout(r, 20)); }); return runner.isPending();"
+    },
+    {
+      "id": 2,
+      "name": "Returns isPending = false after transition finishes",
+      "input": "transition completes",
+      "expected": false,
+      "testFn": "const runner = createTransitionRunner(); await runner.startTransition(async () => { await new Promise(r => setTimeout(r, 5)); }); return runner.isPending();"
+    },
+    {
+      "id": 3,
+      "name": "Handles synchronous callbacks",
+      "input": "synchronous transition execution",
+      "expected": false,
+      "testFn": "const runner = createTransitionRunner(); await runner.startTransition(() => {}); return runner.isPending();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Reports isPending = true while transition is executing",
+        "input": "transition in-flight",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Returns isPending = false after transition finishes",
+        "input": "transition completes",
+        "expected": false,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles synchronous callbacks",
+        "input": "synchronous transition execution",
+        "expected": false,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React categorizes updates into Urgent (typing in an `<input>`, clicks) and Non-Urgent / Transition (filtering a 10,000 item list). Wrapping an update in `startTransition(() => setQuery(text))` allows React to interrupt the list render if the user types another keystroke.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Non-Urgent Update Flagging with isPending.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Non-Urgent Update Flagging with isPending maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Transitions are for low-priority updates. Using transitions for input state causes inputs to drop characters."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

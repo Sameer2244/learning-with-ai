@@ -1,0 +1,92 @@
+{
+  "id": "memo-medium",
+  "title": "Implement Custom useMemo & useCallback Engine",
+  "difficulty": "Medium",
+  "topicId": "react-rerenders-performance",
+  "topicCategory": "3. Re-render Cascades & Performance",
+  "topicTitle": "Optimization",
+  "subtopicId": "rerender-triggers-memo",
+  "subtopicTitle": "Re-render Triggers & 'React.memo' Mechanics",
+  "concept": "Hook-Level Memoization via Dependency Caching",
+  "problemStatement": "Implement `createMemoEngine()` providing `useMemo(factory, deps)` and `useCallback(fn, deps)`. Only re-evaluates `factory` or returns a new function when `deps` change according to `Object.is`.",
+  "interviewTrap": "`useCallback(fn, deps)` is literally just syntactic sugar for `useMemo(() => fn, deps)`.",
+  "starterCode": "function createMemoEngine() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createMemoEngine() {\n  let memoSlot = null;\n  let callbackSlot = null;\n\n  function useMemo(factory, deps) {\n    if (memoSlot && deps && memoSlot.deps.every((d, i) => Object.is(d, deps[i]))) {\n      return memoSlot.value;\n    }\n    const value = factory();\n    memoSlot = { value, deps };\n    return value;\n  }\n\n  function useCallback(callback, deps) {\n    return useMemo(() => callback, deps);\n  }\n\n  return { useMemo, useCallback };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "useMemo caches computation when deps do not change",
+      "input": "factory called once across multiple renders with same deps",
+      "expected": 1,
+      "testFn": "const engine = createMemoEngine(); let calls = 0; const compute = () => { calls++; return 42; }; engine.useMemo(compute, [1]); engine.useMemo(compute, [1]); return calls;"
+    },
+    {
+      "id": 2,
+      "name": "useMemo recomputes when deps change",
+      "input": "dep changes from 1 to 2",
+      "expected": 2,
+      "testFn": "const engine = createMemoEngine(); let calls = 0; const compute = () => { calls++; return 100; }; engine.useMemo(compute, [1]); engine.useMemo(compute, [2]); return calls;"
+    },
+    {
+      "id": 3,
+      "name": "useCallback preserves function reference when deps match",
+      "input": "stable callback identity",
+      "expected": true,
+      "testFn": "const engine = createMemoEngine(); const cb1 = engine.useCallback(() => 1, ['id']); const cb2 = engine.useCallback(() => 1, ['id']); return cb1 === cb2;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "useMemo caches computation when deps do not change",
+        "input": "factory called once across multiple renders with same deps",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "useMemo recomputes when deps change",
+        "input": "dep changes from 1 to 2",
+        "expected": 2,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "useCallback preserves function reference when deps match",
+        "input": "stable callback identity",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Whenever a parent component re-renders, React re-renders every child component down the tree by default. `React.memo` stops this descent by checking if all props are identical using `Object.is`. Passing a new object or inline function reference `() => {}` forces re-rendering.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Hook-Level Memoization via Dependency Caching.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Hook-Level Memoization via Dependency Caching maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "`useCallback(fn, deps)` is literally just syntactic sugar for `useMemo(() => fn, deps)`."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

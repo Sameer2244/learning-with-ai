@@ -1,0 +1,104 @@
+{
+  "id": "render-basic",
+  "title": "Layout Thrashing Batcher",
+  "difficulty": "Basic",
+  "topicId": "browser-dom-internals",
+  "topicCategory": "5. Browser Engine & DOM Internals",
+  "topicTitle": "Browser Architecture",
+  "subtopicId": "rendering-pipeline",
+  "subtopicTitle": "Critical Rendering Path: Reflow vs Repaint",
+  "concept": "Separating DOM Reads and Writes",
+  "problemStatement": "Implement `batchDOMOperations(reads, writes)` that separates an array of DOM measurement tasks (reads) and mutation tasks (writes), executing ALL reads first before executing any writes, preventing forced synchronous layout reflow.",
+  "interviewTrap": "Alternating read-write-read-write inside a loop forces the browser to recalculate layout immediately on every iteration.",
+  "starterCode": "function batchDOMOperations(reads, writes) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function batchDOMOperations(reads, writes) {\n  const readResults = reads.map(readFn => readFn());\n  writes.forEach(writeFn => writeFn(readResults));\n  return readResults;\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Executes all reads before writes",
+      "input": "verify read order precedes write order",
+      "expected": [
+        "read1",
+        "read2",
+        "write1"
+      ],
+      "testFn": "const log = []; const reads = [() => log.push('read1'), () => log.push('read2')]; const writes = [() => log.push('write1')]; batchDOMOperations(reads, writes); return log;"
+    },
+    {
+      "id": 2,
+      "name": "Supplies read results to write functions",
+      "input": "writes receive values calculated by reads",
+      "expected": 300,
+      "testFn": "let written = 0; const reads = [() => 100, () => 200]; const writes = [res => { written = res[0] + res[1]; }]; batchDOMOperations(reads, writes); return written;"
+    },
+    {
+      "id": 3,
+      "name": "Handles empty reads or writes safely",
+      "input": "batch with empty writes",
+      "expected": [
+        "done"
+      ],
+      "testFn": "return batchDOMOperations([() => 'done'], []);"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Executes all reads before writes",
+        "input": "verify read order precedes write order",
+        "expected": [
+          "read1",
+          "read2",
+          "write1"
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Supplies read results to write functions",
+        "input": "writes receive values calculated by reads",
+        "expected": 300,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles empty reads or writes safely",
+        "input": "batch with empty writes",
+        "expected": [
+          "done"
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Reflow recalculates geometry and layout tree (expensive). Repaint redraws pixels without changing geometry. Composite occurs on the GPU (transforms and opacity). Reading layout properties (`offsetWidth`, `scrollTop`) right after writing them forces synchronous layout thrashing.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Separating DOM Reads and Writes.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Separating DOM Reads and Writes is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Alternating read-write-read-write inside a loop forces the browser to recalculate layout immediately on every iteration."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

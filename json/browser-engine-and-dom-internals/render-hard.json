@@ -1,0 +1,96 @@
+{
+  "id": "render-hard",
+  "title": "Minimal VDOM Diff & Patch Engine",
+  "difficulty": "Hard",
+  "topicId": "browser-dom-internals",
+  "topicCategory": "5. Browser Engine & DOM Internals",
+  "topicTitle": "Browser Architecture",
+  "subtopicId": "rendering-pipeline",
+  "subtopicTitle": "Critical Rendering Path: Reflow vs Repaint",
+  "concept": "Virtual DOM Reconciliation & Minimal Mutation Operations",
+  "problemStatement": "Implement `diff(oldVNode, newVNode)` that returns a list of patch instructions (`{ type: 'REPLACE'|'TEXT'|'PROPS', ... }`) to update `oldVNode` into `newVNode` with minimal operations.",
+  "interviewTrap": "Assuming that tag changes can be patched in place. If tags differ (`div` -> `span`), the entire node must be replaced.",
+  "starterCode": "function diff(oldVNode, newVNode) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function diff(oldVNode, newVNode) {\n  if (!oldVNode) return [{ type: 'CREATE', newVNode }];\n  if (!newVNode) return [{ type: 'REMOVE' }];\n  \n  if (typeof oldVNode !== typeof newVNode || (typeof oldVNode === 'string' && oldVNode !== newVNode)) {\n    return [{ type: 'REPLACE', newVNode }];\n  }\n\n  if (typeof oldVNode === 'string') {\n    return [];\n  }\n\n  if (oldVNode.tag !== newVNode.tag) {\n    return [{ type: 'REPLACE', newVNode }];\n  }\n\n  const patches = [];\n\n  // Props diff\n  const propPatches = {};\n  for (const key of Object.keys(newVNode.props || {})) {\n    if (newVNode.props[key] !== oldVNode.props[key]) {\n      propPatches[key] = newVNode.props[key];\n    }\n  }\n  for (const key of Object.keys(oldVNode.props || {})) {\n    if (!(key in (newVNode.props || {}))) {\n      propPatches[key] = undefined;\n    }\n  }\n\n  if (Object.keys(propPatches).length > 0) {\n    patches.push({ type: 'PROPS', props: propPatches });\n  }\n\n  return patches;\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Generates REPLACE patch when tag changes",
+      "input": "div -> span",
+      "expected": "REPLACE",
+      "testFn": "const p = diff({ tag: 'div', props: {} }, { tag: 'span', props: {} }); return p[0].type;"
+    },
+    {
+      "id": 2,
+      "name": "Generates PROPS patch when attributes change",
+      "input": "props change className",
+      "expected": {
+        "className": "active"
+      },
+      "testFn": "const p = diff({ tag: 'div', props: { className: 'old' } }, { tag: 'div', props: { className: 'active' } }); return p[0].props;"
+    },
+    {
+      "id": 3,
+      "name": "Returns empty patches when nodes are identical",
+      "input": "identical nodes",
+      "expected": 0,
+      "testFn": "const p = diff({ tag: 'div', props: { id: 'x' } }, { tag: 'div', props: { id: 'x' } }); return p.length;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Generates REPLACE patch when tag changes",
+        "input": "div -> span",
+        "expected": "REPLACE",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Generates PROPS patch when attributes change",
+        "input": "props change className",
+        "expected": {
+          "className": "active"
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Returns empty patches when nodes are identical",
+        "input": "identical nodes",
+        "expected": 0,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Reflow recalculates geometry and layout tree (expensive). Repaint redraws pixels without changing geometry. Composite occurs on the GPU (transforms and opacity). Reading layout properties (`offsetWidth`, `scrollTop`) right after writing them forces synchronous layout thrashing.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Virtual DOM Reconciliation & Minimal Mutation Operations.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Virtual DOM Reconciliation & Minimal Mutation Operations is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Assuming that tag changes can be patched in place. If tags differ (`div` -> `span`), the entire node must be replaced."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

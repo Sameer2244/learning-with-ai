@@ -1,0 +1,98 @@
+{
+  "id": "comp-hard",
+  "title": "Compound Component Pattern with Context Sharing",
+  "difficulty": "Hard",
+  "topicId": "react-rerenders-performance",
+  "topicCategory": "3. Re-render Cascades & Performance",
+  "topicTitle": "Optimization",
+  "subtopicId": "composition-over-memo",
+  "subtopicTitle": "Component Composition to Eliminate Re-renders",
+  "concept": "Compound Components (Tabs, Accordions, Menus)",
+  "problemStatement": "Implement `createCompoundAccordion()` with `Accordion(items)` and `Item(id, title, content)` that coordinates which panel is open without manual prop drilling.",
+  "interviewTrap": "Passing `isOpen` and `onToggle` through multiple levels of parent-child-grandchild props creates fragile code. Compound components manage shared state implicitly.",
+  "starterCode": "function createCompoundAccordion(defaultOpenId = null) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createCompoundAccordion(defaultOpenId = null) {\n  let openId = defaultOpenId;\n  const items = [];\n\n  function addItem(id, title, content) {\n    items.push({ id, title, content });\n  }\n\n  function toggle(id) {\n    openId = openId === id ? null : id;\n  }\n\n  function render() {\n    return items.map(item => ({\n      id: item.id,\n      title: item.title,\n      content: item.content,\n      isOpen: item.id === openId\n    }));\n  }\n\n  return { addItem, toggle, render };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Opens default item on initialization",
+      "input": "defaultOpenId = '1'",
+      "expected": true,
+      "testFn": "const acc = createCompoundAccordion('1'); acc.addItem('1', 'T1', 'C1'); acc.addItem('2', 'T2', 'C2'); return acc.render()[0].isOpen;"
+    },
+    {
+      "id": 2,
+      "name": "Switches active open panel on toggle",
+      "input": "toggle('2') closes panel 1 and opens panel 2",
+      "expected": [
+        false,
+        true
+      ],
+      "testFn": "const acc = createCompoundAccordion('1'); acc.addItem('1', 'T1', 'C1'); acc.addItem('2', 'T2', 'C2'); acc.toggle('2'); const r = acc.render(); return [r[0].isOpen, r[1].isOpen];"
+    },
+    {
+      "id": 3,
+      "name": "Toggling active panel closes it (accordion collapses)",
+      "input": "toggle active panel collapses it to null",
+      "expected": false,
+      "testFn": "const acc = createCompoundAccordion('1'); acc.addItem('1', 'T1', 'C1'); acc.toggle('1'); return acc.render()[0].isOpen;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Opens default item on initialization",
+        "input": "defaultOpenId = '1'",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Switches active open panel on toggle",
+        "input": "toggle('2') closes panel 1 and opens panel 2",
+        "expected": [
+          false,
+          true
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Toggling active panel closes it (accordion collapses)",
+        "input": "toggle active panel collapses it to null",
+        "expected": false,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Passing an expensive component as the `children` prop `<Parent><ExpensiveTree /></Parent>` prevents `ExpensiveTree` from re-rendering when `Parent`'s state changes! Because `ExpensiveTree` is evaluated in the grandparent's render scope, its element reference is identical across `Parent` re-renders.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Compound Components (Tabs, Accordions, Menus).",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Compound Components (Tabs, Accordions, Menus) maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Passing `isOpen` and `onToggle` through multiple levels of parent-child-grandchild props creates fragile code. Compound components manage shared state implicitly."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

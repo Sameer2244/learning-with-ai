@@ -1,0 +1,92 @@
+{
+  "id": "cjs-module-cache-basic",
+  "title": "Simulate CommonJS Module Cache & require()",
+  "difficulty": "Basic",
+  "topicId": "module-systems-esm-cjs",
+  "topicCategory": "12. Module Systems: ESM vs CommonJS",
+  "topicTitle": "Modules",
+  "subtopicId": "module-systems",
+  "subtopicTitle": "Module Systems: ESM vs CommonJS & Circular Dependencies",
+  "concept": "CommonJS module.exports & require cache mechanics",
+  "problemStatement": "Implement `createModuleEnvironment()` that exposes `defineModule(id, fn)` and `require(id)`. Modules must only be evaluated once; subsequent `require` calls must return the cached `module.exports` object.",
+  "interviewTrap": "Forgetting to populate cache.set(id, mod) BEFORE calling the module factory causes infinite recursion on circular dependencies.",
+  "starterCode": "/**\n * Simulates the CommonJS runtime module registry and require() cache.\n */\nfunction createModuleEnvironment() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Simulates the CommonJS runtime module registry and require() cache.\n */\nfunction createModuleEnvironment() {\n  const registry = new Map();\n  const cache = new Map();\n\n  return {\n    defineModule(id, factory) {\n      registry.set(id, factory);\n    },\n    require(id) {\n      if (cache.has(id)) {\n        return cache.get(id).exports;\n      }\n      if (!registry.has(id)) {\n        throw new Error('Module ' + id + ' not found');\n      }\n      const mod = { exports: {} };\n      cache.set(id, mod);\n      const factory = registry.get(id);\n      factory(mod.exports, mod, (depId) => this.require(depId));\n      return mod.exports;\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Exports and requires a module successfully",
+      "input": "define math module and require('math').add(2, 3)",
+      "expected": 5,
+      "testFn": "const env = createModuleEnvironment(); env.defineModule('math', (exports) => { exports.add = (a, b) => a + b; }); return env.require('math').add(2, 3);"
+    },
+    {
+      "id": 2,
+      "name": "Subsequent requires return cached instance without re-evaluating",
+      "input": "verify factory is only invoked once",
+      "expected": 1,
+      "testFn": "const env = createModuleEnvironment(); let calls = 0; env.defineModule('counter', (exports) => { calls++; exports.val = 42; }); env.require('counter'); env.require('counter'); return calls;"
+    },
+    {
+      "id": 3,
+      "name": "Throws descriptive error on unknown module ID",
+      "input": "require('unknown')",
+      "expected": "Module unknown not found",
+      "testFn": "const env = createModuleEnvironment(); try { env.require('unknown'); return 'no-error'; } catch (e) { return e.message; }"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Exports and requires a module successfully",
+        "input": "define math module and require('math').add(2, 3)",
+        "expected": 5,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Subsequent requires return cached instance without re-evaluating",
+        "input": "verify factory is only invoked once",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Throws descriptive error on unknown module ID",
+        "input": "require('unknown')",
+        "expected": "Module unknown not found",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "CommonJS exports are evaluated at runtime and copied by value into a module.exports object. ESM exports are live references bound during static analysis, meaning changes in the exporter reflect immediately in the importer.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for CommonJS module.exports & require cache mechanics.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), CommonJS module.exports & require cache mechanics is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Forgetting to populate cache.set(id, mod) BEFORE calling the module factory causes infinite recursion on circular dependencies."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

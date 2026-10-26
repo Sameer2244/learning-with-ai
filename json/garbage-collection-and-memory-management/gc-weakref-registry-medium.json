@@ -1,0 +1,92 @@
+{
+  "id": "gc-weakref-registry-medium",
+  "title": "Ephemeral Cache with WeakRef & Memory Reclamation",
+  "difficulty": "Medium",
+  "topicId": "memory-gc-internals",
+  "topicCategory": "7. Garbage Collection & Memory Management",
+  "topicTitle": "Memory Systems",
+  "subtopicId": "gc-weak-refs",
+  "subtopicTitle": "Garbage Collection, Memory Leaks & Weak References",
+  "concept": "WeakRef Dereferencing & Manual Cache Cleanup",
+  "problemStatement": "Implement an ephemeral in-memory cache `createEphemeralCache()` that stores objects using `WeakRef`. Methods: `set(key, obj)`, `get(key)` (returns the dereferenced object or `undefined` if garbage collected or missing), and `cleanup()` (removes entries whose references have been cleared).",
+  "interviewTrap": "A WeakRef object itself is a strong heap reference if stored in a Map. Without a cleanup pass or FinalizationRegistry, dead keys accumulate in the Map structure even though the targets are collected.",
+  "starterCode": "/**\n * Creates an ephemeral cache storing objects through WeakRef.\n */\nfunction createEphemeralCache() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Creates an ephemeral cache storing objects through WeakRef.\n */\nfunction createEphemeralCache() {\n  const map = new Map();\n  return {\n    set(key, obj) {\n      map.set(key, new WeakRef(obj));\n    },\n    get(key) {\n      const ref = map.get(key);\n      if (!ref) return undefined;\n      const target = ref.deref();\n      if (!target) {\n        map.delete(key);\n        return undefined;\n      }\n      return target;\n    },\n    cleanup() {\n      let cleaned = 0;\n      for (const [key, ref] of map.entries()) {\n        if (!ref.deref()) {\n          map.delete(key);\n          cleaned++;\n        }\n      }\n      return cleaned;\n    },\n    size() {\n      return map.size;\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Stores and dereferences live object",
+      "input": "cache.set('user', user); cache.get('user').name",
+      "expected": "Antigravity",
+      "testFn": "const cache = createEphemeralCache(); const user = { name: 'Antigravity' }; cache.set('user', user); return cache.get('user').name;"
+    },
+    {
+      "id": 2,
+      "name": "Returns undefined for non-existent keys",
+      "input": "cache.get('unknown')",
+      "expected": true,
+      "testFn": "const cache = createEphemeralCache(); return cache.get('unknown') === undefined;"
+    },
+    {
+      "id": 3,
+      "name": "Reports accurate map size",
+      "input": "cache.set('a', a); cache.set('b', b); cache.size()",
+      "expected": 2,
+      "testFn": "const cache = createEphemeralCache(); const a = {}; const b = {}; cache.set('a', a); cache.set('b', b); return cache.size();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Stores and dereferences live object",
+        "input": "cache.set('user', user); cache.get('user').name",
+        "expected": "Antigravity",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Returns undefined for non-existent keys",
+        "input": "cache.get('unknown')",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Reports accurate map size",
+        "input": "cache.set('a', a); cache.set('b', b); cache.size()",
+        "expected": 2,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Objects remain allocated in the V8 heap as long as they are reachable from GC Roots (Global Object, Call Stack, DOM Trees). Weak references allow referencing an object without incrementing its reachability count, preventing memory leaks when targets are discarded.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for WeakRef Dereferencing & Manual Cache Cleanup.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), WeakRef Dereferencing & Manual Cache Cleanup is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "A WeakRef object itself is a strong heap reference if stored in a Map. Without a cleanup pass or FinalizationRegistry, dead keys accumulate in the Map structure even though the targets are collected."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

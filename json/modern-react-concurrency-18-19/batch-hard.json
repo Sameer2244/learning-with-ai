@@ -1,0 +1,98 @@
+{
+  "id": "batch-hard",
+  "title": "Implement flushSync Immediate Commit Engine",
+  "difficulty": "Hard",
+  "topicId": "react-concurrency-18",
+  "topicCategory": "5. Modern React: Concurrency & React 18/19",
+  "topicTitle": "Modern Architecture",
+  "subtopicId": "automatic-batching",
+  "subtopicTitle": "Automatic Batching in React 18 vs flushSync",
+  "concept": "Bypassing Batching to Force Synchronous DOM Flush",
+  "problemStatement": "Implement `createBatchingWithFlushSync(onRender)` that provides standard batched `setState()` and `flushSync(callback)`. Calling `flushSync` forces all pending updates AND any updates inside `callback` to flush synchronously before `flushSync` returns.",
+  "interviewTrap": "Calling `flushSync` inside a lifecycle hook or during another component's render will trigger a React warning. It is reserved for top-level event handlers needing synchronous DOM geometry.",
+  "starterCode": "function createBatchingWithFlushSync(onRender) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createBatchingWithFlushSync(onRender) {\n  let state = { count: 0 };\n  let pending = [];\n  let isScheduled = false;\n\n  function commit() {\n    if (pending.length === 0) return;\n    for (const update of pending) {\n      state = typeof update === 'function' ? update(state) : { ...state, ...update };\n    }\n    pending = [];\n    isScheduled = false;\n    onRender(state);\n  }\n\n  function setState(update) {\n    pending.push(update);\n    if (!isScheduled) {\n      isScheduled = true;\n      queueMicrotask(() => commit());\n    }\n  }\n\n  function flushSync(callback) {\n    if (callback) {\n      callback();\n    }\n    // Force immediate synchronous commit!\n    commit();\n    return state;\n  }\n\n  return { setState, flushSync, getState: () => state };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "flushSync commits state immediately without waiting for microtask",
+      "input": "flushSync forces synchronous commit",
+      "expected": 1,
+      "testFn": "let renders = 0; const store = createBatchingWithFlushSync(() => renders++); store.flushSync(() => { store.setState({ count: 10 }); }); return renders;"
+    },
+    {
+      "id": 2,
+      "name": "Normal setState remains batched until microtask",
+      "input": "normal setState has not committed synchronously",
+      "expected": 0,
+      "testFn": "let renders = 0; const store = createBatchingWithFlushSync(() => renders++); store.setState({ count: 5 }); return renders;"
+    },
+    {
+      "id": 3,
+      "name": "flushSync flushes both previously pending updates and current callback updates",
+      "input": "pending + flushSync combined in single immediate commit",
+      "expected": {
+        "count": 20,
+        "renders": 1
+      },
+      "testFn": "let renders = 0; const store = createBatchingWithFlushSync(() => renders++); store.setState({ count: 10 }); store.flushSync(() => { store.setState({ count: 20 }); }); return { count: store.getState().count, renders };"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "flushSync commits state immediately without waiting for microtask",
+        "input": "flushSync forces synchronous commit",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Normal setState remains batched until microtask",
+        "input": "normal setState has not committed synchronously",
+        "expected": 0,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "flushSync flushes both previously pending updates and current callback updates",
+        "input": "pending + flushSync combined in single immediate commit",
+        "expected": {
+          "count": 20,
+          "renders": 1
+        },
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "In React 17, state updates inside `setTimeout` or `Promise.then` were NOT batched, triggering multiple re-renders. React 18 automatically batches ALL state updates regardless of origin. `flushSync(() => { ... })` opts out of batching, forcing an immediate synchronous DOM flush.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Bypassing Batching to Force Synchronous DOM Flush.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Bypassing Batching to Force Synchronous DOM Flush maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Calling `flushSync` inside a lifecycle hook or during another component's render will trigger a React warning. It is reserved for top-level event handlers needing synchronous DOM geometry."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -4,7 +4,7 @@
   "difficulty": "Basic",
   "topicId": "async-concurrency",
   "topicCategory": "2. Asynchronous JS & Concurrency",
-  "topicTitle": "Asynchronous JS & Concurrency",
+  "topicTitle": "Runtime Engine",
   "subtopicId": "promise-mechanics",
   "subtopicTitle": "Promise Internals & Concurrency Combinators",
   "concept": "Promise Race & Timeout Handling",

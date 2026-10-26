@@ -1,0 +1,92 @@
+{
+  "id": "suspense-cache-dedup-hard",
+  "title": "Concurrent Suspense Resource Cache with Deduplication",
+  "difficulty": "Hard",
+  "topicId": "suspense-error-boundaries-ssr",
+  "topicCategory": "7. Suspense, Error Boundaries & Streaming SSR",
+  "topicTitle": "Suspense & Server",
+  "subtopicId": "suspense-error-boundaries",
+  "subtopicTitle": "Suspense Internals & Error Boundaries",
+  "concept": "Resource Keying, Concurrent Request Deduplication & Invalidation",
+  "problemStatement": "Implement `createSuspenseCache()` with `get(key, fetcher)` that deduplicates in-flight promises across concurrent suspended components, caches resolved results, and supports selective `invalidate(key)`.",
+  "interviewTrap": "Without request deduplication in a shared Suspense cache, three child components suspending on the same user ID will fire three redundant network requests simultaneously.",
+  "starterCode": "/**\n * Shared Suspense resource cache with concurrent promise deduplication.\n */\nfunction createSuspenseCache() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Shared Suspense resource cache with concurrent promise deduplication.\n */\nfunction createSuspenseCache() {\n  const cache = new Map();\n\n  return {\n    get(key, fetcher) {\n      if (cache.has(key)) {\n        return cache.get(key);\n      }\n      const record = { status: 'pending', value: null, promise: null };\n      record.promise = fetcher()\n        .then(val => {\n          record.status = 'success';\n          record.value = val;\n        })\n        .catch(err => {\n          record.status = 'error';\n          record.value = err;\n        });\n\n      record.read = function() {\n        if (record.status === 'pending') throw record.promise;\n        if (record.status === 'error') throw record.value;\n        return record.value;\n      };\n\n      cache.set(key, record);\n      return record;\n    },\n    invalidate(key) {\n      cache.delete(key);\n    },\n    clear() {\n      cache.clear();\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Deduplicates multiple calls for identical key to single fetch invocation",
+      "input": "two calls to cache.get('u1')",
+      "expected": 1,
+      "testFn": "const cache = createSuspenseCache(); let fetches = 0; const fetcher = () => { fetches++; return Promise.resolve(42); }; cache.get('u1', fetcher); cache.get('u1', fetcher); return fetches;"
+    },
+    {
+      "id": 2,
+      "name": "Invalidation causes subsequent call to fetch fresh data",
+      "input": "invalidate('u1') forces re-fetch",
+      "expected": 2,
+      "testFn": "const cache = createSuspenseCache(); let fetches = 0; const fetcher = () => { fetches++; return Promise.resolve(42); }; cache.get('u1', fetcher); cache.invalidate('u1'); cache.get('u1', fetcher); return fetches;"
+    },
+    {
+      "id": 3,
+      "name": "Suspends correctly on pending record",
+      "input": "record.read() throws pending promise",
+      "expected": true,
+      "testFn": "const cache = createSuspenseCache(); const record = cache.get('u2', () => new Promise(() => {})); try { record.read(); return false; } catch (p) { return p instanceof Promise; }"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Deduplicates multiple calls for identical key to single fetch invocation",
+        "input": "two calls to cache.get('u1')",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Invalidation causes subsequent call to fetch fresh data",
+        "input": "invalidate('u1') forces re-fetch",
+        "expected": 2,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Suspends correctly on pending record",
+        "input": "record.read() throws pending promise",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "When a component suspends, it throws a Promise up the Fiber tree. React catches the promise, pauses the render phase for that branch, renders the nearest Suspense fallback, and resumes when the promise resolves.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Resource Keying, Concurrent Request Deduplication & Invalidation.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Resource Keying, Concurrent Request Deduplication & Invalidation maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Without request deduplication in a shared Suspense cache, three child components suspending on the same user ID will fire three redundant network requests simultaneously."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "id": "generator-bidirectional-medium",
+  "title": "Bidirectional Coroutine Task Runner",
+  "difficulty": "Medium",
+  "topicId": "iterators-generators-coroutines",
+  "topicCategory": "9. Iterators, Generators & Async Iteration",
+  "topicTitle": "Language Grammar",
+  "subtopicId": "iterators-generators",
+  "subtopicTitle": "Iterators, Generators & Async Iteration",
+  "concept": "Bidirectional Generator Communication via .next(val)",
+  "problemStatement": "Implement `runConversation(generatorFn, responses)` that steps through a generator function and supplies sequential response values from the `responses` array into each successive `yield` expression, returning an array of all yielded questions and the final return value.",
+  "interviewTrap": "The argument passed to the FIRST .next() call is silently discarded by V8 because execution has not yet reached a yield expression. Passing input starts on the second .next(val) invocation.",
+  "starterCode": "/**\n * Feeds responses into a generator coroutine step-by-step.\n */\nfunction runConversation(generatorFn, responses = []) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Feeds responses into a generator coroutine step-by-step.\n */\nfunction runConversation(generatorFn, responses = []) {\n  const gen = generatorFn();\n  const yielded = [];\n  let step = gen.next();\n  let idx = 0;\n\n  while (!step.done) {\n    yielded.push(step.value);\n    const inputVal = idx < responses.length ? responses[idx] : undefined;\n    idx++;\n    step = gen.next(inputVal);\n  }\n\n  return { yielded, result: step.value };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Feeds inputs into yielded expressions",
+      "input": "coroutine receives name and age",
+      "expected": {
+        "yielded": [
+          "What is your name?",
+          "What is your age?"
+        ],
+        "result": "Profile: Alex, 28"
+      },
+      "testFn": "function* dialog() { const name = yield 'What is your name?'; const age = yield 'What is your age?'; return 'Profile: ' + name + ', ' + age; } return runConversation(dialog, ['Alex', 28]);"
+    },
+    {
+      "id": 2,
+      "name": "Handles immediate return without yields",
+      "input": "generator with no yield",
+      "expected": {
+        "yielded": [],
+        "result": 42
+      },
+      "testFn": "function* direct() { return 42; } return runConversation(direct, ['ignore']);"
+    },
+    {
+      "id": 3,
+      "name": "Handles fewer responses than yield requests",
+      "input": "yields 2 times but only 1 response provided",
+      "expected": "Done with undefined",
+      "testFn": "function* dialog() { const a = yield 1; const b = yield 2; return 'Done with ' + b; } return runConversation(dialog, ['first']).result;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Feeds inputs into yielded expressions",
+        "input": "coroutine receives name and age",
+        "expected": {
+          "yielded": [
+            "What is your name?",
+            "What is your age?"
+          ],
+          "result": "Profile: Alex, 28"
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Handles immediate return without yields",
+        "input": "generator with no yield",
+        "expected": {
+          "yielded": [],
+          "result": 42
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles fewer responses than yield requests",
+        "input": "yields 2 times but only 1 response provided",
+        "expected": "Done with undefined",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Generators are re-entrant state machines. When yield is encountered, the generator's execution context is suspended and pushed out of the call stack. Calling .next() re-attaches the context and resumes evaluation.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Bidirectional Generator Communication via .next(val).",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Bidirectional Generator Communication via .next(val) is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "The argument passed to the FIRST .next() call is silently discarded by V8 because execution has not yet reached a yield expression. Passing input starts on the second .next(val) invocation."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

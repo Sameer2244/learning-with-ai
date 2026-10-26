@@ -4,7 +4,7 @@
   "difficulty": "Medium",
   "topicId": "react-engine-fiber",
   "topicCategory": "1. Fiber Architecture & Reconciliation",
-  "topicTitle": "Fiber Architecture & Reconciliation",
+  "topicTitle": "Core Architecture",
   "subtopicId": "render-vs-commit",
   "subtopicTitle": "Render Phase vs Commit Phase Mechanics",
   "concept": "Separation of VDOM Calculation and DOM Mutation",

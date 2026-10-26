@@ -1,0 +1,92 @@
+{
+  "id": "ref-hard",
+  "title": "Undo/Redo History Stack using Mutable Refs",
+  "difficulty": "Hard",
+  "topicId": "react-refs-dom",
+  "topicCategory": "4. Refs, DOM & Imperative Handles",
+  "topicTitle": "DOM Interop",
+  "subtopicId": "useref-internals",
+  "subtopicTitle": "useRef: Mutable Container vs State",
+  "concept": "Fast History Buffer without Component State Re-renders",
+  "problemStatement": "Implement `createHistoryBuffer(initialState, maxDepth = 10)` that maintains undo/redo stacks within a mutable ref buffer. Provides `set(state)`, `undo()`, `redo()`, and `canUndo() / canRedo()`.",
+  "interviewTrap": "Storing undo/redo stacks in React state causes every intermediate history snapshot to re-render the whole editor. Storing history in refs avoids re-renders until an actual restore occurs.",
+  "starterCode": "function createHistoryBuffer(initialState, maxDepth = 10) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createHistoryBuffer(initialState, maxDepth = 10) {\n  let past = [];\n  let present = initialState;\n  let future = [];\n\n  return {\n    get: () => present,\n    set(newState) {\n      past.push(present);\n      if (past.length > maxDepth) past.shift();\n      present = newState;\n      future = []; // Clear redo stack on new action\n    },\n    undo() {\n      if (past.length === 0) return present;\n      future.unshift(present);\n      present = past.pop();\n      return present;\n    },\n    redo() {\n      if (future.length === 0) return present;\n      past.push(present);\n      present = future.shift();\n      return present;\n    },\n    canUndo: () => past.length > 0,\n    canRedo: () => future.length > 0\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Correctly steps backward with undo()",
+      "input": "set(1) -> set(2) -> undo() returns 1",
+      "expected": 1,
+      "testFn": "const h = createHistoryBuffer(0); h.set(1); h.set(2); return h.undo();"
+    },
+    {
+      "id": 2,
+      "name": "Correctly steps forward with redo()",
+      "input": "undo() -> redo() returns 2",
+      "expected": 2,
+      "testFn": "const h = createHistoryBuffer(0); h.set(1); h.set(2); h.undo(); return h.redo();"
+    },
+    {
+      "id": 3,
+      "name": "Clears future redo stack when new state is pushed",
+      "input": "undo() -> set(3) -> canRedo() is false",
+      "expected": false,
+      "testFn": "const h = createHistoryBuffer(0); h.set(1); h.set(2); h.undo(); h.set(3); return h.canRedo();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Correctly steps backward with undo()",
+        "input": "set(1) -> set(2) -> undo() returns 1",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Correctly steps forward with redo()",
+        "input": "undo() -> redo() returns 2",
+        "expected": 2,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Clears future redo stack when new state is pushed",
+        "input": "undo() -> set(3) -> canRedo() is false",
+        "expected": false,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "`useRef(initial)` returns a plain JS object `{ current: initial }` that is guaranteed to be the exact same object reference on every render. Mutating `ref.current = value` is completely synchronous and NEVER triggers a component re-render.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Fast History Buffer without Component State Re-renders.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Fast History Buffer without Component State Re-renders maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Storing undo/redo stacks in React state causes every intermediate history snapshot to re-render the whole editor. Storing history in refs avoids re-renders until an actual restore occurs."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

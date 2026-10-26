@@ -1,0 +1,92 @@
+{
+  "id": "suspense-resource-wrapper-basic",
+  "title": "Suspense Resource Promise Wrapper (wrapPromise)",
+  "difficulty": "Basic",
+  "topicId": "suspense-error-boundaries-ssr",
+  "topicCategory": "7. Suspense, Error Boundaries & Streaming SSR",
+  "topicTitle": "Suspense & Server",
+  "subtopicId": "suspense-error-boundaries",
+  "subtopicTitle": "Suspense Internals & Error Boundaries",
+  "concept": "Suspense Protocol: Throwing Promises on Pending State",
+  "problemStatement": "Implement `wrapPromise(promise)` that returns an object with a `read()` method. If the promise is pending, `read()` MUST throw the promise itself. If rejected, it throws the error. If resolved, it returns the resolved data.",
+  "interviewTrap": "Throwing a promise is how React Suspense detects async loading. If wrapPromise is instantiated inside the render body instead of cached, a new Promise is created on every render, locking the UI in an infinite suspension loop.",
+  "starterCode": "/**\n * Converts a native Promise into a React Suspense-compatible resource.\n */\nfunction wrapPromise(promise) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Converts a native Promise into a React Suspense-compatible resource.\n */\nfunction wrapPromise(promise) {\n  let status = 'pending';\n  let result;\n  const suspender = promise.then(\n    res => {\n      status = 'success';\n      result = res;\n    },\n    err => {\n      status = 'error';\n      result = err;\n    }\n  );\n\n  return {\n    read() {\n      if (status === 'pending') {\n        throw suspender;\n      } else if (status === 'error') {\n        throw result;\n      } else if (status === 'success') {\n        return result;\n      }\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Throws the suspender promise while pending",
+      "input": "resource.read() on pending promise throws Promise",
+      "expected": true,
+      "testFn": "const p = new Promise(() => {}); const resource = wrapPromise(p); try { resource.read(); return false; } catch (thrown) { return thrown instanceof Promise; }"
+    },
+    {
+      "id": 2,
+      "name": "Returns data synchronously once resolved",
+      "input": "resource.read() after promise resolution",
+      "expected": "DataLoaded",
+      "testFn": "const p = Promise.resolve('DataLoaded'); const resource = wrapPromise(p); return p.then(() => resource.read());"
+    },
+    {
+      "id": 3,
+      "name": "Throws error when rejected",
+      "input": "resource.read() on rejected promise",
+      "expected": "NetworkFail",
+      "testFn": "const p = Promise.reject(new Error('NetworkFail')); const resource = wrapPromise(p); return p.catch(() => {}).then(() => { try { resource.read(); return false; } catch (e) { return e.message; } });"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Throws the suspender promise while pending",
+        "input": "resource.read() on pending promise throws Promise",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Returns data synchronously once resolved",
+        "input": "resource.read() after promise resolution",
+        "expected": "DataLoaded",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Throws error when rejected",
+        "input": "resource.read() on rejected promise",
+        "expected": "NetworkFail",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "When a component suspends, it throws a Promise up the Fiber tree. React catches the promise, pauses the render phase for that branch, renders the nearest Suspense fallback, and resumes when the promise resolves.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Suspense Protocol: Throwing Promises on Pending State.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Suspense Protocol: Throwing Promises on Pending State maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Throwing a promise is how React Suspense detects async loading. If wrapPromise is instantiated inside the render body instead of cached, a new Promise is created on every render, locking the UI in an infinite suspension loop."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

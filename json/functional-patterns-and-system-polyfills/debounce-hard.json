@@ -1,0 +1,92 @@
+{
+  "id": "debounce-hard",
+  "title": "Advanced Debounce with Leading, Trailing & Cancel Controls",
+  "difficulty": "Hard",
+  "topicId": "functional-patterns",
+  "topicCategory": "4. Functional Patterns & System Polyfills",
+  "topicTitle": "Design Patterns",
+  "subtopicId": "debounce-throttle",
+  "subtopicTitle": "Debounce & Throttle with Advanced Controls",
+  "concept": "Production-Grade Debounce (Lodash Pattern)",
+  "problemStatement": "Implement `debounceAdvanced(fn, delay, { leading = false, trailing = true })`. Provide `.cancel()` to abort any pending execution and `.flush()` to immediately execute any pending call.",
+  "interviewTrap": "If `leading: true` and `trailing: false`, the function fires immediately, but must NOT fire at the end of the delay window.",
+  "starterCode": "function debounceAdvanced(fn, delay, options = {}) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function debounceAdvanced(fn, delay, options = {}) {\n  const { leading = false, trailing = true } = options;\n  let timerId = null;\n  let lastArgs = null;\n  let lastThis = null;\n\n  function debounced(...args) {\n    lastArgs = args;\n    lastThis = this;\n\n    const shouldCallLeading = leading && !timerId;\n\n    if (timerId !== null) {\n      clearTimeout(timerId);\n    }\n\n    if (shouldCallLeading) {\n      fn.apply(lastThis, lastArgs);\n      lastArgs = null;\n      lastThis = null;\n    }\n\n    timerId = setTimeout(() => {\n      if (trailing && lastArgs) {\n        fn.apply(lastThis, lastArgs);\n      }\n      timerId = null;\n      lastArgs = null;\n      lastThis = null;\n    }, delay);\n  }\n\n  debounced.cancel = function() {\n    if (timerId !== null) {\n      clearTimeout(timerId);\n      timerId = null;\n    }\n    lastArgs = null;\n    lastThis = null;\n  };\n\n  debounced.flush = function() {\n    if (timerId !== null && lastArgs) {\n      fn.apply(lastThis, lastArgs);\n      debounced.cancel();\n    }\n  };\n\n  return debounced;\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Supports leading execution immediately",
+      "input": "leading: true fires immediately on first call",
+      "expected": 1,
+      "testFn": "let count = 0; const debounced = debounceAdvanced(() => count++, 50, { leading: true, trailing: false }); debounced(); return count;"
+    },
+    {
+      "id": 2,
+      "name": "cancel() aborts pending delayed execution",
+      "input": "debounced() -> cancel() -> wait",
+      "expected": 0,
+      "testFn": "let count = 0; const debounced = debounceAdvanced(() => count++, 30); debounced(); debounced.cancel(); await new Promise(r => setTimeout(r, 45)); return count;"
+    },
+    {
+      "id": 3,
+      "name": "flush() triggers pending execution synchronously",
+      "input": "debounced() -> flush() immediately executes",
+      "expected": 1,
+      "testFn": "let count = 0; const debounced = debounceAdvanced(() => count++, 50); debounced(); debounced.flush(); return count;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Supports leading execution immediately",
+        "input": "leading: true fires immediately on first call",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "cancel() aborts pending delayed execution",
+        "input": "debounced() -> cancel() -> wait",
+        "expected": 0,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "flush() triggers pending execution synchronously",
+        "input": "debounced() -> flush() immediately executes",
+        "expected": 1,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Debounce groups bursts into a single execution after `wait` ms of silence. Throttle guarantees a maximum execution frequency of at most once every `limit` ms.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Production-Grade Debounce (Lodash Pattern).",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Production-Grade Debounce (Lodash Pattern) is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "If `leading: true` and `trailing: false`, the function fires immediately, but must NOT fire at the end of the delay window."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -69,8 +69,8 @@ The platform operates completely standalone with zero external or local LLM depe
    - Big-O algorithmic and space complexity analysis
    - Online specifications and standards verification
 6. **Local Persistence**: Saves your code solutions and completion progress automatically in browser storage.
-7. **Dual Knowledge Storage (Local JSON vs SQLite DB)**:
-   - **Interactive Storage Toggle**: Seamlessly choose whether knowledge guides are saved into a **Local JSON File** (`knowledge.json`) or an **SQLite DB** (`knowledge.db`).
-   - **Automatic No-SQLite Fallback**: If SQLite is not installed or supported in your Node environment, the application automatically falls back to local JSON storage without errors or crashes.
-   - **Instant Loading**: Guides load instantly with zero latency.
-   - **Dedicated Saved Guides Panel**: Search, filter, view, and delete saved guides from either JSON or SQLite with a single click.
+7. **Strict Single JSON File Storage & Offline Architecture**:
+   - **Strictly One JSON File Per Question**: 171 verified questions (JavaScript, React, System Design, Design System) each stored in exactly one individual JSON file under `./json/`.
+   - **Unified Schema**: Consistent question schema across JavaScript, React, System Design, and Design System tracks.
+   - **Pure Local JSON Storage**: All user-saved knowledge guides are persisted in `knowledge.json` with in-place updates (zero versioning, zero database overhead).
+   - **Dedicated Saved Guides Panel**: Search, filter, view, and delete saved guides from local JSON with a single click.

@@ -110,20 +110,14 @@
           </div>
 
           <div class="ds-hero-actions">
-            <!-- Storage Destination Toggle Button (JSON vs SQLite) -->
-            <div class="storage-toggle-control" id="storageToggleControl" title="Choose storage destination for generated knowledge guides">
-              <span class="storage-toggle-label"><i class="fa-solid fa-floppy-disk"></i> Save:</span>
+            <!-- Storage Indicator (Strictly Local JSON File) -->
+            <div class="storage-toggle-control" id="storageToggleControl" title="Storage: Local JSON File (knowledge.json)">
+              <span class="storage-toggle-label"><i class="fa-solid fa-floppy-disk"></i> Storage:</span>
               <div class="storage-toggle-group">
                 <button type="button" class="storage-toggle-btn active" data-mode="json" id="btnStorageJson" title="Save guides into local JSON file (knowledge.json)">
-                  <i class="fa-solid fa-file-code"></i> JSON File
-                </button>
-                <button type="button" class="storage-toggle-btn" data-mode="sqlite" id="btnStorageSqlite" title="Save guides into SQLite DB (knowledge.db)">
-                  <i class="fa-solid fa-database"></i> SQL DB
+                  <i class="fa-solid fa-file-code"></i> JSON Storage
                 </button>
               </div>
-              <span class="sqlite-status-tag" id="sqliteStatusTag" style="display: none;" title="SQLite is not installed or available in Node runtime">
-                <i class="fa-solid fa-circle-exclamation"></i> No SQLite
-              </span>
             </div>
 
             <button class="ds-mark-mastered-btn" id="markMasteredBtn" title="Mark this topic as understood / mastered">
@@ -222,12 +216,9 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" id="savedGuidesSearch" placeholder="Filter saved design system guides by keyword or topic...">
               </div>
-              <div class="saved-storage-toggle" title="Switch storage source view">
-                <button type="button" class="storage-tab-toggle-btn active" data-mode="json" id="panelStorageJsonBtn" title="View Local JSON Guides (knowledge.json)">
+              <div class="saved-storage-toggle" title="Storage source: Local JSON (knowledge.json)">
+                <button type="button" class="storage-tab-toggle-btn active" data-mode="json" id="panelStorageJsonBtn" title="Local JSON Guides (knowledge.json)">
                   <i class="fa-solid fa-file-code"></i> JSON
-                </button>
-                <button type="button" class="storage-tab-toggle-btn" data-mode="sqlite" id="panelStorageSqlBtn" title="View SQLite DB Guides (knowledge.db)">
-                  <i class="fa-solid fa-database"></i> SQL
                 </button>
               </div>
               <button class="icon-btn-sm" id="refreshSavedGuidesBtn" title="Refresh Saved Guides">

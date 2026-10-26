@@ -4,7 +4,7 @@
   "difficulty": "Hard",
   "topicId": "engine-internals",
   "topicCategory": "1. JS Engine & Memory Internals",
-  "topicTitle": "JS Engine & Memory Internals",
+  "topicTitle": "Core Architecture",
   "subtopicId": "hoisting-tdz",
   "subtopicTitle": "Hoisting & Temporal Dead Zone (TDZ)",
   "concept": "ES6 Annex B Block Scoping for Function Declarations",

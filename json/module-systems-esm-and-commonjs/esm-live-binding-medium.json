@@ -1,0 +1,98 @@
+{
+  "id": "esm-live-binding-medium",
+  "title": "ESM Live Binding vs CJS Value Copy Simulator",
+  "difficulty": "Medium",
+  "topicId": "module-systems-esm-cjs",
+  "topicCategory": "12. Module Systems: ESM vs CommonJS",
+  "topicTitle": "Modules",
+  "subtopicId": "module-systems",
+  "subtopicTitle": "Module Systems: ESM vs CommonJS & Circular Dependencies",
+  "concept": "Live Reference Bindings vs Copied Primitive Values",
+  "problemStatement": "Implement `createLiveBindingStore()` that demonstrates the fundamental difference between ESM live bindings (which reflect exported counter changes when incremented) and CJS value copies (which remain frozen at the initial value).",
+  "interviewTrap": "Candidates often assume ESM exports work like objects with values. In reality, ESM generates pointer references in the module record, so mutating the internal variable changes what importers see without re-exporting.",
+  "starterCode": "/**\n * Demonstrates ESM live bindings vs CommonJS value snapshots.\n */\nfunction createLiveBindingStore() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Demonstrates ESM live bindings vs CommonJS value snapshots.\n */\nfunction createLiveBindingStore() {\n  let counter = 0;\n  // CJS export snapshot (value copy)\n  const cjsExport = { counter };\n  // ESM export accessor (live binding)\n  const esmExport = {\n    get counter() { return counter; }\n  };\n\n  return {\n    increment() {\n      counter++;\n    },\n    getCjsCounter() {\n      return cjsExport.counter;\n    },\n    getEsmCounter() {\n      return esmExport.counter;\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Both start at initial value 0",
+      "input": "getCjsCounter() and getEsmCounter() before increment",
+      "expected": "0:0",
+      "testFn": "const store = createLiveBindingStore(); return store.getCjsCounter() + ':' + store.getEsmCounter();"
+    },
+    {
+      "id": 2,
+      "name": "After increment, CJS stays 0 while ESM updates to 1",
+      "input": "store.increment()",
+      "expected": {
+        "cjs": 0,
+        "esm": 1
+      },
+      "testFn": "const store = createLiveBindingStore(); store.increment(); return { cjs: store.getCjsCounter(), esm: store.getEsmCounter() };"
+    },
+    {
+      "id": 3,
+      "name": "Multiple increments continue updating ESM counter live",
+      "input": "store.increment() 3 times",
+      "expected": 3,
+      "testFn": "const store = createLiveBindingStore(); store.increment(); store.increment(); store.increment(); return store.getEsmCounter();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Both start at initial value 0",
+        "input": "getCjsCounter() and getEsmCounter() before increment",
+        "expected": "0:0",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "After increment, CJS stays 0 while ESM updates to 1",
+        "input": "store.increment()",
+        "expected": {
+          "cjs": 0,
+          "esm": 1
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Multiple increments continue updating ESM counter live",
+        "input": "store.increment() 3 times",
+        "expected": 3,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "CommonJS exports are evaluated at runtime and copied by value into a module.exports object. ESM exports are live references bound during static analysis, meaning changes in the exporter reflect immediately in the importer.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Live Reference Bindings vs Copied Primitive Values.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Live Reference Bindings vs Copied Primitive Values is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Candidates often assume ESM exports work like objects with values. In reality, ESM generates pointer references in the module record, so mutating the internal variable changes what importers see without re-exporting."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

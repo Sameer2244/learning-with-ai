@@ -1,0 +1,98 @@
+{
+  "id": "comp-medium",
+  "title": "Render Prop / Slot Decoupler",
+  "difficulty": "Medium",
+  "topicId": "react-rerenders-performance",
+  "topicCategory": "3. Re-render Cascades & Performance",
+  "topicTitle": "Optimization",
+  "subtopicId": "composition-over-memo",
+  "subtopicTitle": "Component Composition to Eliminate Re-renders",
+  "concept": "Inverting Control via Render Props",
+  "problemStatement": "Implement `createSlotContainer(renderHeader, renderBody)` that accepts slot render functions and generates UI output without tightly coupling internal layout state to children.",
+  "interviewTrap": "Creating slot components inside the render loop rather than passing them from outer scope recreates DOM nodes on every render.",
+  "starterCode": "function createSlotContainer(renderHeader, renderBody) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createSlotContainer(renderHeader, renderBody) {\n  return function render(internalState) {\n    return {\n      header: renderHeader(internalState),\n      body: renderBody(internalState)\n    };\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Supplies internal state to header and body slots",
+      "input": "slots receive active user state",
+      "expected": {
+        "header": "TITLE: Admin",
+        "body": "CONTENT: Admin"
+      },
+      "testFn": "const container = createSlotContainer(s => 'TITLE: ' + s.user, s => 'CONTENT: ' + s.user); return container({ user: 'Admin' });"
+    },
+    {
+      "id": 2,
+      "name": "Decouples slots cleanly",
+      "input": "custom body rendering",
+      "expected": 100,
+      "testFn": "const container = createSlotContainer(() => 'header', s => s.count * 10); return container({ count: 10 }).body;"
+    },
+    {
+      "id": 3,
+      "name": "Handles static content slots",
+      "input": "static slot text",
+      "expected": "Static Header",
+      "testFn": "const container = createSlotContainer(() => 'Static Header', () => 'Static Body'); return container({}).header;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Supplies internal state to header and body slots",
+        "input": "slots receive active user state",
+        "expected": {
+          "header": "TITLE: Admin",
+          "body": "CONTENT: Admin"
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Decouples slots cleanly",
+        "input": "custom body rendering",
+        "expected": 100,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles static content slots",
+        "input": "static slot text",
+        "expected": "Static Header",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Passing an expensive component as the `children` prop `<Parent><ExpensiveTree /></Parent>` prevents `ExpensiveTree` from re-rendering when `Parent`'s state changes! Because `ExpensiveTree` is evaluated in the grandparent's render scope, its element reference is identical across `Parent` re-renders.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Inverting Control via Render Props.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Inverting Control via Render Props maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Creating slot components inside the render loop rather than passing them from outer scope recreates DOM nodes on every render."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

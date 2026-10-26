@@ -1,0 +1,92 @@
+{
+  "id": "debounce-basic",
+  "title": "Basic Debounce Function",
+  "difficulty": "Basic",
+  "topicId": "functional-patterns",
+  "topicCategory": "4. Functional Patterns & System Polyfills",
+  "topicTitle": "Design Patterns",
+  "subtopicId": "debounce-throttle",
+  "subtopicTitle": "Debounce & Throttle with Advanced Controls",
+  "concept": "Delayed Execution & Timer Resetting",
+  "problemStatement": "Implement `debounce(fn, delay)` that delays invoking `fn` until after `delay` milliseconds have elapsed since the last time the debounced function was invoked.",
+  "interviewTrap": "Forgetting to preserve `this` and arguments when invoking `fn` inside `setTimeout`.",
+  "starterCode": "function debounce(fn, delay) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function debounce(fn, delay) {\n  let timerId = null;\n\n  return function(...args) {\n    if (timerId !== null) {\n      clearTimeout(timerId);\n    }\n    timerId = setTimeout(() => {\n      fn.apply(this, args);\n      timerId = null;\n    }, delay);\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Executes only once after rapid burst of calls",
+      "input": "call 3 times within delay",
+      "expected": 1,
+      "testFn": "let calls = 0; const debounced = debounce(() => calls++, 20); debounced(); debounced(); debounced(); await new Promise(r => setTimeout(r, 40)); return calls;"
+    },
+    {
+      "id": 2,
+      "name": "Passes the arguments from the most recent call",
+      "input": "debounced('first'), debounced('last')",
+      "expected": "last",
+      "testFn": "let lastArg = ''; const debounced = debounce(arg => { lastArg = arg; }, 15); debounced('first'); debounced('last'); await new Promise(r => setTimeout(r, 30)); return lastArg;"
+    },
+    {
+      "id": 3,
+      "name": "Executes multiple times if spaced farther than delay",
+      "input": "call, wait, call again",
+      "expected": 2,
+      "testFn": "let count = 0; const debounced = debounce(() => count++, 15); debounced(); await new Promise(r => setTimeout(r, 30)); debounced(); await new Promise(r => setTimeout(r, 30)); return count;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Executes only once after rapid burst of calls",
+        "input": "call 3 times within delay",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Passes the arguments from the most recent call",
+        "input": "debounced('first'), debounced('last')",
+        "expected": "last",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Executes multiple times if spaced farther than delay",
+        "input": "call, wait, call again",
+        "expected": 2,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Debounce groups bursts into a single execution after `wait` ms of silence. Throttle guarantees a maximum execution frequency of at most once every `limit` ms.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Delayed Execution & Timer Resetting.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Delayed Execution & Timer Resetting is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Forgetting to preserve `this` and arguments when invoking `fn` inside `setTimeout`."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

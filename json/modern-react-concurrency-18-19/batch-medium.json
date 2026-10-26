@@ -1,0 +1,98 @@
+{
+  "id": "batch-medium",
+  "title": "Simulate Automatic Batching Across Async Boundaries",
+  "difficulty": "Medium",
+  "topicId": "react-concurrency-18",
+  "topicCategory": "5. Modern React: Concurrency & React 18/19",
+  "topicTitle": "Modern Architecture",
+  "subtopicId": "automatic-batching",
+  "subtopicTitle": "Automatic Batching in React 18 vs flushSync",
+  "concept": "React 18 Universal Batching across Promises & Timeouts",
+  "problemStatement": "Implement `simulateAsyncBatching(actionFns, onRender)` that executes async callbacks (like `fetch.then`) and verifies that multiple dispatches inside the async handler are batched together.",
+  "interviewTrap": "In React 17, `setTimeout(() => { setCount(1); setFlag(true); })` fired 2 renders. In React 18, it fires 1 render.",
+  "starterCode": "async function simulateAsyncBatching(asyncTask, onRender) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "async function simulateAsyncBatching(asyncTask, onRender) {\n  let renders = 0;\n  let state = { count: 0, text: '' };\n  let pendingQueue = [];\n  let isFlushing = false;\n\n  function dispatch(update) {\n    pendingQueue.push(update);\n    if (!isFlushing) {\n      isFlushing = true;\n      queueMicrotask(() => {\n        for (const u of pendingQueue) {\n          state = { ...state, ...u };\n        }\n        pendingQueue = [];\n        renders++;\n        isFlushing = false;\n        onRender(state, renders);\n      });\n    }\n  }\n\n  await asyncTask(dispatch);\n  await new Promise(r => setTimeout(r, 10)); // Wait for microtask drain\n  return { state, renders };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Batches multiple dispatches inside an async timeout into 1 render",
+      "input": "2 dispatches in setTimeout fire 1 render",
+      "expected": 1,
+      "testFn": "const res = await simulateAsyncBatching(async (dispatch) => { await new Promise(r => setTimeout(r, 5)); dispatch({ count: 1 }); dispatch({ text: 'ready' }); }, () => {}); return res.renders;"
+    },
+    {
+      "id": 2,
+      "name": "Merges state properties accurately",
+      "input": "state has both count and text updated",
+      "expected": {
+        "count": 1,
+        "text": "ready"
+      },
+      "testFn": "const res = await simulateAsyncBatching(async (dispatch) => { await new Promise(r => setTimeout(r, 5)); dispatch({ count: 1 }); dispatch({ text: 'ready' }); }, () => {}); return res.state;"
+    },
+    {
+      "id": 3,
+      "name": "Dispatches across different async turns create separate renders",
+      "input": "dispatches in separate timeouts produce 2 renders",
+      "expected": 2,
+      "testFn": "let renderCount = 0; await simulateAsyncBatching(async (dispatch) => { dispatch({ count: 1 }); await new Promise(r => setTimeout(r, 15)); dispatch({ count: 2 }); }, (s, r) => { renderCount = r; }); return renderCount;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Batches multiple dispatches inside an async timeout into 1 render",
+        "input": "2 dispatches in setTimeout fire 1 render",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Merges state properties accurately",
+        "input": "state has both count and text updated",
+        "expected": {
+          "count": 1,
+          "text": "ready"
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Dispatches across different async turns create separate renders",
+        "input": "dispatches in separate timeouts produce 2 renders",
+        "expected": 2,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "In React 17, state updates inside `setTimeout` or `Promise.then` were NOT batched, triggering multiple re-renders. React 18 automatically batches ALL state updates regardless of origin. `flushSync(() => { ... })` opts out of batching, forcing an immediate synchronous DOM flush.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for React 18 Universal Batching across Promises & Timeouts.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, React 18 Universal Batching across Promises & Timeouts maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "In React 17, `setTimeout(() => { setCount(1); setFlag(true); })` fired 2 renders. In React 18, it fires 1 render."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

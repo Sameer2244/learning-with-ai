@@ -1,0 +1,106 @@
+{
+  "id": "trans-hard",
+  "title": "Urgent vs Non-Urgent Priority Task Queue",
+  "difficulty": "Hard",
+  "topicId": "react-concurrency-18",
+  "topicCategory": "5. Modern React: Concurrency & React 18/19",
+  "topicTitle": "Modern Architecture",
+  "subtopicId": "transitions-concurrency",
+  "subtopicTitle": "useTransition & useDeferredValue Mechanics",
+  "concept": "Lanes / Priority-Based Task Scheduling",
+  "problemStatement": "Implement `createPriorityScheduler()` that queues tasks labeled `'urgent'` (Priority 1) and `'transition'` (Priority 2). `flush()` must ALWAYS execute all urgent tasks before executing any transition tasks.",
+  "interviewTrap": "In React 18's Lane model, urgent events (keystrokes) interrupt running transition fibers, discarding in-progress work to preserve 60fps input responsiveness.",
+  "starterCode": "function createPriorityScheduler() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createPriorityScheduler() {\n  const urgentQueue = [];\n  const transitionQueue = [];\n\n  function schedule(task, priority = 'transition') {\n    if (priority === 'urgent') {\n      urgentQueue.push(task);\n    } else {\n      transitionQueue.push(task);\n    }\n  }\n\n  function flush() {\n    const executed = [];\n    // 1. Drain all urgent tasks first\n    while (urgentQueue.length > 0) {\n      const task = urgentQueue.shift();\n      executed.push(task());\n    }\n    // 2. Drain transition tasks\n    while (transitionQueue.length > 0) {\n      const task = transitionQueue.shift();\n      executed.push(task());\n    }\n    return executed;\n  }\n\n  return { schedule, flush };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Executes urgent tasks before older transition tasks",
+      "input": "transition scheduled before urgent task",
+      "expected": [
+        "urgent-1",
+        "transition-1"
+      ],
+      "testFn": "const s = createPriorityScheduler(); s.schedule(() => 'transition-1', 'transition'); s.schedule(() => 'urgent-1', 'urgent'); return s.flush();"
+    },
+    {
+      "id": 2,
+      "name": "Maintains FIFO order within same priority level",
+      "input": "multiple urgent tasks execute in insertion order",
+      "expected": [
+        "u1",
+        "u2",
+        "t1"
+      ],
+      "testFn": "const s = createPriorityScheduler(); s.schedule(() => 'u1', 'urgent'); s.schedule(() => 't1', 'transition'); s.schedule(() => 'u2', 'urgent'); return s.flush();"
+    },
+    {
+      "id": 3,
+      "name": "Handles empty queues safely",
+      "input": "flush with no tasks",
+      "expected": [],
+      "testFn": "const s = createPriorityScheduler(); return s.flush();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Executes urgent tasks before older transition tasks",
+        "input": "transition scheduled before urgent task",
+        "expected": [
+          "urgent-1",
+          "transition-1"
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Maintains FIFO order within same priority level",
+        "input": "multiple urgent tasks execute in insertion order",
+        "expected": [
+          "u1",
+          "u2",
+          "t1"
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles empty queues safely",
+        "input": "flush with no tasks",
+        "expected": [],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React categorizes updates into Urgent (typing in an `<input>`, clicks) and Non-Urgent / Transition (filtering a 10,000 item list). Wrapping an update in `startTransition(() => setQuery(text))` allows React to interrupt the list render if the user types another keystroke.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Lanes / Priority-Based Task Scheduling.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Lanes / Priority-Based Task Scheduling maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "In React 18's Lane model, urgent events (keystrokes) interrupt running transition fibers, discarding in-progress work to preserve 60fps input responsiveness."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

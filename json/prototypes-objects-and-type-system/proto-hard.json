@@ -1,0 +1,92 @@
+{
+  "id": "proto-hard",
+  "title": "Inheritance Builder with Multiple Mixins & Super Dispatch",
+  "difficulty": "Hard",
+  "topicId": "prototypes-and-types",
+  "topicCategory": "3. Prototypes, Objects & Type System",
+  "topicTitle": "Object Model",
+  "subtopicId": "prototype-chain",
+  "subtopicTitle": "Prototype Chain & Prototypal Inheritance",
+  "concept": "Prototypal Inheritance & Clean Method Composition",
+  "problemStatement": "Implement `createSubclass(Parent, ChildConstructor, methods, mixins)` that sets up full prototypal inheritance without ES6 classes, wires `Child.prototype.__proto__` to `Parent.prototype`, copies mixin methods safely, and attaches `_super` to invoke parent methods.",
+  "interviewTrap": "Assigning `Child.prototype = Parent.prototype` shares the exact same prototype object, causing methods added to Child to pollute Parent.",
+  "starterCode": "function createSubclass(Parent, ChildConstructor, methods = {}, mixins = []) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createSubclass(Parent, ChildConstructor, methods = {}, mixins = []) {\n  ChildConstructor.prototype = Object.create(Parent.prototype);\n  ChildConstructor.prototype.constructor = ChildConstructor;\n\n  // Add subclass methods\n  Object.assign(ChildConstructor.prototype, methods);\n\n  // Copy mixins\n  for (const mixin of mixins) {\n    Object.assign(ChildConstructor.prototype, mixin);\n  }\n\n  ChildConstructor.prototype._super = function(methodName, ...args) {\n    return Parent.prototype[methodName].apply(this, args);\n  };\n\n  return ChildConstructor;\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Correctly wires prototype chain",
+      "input": "child instanceof Parent",
+      "expected": true,
+      "testFn": "function Animal(name) { this.name = name; } function Dog(name) { Animal.call(this, name); } createSubclass(Animal, Dog); const d = new Dog('Rex'); return d instanceof Animal;"
+    },
+    {
+      "id": 2,
+      "name": "Executes super method via _super",
+      "input": "calls parent method via _super",
+      "expected": "ANIMAL: Rex",
+      "testFn": "function Animal(name) { this.name = name; } Animal.prototype.speak = function() { return 'ANIMAL: ' + this.name; }; function Dog(name) { Animal.call(this, name); } createSubclass(Animal, Dog, { speak() { return this._super('speak'); } }); const d = new Dog('Rex'); return d.speak();"
+    },
+    {
+      "id": 3,
+      "name": "Integrates mixins into prototype",
+      "input": "dog has mixin method",
+      "expected": "wagging",
+      "testFn": "function Animal() {} function Dog() {} const wagMixin = { wag() { return 'wagging'; } }; createSubclass(Animal, Dog, {}, [wagMixin]); const d = new Dog(); return d.wag();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Correctly wires prototype chain",
+        "input": "child instanceof Parent",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Executes super method via _super",
+        "input": "calls parent method via _super",
+        "expected": "ANIMAL: Rex",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Integrates mixins into prototype",
+        "input": "dog has mixin method",
+        "expected": "wagging",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Every JS object has an internal `[[Prototype]]` link. Property lookup walks this chain until the property is found or `null` is reached (`Object.prototype.__proto__ === null`). Modifying a property on an instance creates an 'own property' shadowing the prototype's property.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Prototypal Inheritance & Clean Method Composition.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Prototypal Inheritance & Clean Method Composition is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Assigning `Child.prototype = Parent.prototype` shares the exact same prototype object, causing methods added to Child to pollute Parent."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

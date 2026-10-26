@@ -1,0 +1,116 @@
+{
+  "id": "binary-base64-buffer-medium",
+  "title": "Base64 to Uint8Array Binary Decoder",
+  "difficulty": "Medium",
+  "topicId": "binary-typed-arrays-buffers",
+  "topicCategory": "11. Binary Data, Buffers & Memory Systems",
+  "topicTitle": "Binary & Buffers",
+  "subtopicId": "binary-data-buffers",
+  "subtopicTitle": "Binary Data, TypedArrays & Memory Buffers",
+  "concept": "Bitwise Shifting & Byte Array Construction",
+  "problemStatement": "Implement `base64ToUint8Array(b64String)` that decodes a standard Base64 string directly into a `Uint8Array` using bitwise operations.",
+  "interviewTrap": "Using atob() creates an intermediate binary string in memory where each byte is stored as a 16-bit UTF-16 code point, doubling memory consumption.",
+  "starterCode": "/**\n * Decodes a Base64 string directly into a Uint8Array byte buffer.\n */\nfunction base64ToUint8Array(b64) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Decodes a Base64 string directly into a Uint8Array byte buffer.\n */\nfunction base64ToUint8Array(b64) {\n  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';\n  const lookup = new Uint8Array(256);\n  for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;\n\n  const clean = b64.replace(/=+$/, '');\n  const len = clean.length;\n  const byteLen = Math.floor((len * 3) / 4);\n  const bytes = new Uint8Array(byteLen);\n\n  let p = 0;\n  for (let i = 0; i < len; i += 4) {\n    const c0 = lookup[clean.charCodeAt(i)];\n    const c1 = lookup[clean.charCodeAt(i + 1)];\n    const c2 = i + 2 < len ? lookup[clean.charCodeAt(i + 2)] : 0;\n    const c3 = i + 3 < len ? lookup[clean.charCodeAt(i + 3)] : 0;\n\n    bytes[p++] = (c0 << 2) | (c1 >> 4);\n    if (p < byteLen) bytes[p++] = ((c1 & 15) << 4) | (c2 >> 2);\n    if (p < byteLen) bytes[p++] = ((c2 & 3) << 6) | c3;\n  }\n  return bytes;\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Decodes 'SGVsbG8=' to ASCII byte values of 'Hello'",
+      "input": "base64ToUint8Array('SGVsbG8=')",
+      "expected": [
+        72,
+        101,
+        108,
+        108,
+        111
+      ],
+      "testFn": "const bytes = base64ToUint8Array('SGVsbG8='); return Array.from(bytes);"
+    },
+    {
+      "id": 2,
+      "name": "Decodes multiple blocks accurately",
+      "input": "base64ToUint8Array('AQIDBAU=')",
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "testFn": "return Array.from(base64ToUint8Array('AQIDBAU='));"
+    },
+    {
+      "id": 3,
+      "name": "Handles empty string input",
+      "input": "base64ToUint8Array('')",
+      "expected": [],
+      "testFn": "return Array.from(base64ToUint8Array(''));"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Decodes 'SGVsbG8=' to ASCII byte values of 'Hello'",
+        "input": "base64ToUint8Array('SGVsbG8=')",
+        "expected": [
+          72,
+          101,
+          108,
+          108,
+          111
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Decodes multiple blocks accurately",
+        "input": "base64ToUint8Array('AQIDBAU=')",
+        "expected": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles empty string input",
+        "input": "base64ToUint8Array('')",
+        "expected": [],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "An ArrayBuffer is a contiguous chunk of raw heap memory. TypedArrays (Uint8Array, Int32Array) and DataViews provide structured lenses over the buffer. Endianness matters when parsing multi-byte integers across platforms.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Bitwise Shifting & Byte Array Construction.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Bitwise Shifting & Byte Array Construction is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Using atob() creates an intermediate binary string in memory where each byte is stored as a 16-bit UTF-16 code point, doubling memory consumption."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

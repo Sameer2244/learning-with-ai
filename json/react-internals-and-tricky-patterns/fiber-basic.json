@@ -1,0 +1,100 @@
+{
+  "id": "fiber-basic",
+  "title": "Fiber Node Factory",
+  "difficulty": "Basic",
+  "topicId": "react-internals-js",
+  "topicCategory": "6. React Internals & Tricky Patterns",
+  "topicTitle": "React Bridge",
+  "subtopicId": "fiber-reconciliation",
+  "subtopicTitle": "Fiber Architecture & Reconciliation Mechanics",
+  "concept": "Fiber Node Structure & Pointers",
+  "problemStatement": "Implement `createFiberNode(tag, type, props)` that initializes a Fiber node with `child: null`, `sibling: null`, `return: null`, `memoizedProps`, and `alternate: null`.",
+  "interviewTrap": "Confusing `pendingProps` (props being passed to the new render) with `memoizedProps` (props from the last committed render).",
+  "starterCode": "function createFiberNode(tag, type, props = {}) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createFiberNode(tag, type, props = {}) {\n  return {\n    tag,\n    type,\n    pendingProps: props,\n    memoizedProps: null,\n    memoizedState: null,\n    child: null,\n    sibling: null,\n    return: null,\n    alternate: null\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Initializes fiber node with null pointers",
+      "input": "createFiberNode('HostComponent', 'div')",
+      "expected": {
+        "child": null,
+        "sibling": null,
+        "return": null
+      },
+      "testFn": "const f = createFiberNode('HostComponent', 'div'); return { child: f.child, sibling: f.sibling, return: f.return };"
+    },
+    {
+      "id": 2,
+      "name": "Assigns type and pending props",
+      "input": "createFiberNode with props",
+      "expected": "hello",
+      "testFn": "const f = createFiberNode('HostComponent', 'span', { title: 'hello' }); return f.pendingProps.title;"
+    },
+    {
+      "id": 3,
+      "name": "Sets alternate to null by default (double buffering)",
+      "input": "f.alternate === null",
+      "expected": true,
+      "testFn": "const f = createFiberNode('FunctionComponent', () => {}); return f.alternate === null;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Initializes fiber node with null pointers",
+        "input": "createFiberNode('HostComponent', 'div')",
+        "expected": {
+          "child": null,
+          "sibling": null,
+          "return": null
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Assigns type and pending props",
+        "input": "createFiberNode with props",
+        "expected": "hello",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Sets alternate to null by default (double buffering)",
+        "input": "f.alternate === null",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React represents UI as a singly linked list of Fiber nodes (`child`, `sibling`, `return`). Render phase is interruptible and can be paused; commit phase is strictly synchronous.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Fiber Node Structure & Pointers.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Fiber Node Structure & Pointers is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Confusing `pendingProps` (props being passed to the new render) with `memoizedProps` (props from the last committed render)."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

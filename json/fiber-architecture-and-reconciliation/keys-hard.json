@@ -4,7 +4,7 @@
   "difficulty": "Hard",
   "topicId": "react-engine-fiber",
   "topicCategory": "1. Fiber Architecture & Reconciliation",
-  "topicTitle": "Fiber Architecture & Reconciliation",
+  "topicTitle": "Core Architecture",
   "subtopicId": "reconciliation-keys",
   "subtopicTitle": "Diffing Algorithm & The 'key' Prop Trap",
   "concept": "Uncontrolled State Retention across Key Changes",

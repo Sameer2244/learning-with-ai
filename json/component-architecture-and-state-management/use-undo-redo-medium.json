@@ -1,0 +1,92 @@
+{
+  "id": "use-undo-redo-medium",
+  "title": "Undo/Redo State Machine with History Stack",
+  "difficulty": "Medium",
+  "topicId": "component-architecture-state",
+  "topicCategory": "6. Component Architecture & State Management",
+  "topicTitle": "Architecture & State",
+  "subtopicId": "custom-hooks-reducer",
+  "subtopicTitle": "Custom Hooks & State Reducer Pattern",
+  "concept": "Immutable History State Reducer",
+  "problemStatement": "Implement `createUndoRedo(initialPresent)` supporting `set(newPresent)`, `undo()`, `redo()`, `canUndo()`, and `canRedo()`. Setting a new value clears the future stack.",
+  "interviewTrap": "A common bug is forgetting to clear the future/redo stack when a new mutation is made after an undo, resulting in corrupted parallel history timelines.",
+  "starterCode": "/**\n * Manages an immutable past/present/future history timeline.\n */\nfunction createUndoRedo(initialPresent) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Manages an immutable past/present/future history timeline.\n */\nfunction createUndoRedo(initialPresent) {\n  let past = [];\n  let present = initialPresent;\n  let future = [];\n\n  return {\n    get present() { return present; },\n    set(newPresent) {\n      if (newPresent === present) return;\n      past.push(present);\n      present = newPresent;\n      future = []; // Clear redo stack on new action\n    },\n    undo() {\n      if (past.length === 0) return false;\n      future.unshift(present);\n      present = past.pop();\n      return true;\n    },\n    redo() {\n      if (future.length === 0) return false;\n      past.push(present);\n      present = future.shift();\n      return true;\n    },\n    canUndo() { return past.length > 0; },\n    canRedo() { return future.length > 0; }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Performs basic undo and restores previous state",
+      "input": "set 1, set 2, undo()",
+      "expected": 1,
+      "testFn": "const hist = createUndoRedo(0); hist.set(1); hist.set(2); hist.undo(); return hist.present;"
+    },
+    {
+      "id": 2,
+      "name": "New mutation after undo clears the redo stack",
+      "input": "undo, then set 3 -> canRedo must be false",
+      "expected": false,
+      "testFn": "const hist = createUndoRedo(0); hist.set(1); hist.undo(); hist.set(99); return hist.canRedo();"
+    },
+    {
+      "id": 3,
+      "name": "Redo restores undone state",
+      "input": "undo then redo",
+      "expected": 1,
+      "testFn": "const hist = createUndoRedo(0); hist.set(1); hist.undo(); hist.redo(); return hist.present;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Performs basic undo and restores previous state",
+        "input": "set 1, set 2, undo()",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "New mutation after undo clears the redo stack",
+        "input": "undo, then set 3 -> canRedo must be false",
+        "expected": false,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Redo restores undone state",
+        "input": "undo then redo",
+        "expected": 1,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "The State Reducer pattern allows the consumer of a custom hook to intercept and customize state transitions before they are committed, giving developers total control without modifying hook internals.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Immutable History State Reducer.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Immutable History State Reducer maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "A common bug is forgetting to clear the future/redo stack when a new mutation is made after an undo, resulting in corrupted parallel history timelines."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

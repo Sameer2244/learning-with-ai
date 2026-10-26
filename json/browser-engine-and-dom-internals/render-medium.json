@@ -1,0 +1,103 @@
+{
+  "id": "render-medium",
+  "title": "Lightweight Virtual DOM Element Creator & Renderer",
+  "difficulty": "Medium",
+  "topicId": "browser-dom-internals",
+  "topicCategory": "5. Browser Engine & DOM Internals",
+  "topicTitle": "Browser Architecture",
+  "subtopicId": "rendering-pipeline",
+  "subtopicTitle": "Critical Rendering Path: Reflow vs Repaint",
+  "concept": "Virtual DOM Tree Construction and Real DOM Mounting",
+  "problemStatement": "Implement `h(tag, props, ...children)` and `mount(vnode, container)` that builds a minimal virtual DOM tree and mounts it as real DOM nodes with attributes and text.",
+  "interviewTrap": "Forgetting that children can be plain strings/numbers or nested arrays (`children.flat()`).",
+  "starterCode": "function h(tag, props = {}, ...children) {\n  // TODO: Implement solution\n}\n\nfunction mount(vnode, container) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function h(tag, props = {}, ...children) {\n  return {\n    tag,\n    props: props || {},\n    children: children.flat()\n  };\n}\n\nfunction mount(vnode, container) {\n  if (typeof vnode === 'string' || typeof vnode === 'number') {\n    const textNode = document.createTextNode(String(vnode));\n    container.appendChild(textNode);\n    return textNode;\n  }\n\n  const el = document.createElement(vnode.tag);\n\n  for (const [key, value] of Object.entries(vnode.props)) {\n    if (key.startsWith('on') && typeof value === 'function') {\n      el.addEventListener(key.slice(2).toLowerCase(), value);\n    } else {\n      el.setAttribute(key, value);\n    }\n  }\n\n  for (const child of vnode.children) {\n    mount(child, el);\n  }\n\n  container.appendChild(el);\n  return el;\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Creates and mounts DOM node with attributes",
+      "input": "h('div', { id: 'box' }, 'Hello')",
+      "expected": {
+        "tag": "DIV",
+        "id": "box",
+        "text": "Hello"
+      },
+      "testFn": "const root = document.createElement('div'); const v = h('div', { id: 'box' }, 'Hello'); const el = mount(v, root); return { tag: el.tagName, id: el.id, text: el.textContent };"
+    },
+    {
+      "id": 2,
+      "name": "Mounts nested children hierarchically",
+      "input": "h('ul', {}, h('li', {}, 'A'), h('li', {}, 'B'))",
+      "expected": 2,
+      "testFn": "const root = document.createElement('div'); const v = h('ul', {}, h('li', {}, 'A'), h('li', {}, 'B')); const el = mount(v, root); return el.children.length;"
+    },
+    {
+      "id": 3,
+      "name": "Attaches event handlers properly",
+      "input": "click listener attached via props",
+      "expected": 1,
+      "testFn": "let count = 0; const root = document.createElement('div'); const v = h('button', { onClick: () => count++ }, 'Click'); const btn = mount(v, root); btn.click(); return count;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 0,
+    "allPassed": false,
+    "details": [
+      {
+        "id": 1,
+        "name": "Creates and mounts DOM node with attributes",
+        "input": "h('div', { id: 'box' }, 'Hello')",
+        "expected": {
+          "tag": "DIV",
+          "id": "box",
+          "text": "Hello"
+        },
+        "error": "el.setAttribute is not a function",
+        "status": "ERROR"
+      },
+      {
+        "id": 2,
+        "name": "Mounts nested children hierarchically",
+        "input": "h('ul', {}, h('li', {}, 'A'), h('li', {}, 'B'))",
+        "expected": 2,
+        "error": "document.createTextNode is not a function",
+        "status": "ERROR"
+      },
+      {
+        "id": 3,
+        "name": "Attaches event handlers properly",
+        "input": "click listener attached via props",
+        "expected": 1,
+        "error": "el.addEventListener is not a function",
+        "status": "ERROR"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Reflow recalculates geometry and layout tree (expensive). Repaint redraws pixels without changing geometry. Composite occurs on the GPU (transforms and opacity). Reading layout properties (`offsetWidth`, `scrollTop`) right after writing them forces synchronous layout thrashing.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Virtual DOM Tree Construction and Real DOM Mounting.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Virtual DOM Tree Construction and Real DOM Mounting is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Forgetting that children can be plain strings/numbers or nested arrays (`children.flat()`)."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "id": "clone-basic",
+  "title": "Shallow Clone with Property Descriptors",
+  "difficulty": "Basic",
+  "topicId": "prototypes-and-types",
+  "topicCategory": "3. Prototypes, Objects & Type System",
+  "topicTitle": "Object Model",
+  "subtopicId": "deep-clone-descriptors",
+  "subtopicTitle": "Object Descriptors & Deep Cloning with Circular References",
+  "concept": "Object.getOwnPropertyDescriptors & Property Integrity",
+  "problemStatement": "Implement `shallowCloneWithDescriptors(obj)` that copies all own properties (enumerable and non-enumerable, including getters/setters and Symbols) using `Object.getOwnPropertyDescriptors` and `Object.create`.",
+  "interviewTrap": "Using `{ ...obj }` or `Object.assign` turns getter properties into plain value properties evaluated during copy, destroying the dynamic getter.",
+  "starterCode": "function shallowCloneWithDescriptors(obj) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function shallowCloneWithDescriptors(obj) {\n  if (obj === null || typeof obj !== 'object') return obj;\n  const proto = Object.getPrototypeOf(obj);\n  const descriptors = Object.getOwnPropertyDescriptors(obj);\n  return Object.create(proto, descriptors);\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Preserves dynamic getter behavior",
+      "input": "cloned object preserves getter function",
+      "expected": "HELLO",
+      "testFn": "const orig = { text: 'hello', get upper() { return this.text.toUpperCase(); } }; const clone = shallowCloneWithDescriptors(orig); orig.text = 'world'; return clone.upper;"
+    },
+    {
+      "id": 2,
+      "name": "Preserves non-enumerable properties",
+      "input": "cloned object retains non-enumerable property",
+      "expected": 123,
+      "testFn": "const orig = {}; Object.defineProperty(orig, 'secret', { value: 123, enumerable: false }); const clone = shallowCloneWithDescriptors(orig); return clone.secret;"
+    },
+    {
+      "id": 3,
+      "name": "Retains prototype of original object",
+      "input": "clone has identical prototype",
+      "expected": true,
+      "testFn": "class Sample {} const orig = new Sample(); const clone = shallowCloneWithDescriptors(orig); return clone instanceof Sample;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Preserves dynamic getter behavior",
+        "input": "cloned object preserves getter function",
+        "expected": "HELLO",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Preserves non-enumerable properties",
+        "input": "cloned object retains non-enumerable property",
+        "expected": 123,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Retains prototype of original object",
+        "input": "clone has identical prototype",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "`JSON.parse(JSON.stringify(obj))` drops undefined, functions, Symbols, Date (turned to string), RegExp, and throws TypeError on circular references. Production deep clones require a WeakMap visited tracker.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Object.getOwnPropertyDescriptors & Property Integrity.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Object.getOwnPropertyDescriptors & Property Integrity is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Using `{ ...obj }` or `Object.assign` turns getter properties into plain value properties evaluated during copy, destroying the dynamic getter."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

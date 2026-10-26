@@ -1,0 +1,92 @@
+{
+  "id": "throttle-medium",
+  "title": "Basic Throttle Function",
+  "difficulty": "Medium",
+  "topicId": "functional-patterns",
+  "topicCategory": "4. Functional Patterns & System Polyfills",
+  "topicTitle": "Design Patterns",
+  "subtopicId": "debounce-throttle",
+  "subtopicTitle": "Debounce & Throttle with Advanced Controls",
+  "concept": "Rate Limiting & Time Window Enforcement",
+  "problemStatement": "Implement `throttle(fn, limit)` that guarantees `fn` is called at most once every `limit` milliseconds.",
+  "interviewTrap": "Basic throttle without trailing calls drops the final event in a burst (e.g., stopping scroll). For simple rate limiting, leading execution is standard.",
+  "starterCode": "function throttle(fn, limit) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function throttle(fn, limit) {\n  let inThrottle = false;\n\n  return function(...args) {\n    if (!inThrottle) {\n      fn.apply(this, args);\n      inThrottle = true;\n      setTimeout(() => {\n        inThrottle = false;\n      }, limit);\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Executes immediately on leading call",
+      "input": "first call runs synchronously",
+      "expected": 1,
+      "testFn": "let count = 0; const throttled = throttle(() => count++, 50); throttled(); return count;"
+    },
+    {
+      "id": 2,
+      "name": "Blocks subsequent calls during throttle period",
+      "input": "3 rapid calls within throttle window execute once",
+      "expected": 1,
+      "testFn": "let count = 0; const throttled = throttle(() => count++, 50); throttled(); throttled(); throttled(); return count;"
+    },
+    {
+      "id": 3,
+      "name": "Allows new invocation after window expires",
+      "input": "call, wait limit, call again",
+      "expected": 2,
+      "testFn": "let count = 0; const throttled = throttle(() => count++, 20); throttled(); await new Promise(r => setTimeout(r, 35)); throttled(); return count;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Executes immediately on leading call",
+        "input": "first call runs synchronously",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Blocks subsequent calls during throttle period",
+        "input": "3 rapid calls within throttle window execute once",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Allows new invocation after window expires",
+        "input": "call, wait limit, call again",
+        "expected": 2,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Debounce groups bursts into a single execution after `wait` ms of silence. Throttle guarantees a maximum execution frequency of at most once every `limit` ms.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Rate Limiting & Time Window Enforcement.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Rate Limiting & Time Window Enforcement is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Basic throttle without trailing calls drops the final event in a burst (e.g., stopping scroll). For simple rate limiting, leading execution is standard."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

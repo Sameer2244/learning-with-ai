@@ -4,7 +4,7 @@
   "difficulty": "Basic",
   "topicId": "async-concurrency",
   "topicCategory": "2. Asynchronous JS & Concurrency",
-  "topicTitle": "Asynchronous JS & Concurrency",
+  "topicTitle": "Runtime Engine",
   "subtopicId": "async-await-under-the-hood",
   "subtopicTitle": "Async/Await as Generators + Promise Runners",
   "concept": "Generator Protocol & Yield Delegation",

@@ -4,7 +4,7 @@
   "difficulty": "Hard",
   "topicId": "engine-internals",
   "topicCategory": "1. JS Engine & Memory Internals",
-  "topicTitle": "JS Engine & Memory Internals",
+  "topicTitle": "Core Architecture",
   "subtopicId": "lexical-scope-closures",
   "subtopicTitle": "Scope Chain, Lexical Scoping & Closures",
   "concept": "Lexical Cache Management & Memory Eviction",

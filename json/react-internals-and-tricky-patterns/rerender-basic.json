@@ -1,0 +1,92 @@
+{
+  "id": "rerender-basic",
+  "title": "Shallow Equality Comparator (shallowEqual)",
+  "difficulty": "Basic",
+  "topicId": "react-internals-js",
+  "topicCategory": "6. React Internals & Tricky Patterns",
+  "topicTitle": "React Bridge",
+  "subtopicId": "rerender-optimization",
+  "subtopicTitle": "Re-render Cascades & Memoization Strategies",
+  "concept": "Object & Prop Identity Comparison (Object.is)",
+  "problemStatement": "Implement `shallowEqual(objA, objB)` matching the exact comparator used by `React.memo` and `PureComponent`. Returns `true` if all own keys are shallowly equal using `Object.is`.",
+  "interviewTrap": "Using `===` instead of `Object.is` causes `+0` and `-0` to match incorrectly and `NaN === NaN` to fail.",
+  "starterCode": "function shallowEqual(objA, objB) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function shallowEqual(objA, objB) {\n  if (Object.is(objA, objB)) return true;\n  if (typeof objA !== 'object' || objA === null || typeof objB !== 'object' || objB === null) {\n    return false;\n  }\n\n  const keysA = Object.keys(objA);\n  const keysB = Object.keys(objB);\n\n  if (keysA.length !== keysB.length) return false;\n\n  for (let i = 0; i < keysA.length; i++) {\n    const key = keysA[i];\n    if (!Object.prototype.hasOwnProperty.call(objB, key) || !Object.is(objA[key], objB[key])) {\n      return false;\n    }\n  }\n\n  return true;\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Returns true for objects with identical top-level properties",
+      "input": "shallowEqual({ a: 1, b: 'x' }, { a: 1, b: 'x' })",
+      "expected": true,
+      "testFn": "return shallowEqual({ a: 1, b: 'x' }, { a: 1, b: 'x' });"
+    },
+    {
+      "id": 2,
+      "name": "Returns false when nested object references differ",
+      "input": "shallowEqual({ inner: {} }, { inner: {} })",
+      "expected": false,
+      "testFn": "return shallowEqual({ inner: {} }, { inner: {} });"
+    },
+    {
+      "id": 3,
+      "name": "Handles NaN properly via Object.is",
+      "input": "shallowEqual({ n: NaN }, { n: NaN })",
+      "expected": true,
+      "testFn": "return shallowEqual({ n: NaN }, { n: NaN });"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Returns true for objects with identical top-level properties",
+        "input": "shallowEqual({ a: 1, b: 'x' }, { a: 1, b: 'x' })",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Returns false when nested object references differ",
+        "input": "shallowEqual({ inner: {} }, { inner: {} })",
+        "expected": false,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles NaN properly via Object.is",
+        "input": "shallowEqual({ n: NaN }, { n: NaN })",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "By default, when a parent component renders, all its child components re-render recursively regardless of whether their props changed. `React.memo` bails out only if all props are shallowly equal.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Object & Prop Identity Comparison (Object.is).",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Object & Prop Identity Comparison (Object.is) is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Using `===` instead of `Object.is` causes `+0` and `-0` to match incorrectly and `NaN === NaN` to fail."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -4,7 +4,7 @@
   "difficulty": "Hard",
   "topicId": "react-hooks-state-machine",
   "topicCategory": "2. Hooks State Machine & Closures",
-  "topicTitle": "Hooks State Machine & Closures",
+  "topicTitle": "Hooks Internals",
   "subtopicId": "effect-timings",
   "subtopicTitle": "useEffect vs useLayoutEffect vs useInsertionEffect",
   "concept": "Scheduler Separation of Layout and Passive Effect Queues",

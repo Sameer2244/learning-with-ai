@@ -1,0 +1,96 @@
+{
+  "id": "event-medium",
+  "title": "Custom EventEmitter with 'once' and Unsubscribe",
+  "difficulty": "Medium",
+  "topicId": "browser-dom-internals",
+  "topicCategory": "5. Browser Engine & DOM Internals",
+  "topicTitle": "Browser Architecture",
+  "subtopicId": "event-propagation",
+  "subtopicTitle": "DOM Event Flow: Capturing, Bubbling & Delegation",
+  "concept": "Observer Pattern & Clean Subscription Teardown",
+  "problemStatement": "Implement `EventEmitter` with methods: `on(event, listener)`, `emit(event, ...args)`, `off(event, listener)`, and `once(event, listener)`. `on()` and `once()` must return an unsubscribe function `() => void`.",
+  "interviewTrap": "Modifying the listeners array/set while iterating over it during `emit` causes subsequent listeners to be skipped. Always iterate over a snapshot copy.",
+  "starterCode": "class EventEmitter {\n  constructor() {\n    // TODO: Initialize event storage\n  }\n\n  on(event, listener) {\n    // TODO: Register listener and return unsubscribe function\n  }\n\n  emit(event, ...args) {\n    // TODO: Trigger listeners\n  }\n\n  off(event, listener) {\n    // TODO: Remove listener\n  }\n\n  once(event, listener) {\n    // TODO: Register one-time listener\n  }\n}\n",
+  "solutionCode": "class EventEmitter {\n  constructor() {\n    this.events = new Map();\n  }\n\n  on(event, listener) {\n    if (!this.events.has(event)) {\n      this.events.set(event, new Set());\n    }\n    this.events.get(event).add(listener);\n\n    return () => this.off(event, listener);\n  }\n\n  emit(event, ...args) {\n    if (!this.events.has(event)) return false;\n    // Iterate over a copy to handle listeners modifying the set during emit\n    const listeners = Array.from(this.events.get(event));\n    for (const listener of listeners) {\n      listener(...args);\n    }\n    return listeners.length > 0;\n  }\n\n  off(event, listener) {\n    if (!this.events.has(event)) return;\n    this.events.get(event).delete(listener);\n    if (this.events.get(event).size === 0) {\n      this.events.delete(event);\n    }\n  }\n\n  once(event, listener) {\n    const wrapper = (...args) => {\n      this.off(event, wrapper);\n      listener(...args);\n    };\n    return this.on(event, wrapper);\n  }\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Notifies listeners upon emit with parameters",
+      "input": "emitter.emit('data', 'val')",
+      "expected": [
+        "val"
+      ],
+      "testFn": "const ee = new EventEmitter(); const log = []; ee.on('data', x => log.push(x)); ee.emit('data', 'val'); return log;"
+    },
+    {
+      "id": 2,
+      "name": "once() fires exactly one time then unregisters",
+      "input": "emit twice on once listener",
+      "expected": 1,
+      "testFn": "const ee = new EventEmitter(); let count = 0; ee.once('ping', () => count++); ee.emit('ping'); ee.emit('ping'); return count;"
+    },
+    {
+      "id": 3,
+      "name": "Returned unsubscribe function removes listener",
+      "input": "unsub() removes listener",
+      "expected": 1,
+      "testFn": "const ee = new EventEmitter(); let count = 0; const unsub = ee.on('tick', () => count++); ee.emit('tick'); unsub(); ee.emit('tick'); return count;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Notifies listeners upon emit with parameters",
+        "input": "emitter.emit('data', 'val')",
+        "expected": [
+          "val"
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "once() fires exactly one time then unregisters",
+        "input": "emit twice on once listener",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Returned unsubscribe function removes listener",
+        "input": "unsub() removes listener",
+        "expected": 1,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Events travel down from `window` through the DOM tree (Capturing Phase) until they reach the target (Target Phase), then bubble back up to `window` (Bubbling Phase). Event delegation attaches a single listener to a common ancestor, querying `event.target.closest()`.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Observer Pattern & Clean Subscription Teardown.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Observer Pattern & Clean Subscription Teardown is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Modifying the listeners array/set while iterating over it during `emit` causes subsequent listeners to be skipped. Always iterate over a snapshot copy."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

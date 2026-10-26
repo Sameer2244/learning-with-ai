@@ -4,7 +4,7 @@
   "difficulty": "Medium",
   "topicId": "react-engine-fiber",
   "topicCategory": "1. Fiber Architecture & Reconciliation",
-  "topicTitle": "Fiber Architecture & Reconciliation",
+  "topicTitle": "Core Architecture",
   "subtopicId": "fiber-nodes-trees",
   "subtopicTitle": "Fiber Tree & Linked List Traversal",
   "concept": "Non-Recursive Tree Traversal via Fiber Pointers",

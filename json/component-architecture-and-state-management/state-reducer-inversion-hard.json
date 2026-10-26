@@ -1,0 +1,100 @@
+{
+  "id": "state-reducer-inversion-hard",
+  "title": "Inversion of Control via Custom State Reducer",
+  "difficulty": "Hard",
+  "topicId": "component-architecture-state",
+  "topicCategory": "6. Component Architecture & State Management",
+  "topicTitle": "Architecture & State",
+  "subtopicId": "custom-hooks-reducer",
+  "subtopicTitle": "Custom Hooks & State Reducer Pattern",
+  "concept": "State Reducer Pattern & Middleware Action Interception",
+  "problemStatement": "Implement `createReducibleStore(baseReducer, initialState, customReducer)` where state transitions run through `customReducer(state, action, defaultNextState)` before updating, allowing callers to override or prevent specific actions.",
+  "interviewTrap": "The State Reducer pattern (popularized by Downshift) empowers library users to block specific internal actions (e.g. preventing a dropdown from closing on Enter) without forking the component.",
+  "starterCode": "/**\n * Downshift-style State Reducer enabling consumer action overrides.\n */\nfunction createReducibleStore(baseReducer, initialState, customReducer) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Downshift-style State Reducer enabling consumer action overrides.\n */\nfunction createReducibleStore(baseReducer, initialState, customReducer) {\n  let state = initialState;\n\n  return {\n    getState() { return state; },\n    dispatch(action) {\n      const defaultNextState = baseReducer(state, action);\n      if (typeof customReducer === 'function') {\n        state = customReducer(state, action, defaultNextState);\n      } else {\n        state = defaultNextState;\n      }\n      return state;\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Executes default reducer transitions normally",
+      "input": "dispatch INCREMENT",
+      "expected": {
+        "count": 1
+      },
+      "testFn": "const base = (s, a) => a.type === 'INC' ? { count: s.count + 1 } : s; const store = createReducibleStore(base, { count: 0 }); store.dispatch({ type: 'INC' }); return store.getState();"
+    },
+    {
+      "id": 2,
+      "name": "User custom reducer intercepts and overrides specific actions",
+      "input": "custom reducer blocks decrement below zero",
+      "expected": {
+        "count": 0
+      },
+      "testFn": "const base = (s, a) => a.type === 'DEC' ? { count: s.count - 1 } : s; const custom = (s, a, next) => next.count < 0 ? s : next; const store = createReducibleStore(base, { count: 0 }, custom); store.dispatch({ type: 'DEC' }); return store.getState();"
+    },
+    {
+      "id": 3,
+      "name": "Preserves state identity when actions are blocked",
+      "input": "verify state object reference equality when action is prevented",
+      "expected": true,
+      "testFn": "const base = (s) => ({ ...s }); const custom = (s) => s; const initial = { val: 1 }; const store = createReducibleStore(base, initial, custom); store.dispatch({ type: 'TEST' }); return store.getState() === initial;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Executes default reducer transitions normally",
+        "input": "dispatch INCREMENT",
+        "expected": {
+          "count": 1
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "User custom reducer intercepts and overrides specific actions",
+        "input": "custom reducer blocks decrement below zero",
+        "expected": {
+          "count": 0
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Preserves state identity when actions are blocked",
+        "input": "verify state object reference equality when action is prevented",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "The State Reducer pattern allows the consumer of a custom hook to intercept and customize state transitions before they are committed, giving developers total control without modifying hook internals.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for State Reducer Pattern & Middleware Action Interception.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, State Reducer Pattern & Middleware Action Interception maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "The State Reducer pattern (popularized by Downshift) empowers library users to block specific internal actions (e.g. preventing a dropdown from closing on Enter) without forking the component."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

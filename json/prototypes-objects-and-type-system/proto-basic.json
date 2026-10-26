@@ -1,0 +1,92 @@
+{
+  "id": "proto-basic",
+  "title": "Prototype Chain Walker & Distance Calculator",
+  "difficulty": "Basic",
+  "topicId": "prototypes-and-types",
+  "topicCategory": "3. Prototypes, Objects & Type System",
+  "topicTitle": "Object Model",
+  "subtopicId": "prototype-chain",
+  "subtopicTitle": "Prototype Chain & Prototypal Inheritance",
+  "concept": "[[Prototype]] Traversal to Object.prototype and null",
+  "problemStatement": "Implement `getPrototypeDepth(obj)` that traverses an object's prototype chain and returns the number of hops until `null` is reached. If `obj` is null or undefined, return 0.",
+  "interviewTrap": "Using `__proto__` directly is deprecated. Always prefer `Object.getPrototypeOf(obj)`.",
+  "starterCode": "function getPrototypeDepth(obj) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function getPrototypeDepth(obj) {\n  if (obj === null || obj === undefined) return 0;\n  let depth = 0;\n  let curr = Object.getPrototypeOf(obj);\n  while (curr !== null) {\n    depth++;\n    curr = Object.getPrototypeOf(curr);\n  }\n  return depth;\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Standard object literal has depth of 1 (Object.prototype -> null)",
+      "input": "getPrototypeDepth({})",
+      "expected": 1,
+      "testFn": "return getPrototypeDepth({});"
+    },
+    {
+      "id": 2,
+      "name": "Object created with Object.create(null) has depth 0",
+      "input": "getPrototypeDepth(Object.create(null))",
+      "expected": 0,
+      "testFn": "return getPrototypeDepth(Object.create(null));"
+    },
+    {
+      "id": 3,
+      "name": "Inherited chain depth reflects hierarchy",
+      "input": "grandchild -> parent -> Object.prototype -> null",
+      "expected": 2,
+      "testFn": "const parent = {}; const child = Object.create(parent); return getPrototypeDepth(child);"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Standard object literal has depth of 1 (Object.prototype -> null)",
+        "input": "getPrototypeDepth({})",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Object created with Object.create(null) has depth 0",
+        "input": "getPrototypeDepth(Object.create(null))",
+        "expected": 0,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Inherited chain depth reflects hierarchy",
+        "input": "grandchild -> parent -> Object.prototype -> null",
+        "expected": 2,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Every JS object has an internal `[[Prototype]]` link. Property lookup walks this chain until the property is found or `null` is reached (`Object.prototype.__proto__ === null`). Modifying a property on an instance creates an 'own property' shadowing the prototype's property.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for [[Prototype]] Traversal to Object.prototype and null.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), [[Prototype]] Traversal to Object.prototype and null is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Using `__proto__` directly is deprecated. Always prefer `Object.getPrototypeOf(obj)`."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

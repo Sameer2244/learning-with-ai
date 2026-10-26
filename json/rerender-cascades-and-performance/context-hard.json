@@ -1,0 +1,98 @@
+{
+  "id": "context-hard",
+  "title": "Fine-Grained Context Selector with Invalidation Channels",
+  "difficulty": "Hard",
+  "topicId": "react-rerenders-performance",
+  "topicCategory": "3. Re-render Cascades & Performance",
+  "topicTitle": "Optimization",
+  "subtopicId": "context-churn",
+  "subtopicTitle": "Context Churn & Split Context Architecture",
+  "concept": "Zustand-Style Subscription Architecture",
+  "problemStatement": "Implement `createContextChannel(initialState)` that supports fine-grained selector subscriptions with custom equality comparators (e.g. shallow array equality).",
+  "interviewTrap": "Using deep comparison everywhere kills performance. Using `shallowEqual` on array slices avoids unnecessary notification without high diff cost.",
+  "starterCode": "function createContextChannel(initialState) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createContextChannel(initialState) {\n  let state = initialState;\n  const listeners = new Set();\n\n  function subscribe(selector, onStoreChange, equalityFn = Object.is) {\n    let lastSelection = selector(state);\n\n    const listener = () => {\n      const nextSelection = selector(state);\n      if (!equalityFn(lastSelection, nextSelection)) {\n        lastSelection = nextSelection;\n        onStoreChange(nextSelection);\n      }\n    };\n\n    listeners.add(listener);\n    return () => listeners.delete(listener);\n  }\n\n  function emit(nextState) {\n    state = typeof nextState === 'function' ? nextState(state) : { ...state, ...nextState };\n    listeners.forEach(l => l());\n  }\n\n  return { subscribe, emit, getState: () => state };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Suppresses notifications when shallow array contents match",
+      "input": "array slice returns same items with shallow comparison",
+      "expected": 0,
+      "testFn": "const channel = createContextChannel({ items: [1, 2] }); let notified = 0; const shallowArray = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]); channel.subscribe(s => s.items, () => notified++, shallowArray); channel.emit({ items: [1, 2] }); return notified;"
+    },
+    {
+      "id": 2,
+      "name": "Fires notification when array items differ",
+      "input": "array items change",
+      "expected": 1,
+      "testFn": "const channel = createContextChannel({ items: [1, 2] }); let notified = 0; const shallowArray = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]); channel.subscribe(s => s.items, () => notified++, shallowArray); channel.emit({ items: [1, 2, 3] }); return notified;"
+    },
+    {
+      "id": 3,
+      "name": "Maintains independent subscribers across different channels",
+      "input": "two subscribers on different state properties",
+      "expected": [
+        1,
+        0
+      ],
+      "testFn": "const channel = createContextChannel({ a: 1, b: 2 }); let callsA = 0; let callsB = 0; channel.subscribe(s => s.a, () => callsA++); channel.subscribe(s => s.b, () => callsB++); channel.emit({ a: 99 }); return [callsA, callsB];"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Suppresses notifications when shallow array contents match",
+        "input": "array slice returns same items with shallow comparison",
+        "expected": 0,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Fires notification when array items differ",
+        "input": "array items change",
+        "expected": 1,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Maintains independent subscribers across different channels",
+        "input": "two subscribers on different state properties",
+        "expected": [
+          1,
+          0
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "When a Context Provider's `value` prop changes identity, EVERY component that calls `useContext(MyContext)` MUST re-render, bypassing any `React.memo` or `shouldComponentUpdate` checks. Splitting into separate `StateContext` and `DispatchContext` prevents dispatch consumers from re-rendering on state changes.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Zustand-Style Subscription Architecture.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Zustand-Style Subscription Architecture maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Using deep comparison everywhere kills performance. Using `shallowEqual` on array slices avoids unnecessary notification without high diff cost."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

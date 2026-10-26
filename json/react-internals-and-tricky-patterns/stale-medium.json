@@ -1,0 +1,92 @@
+{
+  "id": "stale-medium",
+  "title": "Fix Stale Closure in Interval Callback",
+  "difficulty": "Medium",
+  "topicId": "react-internals-js",
+  "topicCategory": "6. React Internals & Tricky Patterns",
+  "topicTitle": "React Bridge",
+  "subtopicId": "stale-closures-hooks",
+  "subtopicTitle": "Stale Closures & Dependency Array Pitfalls",
+  "concept": "Functional State Updates vs Snapshot Closure",
+  "problemStatement": "In React, `setCount(count + 1)` inside a `setInterval` with an empty dependency array always sees `count = 0`. Implement `createSafeCounter(initialValue)` that uses functional updater semantics `setCount(prev => prev + 1)` so that repeated ticks always compute against the freshest state.",
+  "interviewTrap": "Writing `state = state + 1` or capturing `state` at closure creation time. Passing an updater function `prev => prev + 1` resolves the current value at invocation time.",
+  "starterCode": "function createSafeCounter(initialValue = 0) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createSafeCounter(initialValue = 0) {\n  let state = initialValue;\n\n  function setState(updater) {\n    if (typeof updater === 'function') {\n      state = updater(state);\n    } else {\n      state = updater;\n    }\n  }\n\n  function tick() {\n    setState(prev => prev + 1);\n  }\n\n  return {\n    getState: () => state,\n    tick\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Increments accurately across multiple ticks",
+      "input": "3 ticks increment state to 3",
+      "expected": 3,
+      "testFn": "const c = createSafeCounter(0); c.tick(); c.tick(); c.tick(); return c.getState();"
+    },
+    {
+      "id": 2,
+      "name": "Works with custom starting value",
+      "input": "start at 10, tick 2 times",
+      "expected": 12,
+      "testFn": "const c = createSafeCounter(10); c.tick(); c.tick(); return c.getState();"
+    },
+    {
+      "id": 3,
+      "name": "Functional update receives actual state, not stale snapshot",
+      "input": "state updates reliably without external dependencies",
+      "expected": 100,
+      "testFn": "const c = createSafeCounter(0); for(let i=0; i<100; i++) c.tick(); return c.getState();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Increments accurately across multiple ticks",
+        "input": "3 ticks increment state to 3",
+        "expected": 3,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Works with custom starting value",
+        "input": "start at 10, tick 2 times",
+        "expected": 12,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Functional update receives actual state, not stale snapshot",
+        "input": "state updates reliably without external dependencies",
+        "expected": 100,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Every React render has its own props, state, and event handlers. A closure formed inside an effect or callback captures variables from that specific render snapshot forever unless re-created or accessed via functional updates/useRef.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Functional State Updates vs Snapshot Closure.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Functional State Updates vs Snapshot Closure is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Writing `state = state + 1` or capturing `state` at closure creation time. Passing an updater function `prev => prev + 1` resolves the current value at invocation time."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

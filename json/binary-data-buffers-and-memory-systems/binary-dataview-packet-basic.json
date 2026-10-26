@@ -1,0 +1,108 @@
+{
+  "id": "binary-dataview-packet-basic",
+  "title": "Binary Header Packet Encoder & Decoder",
+  "difficulty": "Basic",
+  "topicId": "binary-typed-arrays-buffers",
+  "topicCategory": "11. Binary Data, Buffers & Memory Systems",
+  "topicTitle": "Binary & Buffers",
+  "subtopicId": "binary-data-buffers",
+  "subtopicTitle": "Binary Data, TypedArrays & Memory Buffers",
+  "concept": "DataView Explicit Endianness & Byte Serialization",
+  "problemStatement": "Implement `encodePacket(id, statusCode, payloadLength)` and `decodePacket(arrayBuffer)` where the packet structure is: 2 bytes for uint16 ID, 1 byte for uint8 statusCode, 4 bytes for uint32 payloadLength (all Big-Endian).",
+  "interviewTrap": "TypedArrays (e.g., Uint16Array) use the CPU's native endianness (almost always Little-Endian on x86/ARM), which breaks cross-platform network protocol compliance. Always use DataView for explicit endianness control.",
+  "starterCode": "/**\n * Encodes a 7-byte binary header packet using DataView.\n */\nfunction encodePacket(id, statusCode, payloadLength) {\n  // TODO: Implement solution\n}\n\n/**\n * Decodes a 7-byte binary header packet using DataView.\n */\nfunction decodePacket(buffer) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Encodes a 7-byte binary header packet using DataView.\n */\nfunction encodePacket(id, statusCode, payloadLength) {\n  const buffer = new ArrayBuffer(7);\n  const view = new DataView(buffer);\n  view.setUint16(0, id, false); // Big-Endian\n  view.setUint8(2, statusCode);\n  view.setUint32(3, payloadLength, false); // Big-Endian\n  return buffer;\n}\n\n/**\n * Decodes a 7-byte binary header packet using DataView.\n */\nfunction decodePacket(buffer) {\n  const view = new DataView(buffer);\n  return {\n    id: view.getUint16(0, false),\n    statusCode: view.getUint8(2),\n    payloadLength: view.getUint32(3, false)\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Correctly encodes and decodes round-trip packet",
+      "input": "encode(1001, 200, 65536)",
+      "expected": {
+        "id": 1001,
+        "statusCode": 200,
+        "payloadLength": 65536
+      },
+      "testFn": "const buf = encodePacket(1001, 200, 65536); return decodePacket(buf);"
+    },
+    {
+      "id": 2,
+      "name": "Handles boundary 16-bit and 32-bit integer limits",
+      "input": "id: 65535, statusCode: 255, payload: 4294967295",
+      "expected": {
+        "id": 65535,
+        "statusCode": 255,
+        "payloadLength": 4294967295
+      },
+      "testFn": "const buf = encodePacket(65535, 255, 4294967295); return decodePacket(buf);"
+    },
+    {
+      "id": 3,
+      "name": "Enforces exact 7-byte buffer size allocation",
+      "input": "encodePacket byteLength check",
+      "expected": 7,
+      "testFn": "const buf = encodePacket(1, 1, 1); return buf.byteLength;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Correctly encodes and decodes round-trip packet",
+        "input": "encode(1001, 200, 65536)",
+        "expected": {
+          "id": 1001,
+          "statusCode": 200,
+          "payloadLength": 65536
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Handles boundary 16-bit and 32-bit integer limits",
+        "input": "id: 65535, statusCode: 255, payload: 4294967295",
+        "expected": {
+          "id": 65535,
+          "statusCode": 255,
+          "payloadLength": 4294967295
+        },
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Enforces exact 7-byte buffer size allocation",
+        "input": "encodePacket byteLength check",
+        "expected": 7,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "An ArrayBuffer is a contiguous chunk of raw heap memory. TypedArrays (Uint8Array, Int32Array) and DataViews provide structured lenses over the buffer. Endianness matters when parsing multi-byte integers across platforms.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for DataView Explicit Endianness & Byte Serialization.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), DataView Explicit Endianness & Byte Serialization is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "TypedArrays (e.g., Uint16Array) use the CPU's native endianness (almost always Little-Endian on x86/ARM), which breaks cross-platform network protocol compliance. Always use DataView for explicit endianness control."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

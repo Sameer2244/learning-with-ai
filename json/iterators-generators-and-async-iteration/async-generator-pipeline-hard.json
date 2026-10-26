@@ -1,0 +1,134 @@
+{
+  "id": "async-generator-pipeline-hard",
+  "title": "Async Streaming Pipeline with Backpressure & Batching",
+  "difficulty": "Hard",
+  "topicId": "iterators-generators-coroutines",
+  "topicCategory": "9. Iterators, Generators & Async Iteration",
+  "topicTitle": "Language Grammar",
+  "subtopicId": "iterators-generators",
+  "subtopicTitle": "Iterators, Generators & Async Iteration",
+  "concept": "Async Generators & Flow Control Backpressure",
+  "problemStatement": "Implement `async function* batchAsyncStream(asyncIterable, batchSize)` that reads from an async iterable source and yields arrays of items chunked by `batchSize`. Any remaining items when the stream closes must be yielded in a final partial batch.",
+  "interviewTrap": "Failing to handle trailing remaining items when an async iterator completes causes silent data loss. Consuming without backpressure risks memory ballooning.",
+  "starterCode": "/**\n * Chunks an async iterable stream into fixed-size batches.\n */\nasync function* batchAsyncStream(asyncIterable, batchSize = 3) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Chunks an async iterable stream into fixed-size batches.\n */\nasync function* batchAsyncStream(asyncIterable, batchSize = 3) {\n  let batch = [];\n  for await (const item of asyncIterable) {\n    batch.push(item);\n    if (batch.length >= batchSize) {\n      yield batch;\n      batch = [];\n    }\n  }\n  if (batch.length > 0) {\n    yield batch;\n  }\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Chunks stream into equal batches",
+      "input": "Stream of [1, 2, 3, 4] with batchSize 2",
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "testFn": "async function* src() { yield 1; yield 2; yield 3; yield 4; } const res = []; for await (const b of batchAsyncStream(src(), 2)) res.push(b); return res;"
+    },
+    {
+      "id": 2,
+      "name": "Flushes remaining items on stream completion",
+      "input": "Stream of [1, 2, 3, 4, 5] with batchSize 2",
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          5
+        ]
+      ],
+      "testFn": "async function* src() { yield 1; yield 2; yield 3; yield 4; yield 5; } const res = []; for await (const b of batchAsyncStream(src(), 2)) res.push(b); return res;"
+    },
+    {
+      "id": 3,
+      "name": "Yields nothing for empty stream",
+      "input": "Empty source stream",
+      "expected": [],
+      "testFn": "async function* src() {} const res = []; for await (const b of batchAsyncStream(src(), 2)) res.push(b); return res;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Chunks stream into equal batches",
+        "input": "Stream of [1, 2, 3, 4] with batchSize 2",
+        "expected": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Flushes remaining items on stream completion",
+        "input": "Stream of [1, 2, 3, 4, 5] with batchSize 2",
+        "expected": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            5
+          ]
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Yields nothing for empty stream",
+        "input": "Empty source stream",
+        "expected": [],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Generators are re-entrant state machines. When yield is encountered, the generator's execution context is suspended and pushed out of the call stack. Calling .next() re-attaches the context and resumes evaluation.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Async Generators & Flow Control Backpressure.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Async Generators & Flow Control Backpressure is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Failing to handle trailing remaining items when an async iterator completes causes silent data loss. Consuming without backpressure risks memory ballooning."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

@@ -27,9 +27,7 @@
     masteredTopics: new Set(JSON.parse(localStorage.getItem(storageMasteredKey) || '[]')),
     userCodeHistory: JSON.parse(localStorage.getItem(storageHistoryKey) || '{}'),
     lastConsoleOutput: '',
-    storageMode: localStorage.getItem('js_depth_storage_mode') || 'json',
-    sqliteAvailable: true,
-    sqliteError: null
+    storageMode: 'json'
   };
 
   // Monaco Editor Reference
@@ -99,10 +97,7 @@
   const tabSavedIcon = document.getElementById('tabSavedIcon');
 
   const btnStorageJson = document.getElementById('btnStorageJson');
-  const btnStorageSqlite = document.getElementById('btnStorageSqlite');
   const panelStorageJsonBtn = document.getElementById('panelStorageJsonBtn');
-  const panelStorageSqlBtn = document.getElementById('panelStorageSqlBtn');
-  const sqliteStatusTag = document.getElementById('sqliteStatusTag');
 
   const evaluationContent = document.getElementById('evaluationContent');
   const markMasteredBtn = document.getElementById('markMasteredBtn');
@@ -327,7 +322,7 @@
     // Render Test Cases
     renderTestCases(challenge.testCases || []);
 
-    // Check SQLite DB for saved knowledge guide
+    // Check local JSON storage for saved knowledge guide
     checkAndLoadSavedGuide(challenge);
   }
 
@@ -960,104 +955,32 @@
   }
 
   // -------------------------------------------------------------
-  // Storage Mode Management (Local JSON File vs SQLite DB)
+  // Storage Management (Strictly Local JSON File - knowledge.json)
   // -------------------------------------------------------------
 
   async function initStorageMode() {
-    try {
-      const res = await fetch('/api/storage-status');
-      const data = await res.json();
-      if (data.success) {
-        state.sqliteAvailable = Boolean(data.sqliteAvailable);
-        state.sqliteError = data.sqliteError;
-        if (!state.sqliteAvailable) {
-          state.storageMode = 'json';
-          localStorage.setItem('js_depth_storage_mode', 'json');
-        }
-      }
-    } catch (err) {
-      console.warn('[Storage] Could not fetch storage status, defaulting to JSON:', err);
-    }
+    state.storageMode = 'json';
     updateStorageUI();
   }
 
   function updateStorageUI() {
-    const isJson = state.storageMode === 'json';
-
-    // Topbar storage toggle buttons
     if (btnStorageJson) {
-      btnStorageJson.classList.toggle('active', isJson);
+      btnStorageJson.classList.add('active');
     }
-    if (btnStorageSqlite) {
-      btnStorageSqlite.classList.toggle('active', !isJson);
-      if (!state.sqliteAvailable) {
-        btnStorageSqlite.disabled = true;
-        btnStorageSqlite.classList.add('disabled');
-        btnStorageSqlite.title = 'SQLite is not installed or available in Node runtime. Local JSON file is used.';
-      } else {
-        btnStorageSqlite.disabled = false;
-        btnStorageSqlite.classList.remove('disabled');
-        btnStorageSqlite.title = 'Save guides into SQLite DB (knowledge.db)';
-      }
-    }
-
-    // Right panel toolbar storage toggle buttons
     if (panelStorageJsonBtn) {
-      panelStorageJsonBtn.classList.toggle('active', isJson);
+      panelStorageJsonBtn.classList.add('active');
     }
-    if (panelStorageSqlBtn) {
-      panelStorageSqlBtn.classList.toggle('active', !isJson);
-      if (!state.sqliteAvailable) {
-        panelStorageSqlBtn.disabled = true;
-        panelStorageSqlBtn.classList.add('disabled');
-        panelStorageSqlBtn.title = 'SQLite is not installed or available. Using Local JSON.';
-      } else {
-        panelStorageSqlBtn.disabled = false;
-        panelStorageSqlBtn.classList.remove('disabled');
-        panelStorageSqlBtn.title = 'View SQLite DB Guides (knowledge.db)';
-      }
-    }
-
-    // Status warning tag when SQLite is not installed
-    if (sqliteStatusTag) {
-      if (!state.sqliteAvailable) {
-        sqliteStatusTag.style.display = 'inline-flex';
-        sqliteStatusTag.title = 'SQLite is not installed. Saving to local knowledge.json file.';
-        sqliteStatusTag.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> SQLite not installed';
-      } else {
-        sqliteStatusTag.style.display = 'none';
-      }
-    }
-
-    // Saved guides panel tab label & icon
     if (tabSavedLabel) {
-      tabSavedLabel.textContent = isJson ? 'Saved JSON' : 'Saved SQL';
+      tabSavedLabel.textContent = 'Saved JSON';
     }
     if (tabSavedIcon) {
-      tabSavedIcon.className = isJson ? 'fa-solid fa-file-code' : 'fa-solid fa-database';
+      tabSavedIcon.className = 'fa-solid fa-file-code';
     }
   }
 
   async function handleStorageSwitch(targetMode) {
-    if (targetMode === 'sqlite' && !state.sqliteAvailable) {
-      alert('SQLite is not installed or available in this Node runtime. All knowledge guides are saved locally in "knowledge.json".');
-      return;
-    }
-
-    state.storageMode = targetMode;
-    localStorage.setItem('js_depth_storage_mode', targetMode);
+    state.storageMode = 'json';
     updateStorageUI();
-
-    try {
-      await fetch('/api/storage-mode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: targetMode })
-      });
-    } catch (e) {
-      // Non-critical
-    }
-
     await updateSavedGuidesCount();
 
     if (savedGuidesPane && savedGuidesPane.classList.contains('active')) {
@@ -1087,23 +1010,18 @@
          </div>`
       : '';
 
-    const isJsonStorage = (guide.storageMode || state.storageMode) === 'json';
-    const storageBadge = isJsonStorage
-      ? `<div class="storage-target-badge json">
-          <i class="fa-solid fa-file-code"></i> Saved in Local JSON (knowledge.json #${guide.id || 'Saved'})
-        </div>`
-      : `<div class="storage-target-badge sqlite">
-          <i class="fa-solid fa-database"></i> Saved in SQL DB (knowledge.db #${guide.id || 'Saved'})
-        </div>`;
+    const storageBadge = `<div class="storage-target-badge json">
+      <i class="fa-solid fa-file-code"></i> Saved in Local JSON (knowledge.json #${guide.id || 'Saved'})
+    </div>`;
 
     const banner = isFromAutoLoad
       ? `<div class="db-loaded-banner">
           <div class="db-banner-left">
-            <i class="fa-solid ${isJsonStorage ? 'fa-file-code' : 'fa-database'}" style="color:${isJsonStorage ? '#38bdf8' : '#4ade80'};"></i>
-            <span><strong>Loaded from ${isJsonStorage ? 'Local JSON (knowledge.json)' : 'SQL DB (knowledge.db)'}</strong> (Saved: ${guide.created_at || 'Saved'})</span>
+            <i class="fa-solid fa-file-code" style="color:#38bdf8;"></i>
+            <span><strong>Loaded from Local JSON (knowledge.json)</strong> (Saved: ${guide.created_at || 'Saved'})</span>
           </div>
-          <button class="btn-xs" id="btnRegenSaved" title="Generate fresh guide with LLM">
-            <i class="fa-solid fa-arrows-rotate"></i> Re-generate Fresh
+          <button class="btn-xs" id="btnRegenSaved" title="Re-read authoritative guide">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh
           </button>
         </div>`
       : '';
@@ -1235,7 +1153,7 @@
     }
   }
 
-  // Load Saved Knowledge Guides List from selected storage (JSON or SQLite)
+  // Load Saved Knowledge Guides List from local JSON storage
   async function loadSavedGuidesList(searchTerm = '') {
     if (!savedGuidesList) return;
 
@@ -1246,19 +1164,18 @@
     `;
 
     try {
-      const params = new URLSearchParams({ track: currentTrack, limit: '100', storageMode: state.storageMode });
+      const params = new URLSearchParams({ track: currentTrack, limit: '100' });
       if (searchTerm) params.append('search', searchTerm);
 
       const res = await fetch(`/api/knowledge-guides?${params.toString()}`);
       const data = await res.json();
 
       if (!data.success || !data.guides || data.guides.length === 0) {
-        const isJson = state.storageMode === 'json';
         savedGuidesList.innerHTML = `
           <div class="empty-eval-state" style="padding:40px 20px;">
-            <i class="fa-solid ${isJson ? 'fa-file-code' : 'fa-database'}" style="font-size:32px; color:var(--text-muted); margin-bottom:12px;"></i>
-            <h3>No Saved Knowledge Guides in ${isJson ? 'Local JSON' : 'SQLite DB'}</h3>
-            <p>Click "Deep Knowledge Guide" on any topic to generate and save guides to ${isJson ? 'knowledge.json' : 'knowledge.db'}.</p>
+            <i class="fa-solid fa-file-code" style="font-size:32px; color:var(--text-muted); margin-bottom:12px;"></i>
+            <h3>No Saved Knowledge Guides in Local JSON</h3>
+            <p>Click "Deep Knowledge Guide" on any topic to view and save guides to knowledge.json.</p>
           </div>
         `;
         return;
@@ -1272,9 +1189,8 @@
         const searchBadge = g.search_results_count > 0 
           ? `<span class="badge" style="background:rgba(2,132,199,0.15); color:#38bdf8; font-size:10px;"><i class="fa-solid fa-globe"></i> ${g.search_results_count} Specs</span>` 
           : '';
-        const isJson = state.storageMode === 'json';
-        const storageTypeBadge = `<span class="badge" style="background:${isJson ? 'rgba(14,165,233,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isJson ? '#38bdf8' : '#4ade80'}; font-size:10px;">
-          <i class="fa-solid ${isJson ? 'fa-file-code' : 'fa-database'}"></i> ${isJson ? 'JSON' : 'SQL'} #${g.id}
+        const storageTypeBadge = `<span class="badge" style="background:rgba(14,165,233,0.15); color:#38bdf8; font-size:10px;">
+          <i class="fa-solid fa-file-code"></i> JSON #${g.id}
         </span>`;
 
         item.innerHTML = `
@@ -1308,8 +1224,7 @@
 
         item.querySelector('.delete-guide-btn').addEventListener('click', async (e) => {
           e.stopPropagation();
-          const targetName = state.storageMode === 'json' ? 'local JSON file' : 'SQLite DB';
-          if (confirm(`Delete saved knowledge guide #${g.id} from ${targetName}?`)) {
+          if (confirm(`Delete saved knowledge guide #${g.id} from local JSON file?`)) {
             await deleteGuideById(g.id);
           }
         });
@@ -1478,18 +1393,12 @@
       }
     });
 
-    // Storage Mode Switchers (Local JSON vs SQLite DB)
+    // Storage Controls (Local JSON Storage)
     if (btnStorageJson) {
       btnStorageJson.addEventListener('click', () => handleStorageSwitch('json'));
     }
-    if (btnStorageSqlite) {
-      btnStorageSqlite.addEventListener('click', () => handleStorageSwitch('sqlite'));
-    }
     if (panelStorageJsonBtn) {
       panelStorageJsonBtn.addEventListener('click', () => handleStorageSwitch('json'));
-    }
-    if (panelStorageSqlBtn) {
-      panelStorageSqlBtn.addEventListener('click', () => handleStorageSwitch('sqlite'));
     }
 
     // Right Panel Tabs

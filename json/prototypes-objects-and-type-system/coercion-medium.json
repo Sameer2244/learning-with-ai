@@ -1,0 +1,92 @@
+{
+  "id": "coercion-medium",
+  "title": "Custom Symbol.toPrimitive Converter",
+  "difficulty": "Medium",
+  "topicId": "prototypes-and-types",
+  "topicCategory": "3. Prototypes, Objects & Type System",
+  "topicTitle": "Object Model",
+  "subtopicId": "type-coercion",
+  "subtopicTitle": "Implicit & Explicit Type Coercion Rules",
+  "concept": "Custom Object-to-Primitive Protocol (Symbol.toPrimitive)",
+  "problemStatement": "Implement `createMoney(amount, currency)` returning an object that supports arithmetic via `Symbol.toPrimitive`: when coerced to a `'number'`, returns `amount`; when coerced to a `'string'`, returns `${currency} ${amount}`; and when `'default'`, returns `amount`.",
+  "interviewTrap": "If `Symbol.toPrimitive` is absent, JS falls back to calling `valueOf()` and then `toString()`. Providing `Symbol.toPrimitive` takes absolute precedence.",
+  "starterCode": "function createMoney(amount, currency = 'USD') {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function createMoney(amount, currency = 'USD') {\n  return {\n    amount,\n    currency,\n    [Symbol.toPrimitive](hint) {\n      if (hint === 'string') {\n        return `${this.currency} ${this.amount}`;\n      }\n      return this.amount;\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Supports mathematical addition using number hint",
+      "input": "createMoney(50) + createMoney(25)",
+      "expected": 75,
+      "testFn": "const m1 = createMoney(50); const m2 = createMoney(25); return m1 + m2;"
+    },
+    {
+      "id": 2,
+      "name": "Formats currency in template literal using string hint",
+      "input": "`Total: ${createMoney(100, 'EUR')}`",
+      "expected": "Total: EUR 100",
+      "testFn": "const m = createMoney(100, 'EUR'); return `Total: ${m}`;"
+    },
+    {
+      "id": 3,
+      "name": "Supports numeric comparison operators (<, >)",
+      "input": "createMoney(10) < createMoney(20)",
+      "expected": true,
+      "testFn": "return createMoney(10) < createMoney(20);"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Supports mathematical addition using number hint",
+        "input": "createMoney(50) + createMoney(25)",
+        "expected": 75,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Formats currency in template literal using string hint",
+        "input": "`Total: ${createMoney(100, 'EUR')}`",
+        "expected": "Total: EUR 100",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Supports numeric comparison operators (<, >)",
+        "input": "createMoney(10) < createMoney(20)",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "The engine coerces primitives via internal algorithms. In loose equality (`==`), boolean values are first coerced to numbers, objects are coerced via `ToPrimitive(hint)`, and `null == undefined` is exclusively true.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Custom Object-to-Primitive Protocol (Symbol.toPrimitive).",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Custom Object-to-Primitive Protocol (Symbol.toPrimitive) is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "If `Symbol.toPrimitive` is absent, JS falls back to calling `valueOf()` and then `toString()`. Providing `Symbol.toPrimitive` takes absolute precedence."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

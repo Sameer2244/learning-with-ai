@@ -4,7 +4,7 @@
   "difficulty": "Medium",
   "topicId": "engine-internals",
   "topicCategory": "1. JS Engine & Memory Internals",
-  "topicTitle": "JS Engine & Memory Internals",
+  "topicTitle": "Core Architecture",
   "subtopicId": "execution-context",
   "subtopicTitle": "Execution Context & Call Stack",
   "concept": "Tail-Call Trampolining & Heap vs Stack Allocation",

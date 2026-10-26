@@ -1,0 +1,92 @@
+{
+  "id": "curry-basic",
+  "title": "Curry a 3-Argument Function",
+  "difficulty": "Basic",
+  "topicId": "functional-patterns",
+  "topicCategory": "4. Functional Patterns & System Polyfills",
+  "topicTitle": "Design Patterns",
+  "subtopicId": "curry-compose",
+  "subtopicTitle": "Currying, Partial Application & Function Composition",
+  "concept": "Fixed Arity Currying & Closures",
+  "problemStatement": "Implement `curry3(fn)` that curries a function taking exactly 3 arguments, allowing calls like `fn(1)(2)(3)`, `fn(1, 2)(3)`, or `fn(1)(2, 3)`.",
+  "interviewTrap": "Not handling grouped arguments like `fn(1, 2)(3)` where multiple parameters are supplied in a single invocation.",
+  "starterCode": "function curry3(fn) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function curry3(fn) {\n  return function curried(...args) {\n    if (args.length >= 3) {\n      return fn(...args);\n    }\n    return function(...moreArgs) {\n      return curried(...args, ...moreArgs);\n    };\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Accepts 3 arguments one-by-one",
+      "input": "curriedAdd(1)(2)(3)",
+      "expected": 6,
+      "testFn": "const add = (a, b, c) => a + b + c; const cAdd = curry3(add); return cAdd(1)(2)(3);"
+    },
+    {
+      "id": 2,
+      "name": "Accepts 2 arguments then 1 argument",
+      "input": "curriedAdd(1, 2)(3)",
+      "expected": 6,
+      "testFn": "const add = (a, b, c) => a + b + c; const cAdd = curry3(add); return cAdd(1, 2)(3);"
+    },
+    {
+      "id": 3,
+      "name": "Accepts all 3 arguments at once",
+      "input": "curriedAdd(1, 2, 3)",
+      "expected": 6,
+      "testFn": "const add = (a, b, c) => a + b + c; const cAdd = curry3(add); return cAdd(1, 2, 3);"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Accepts 3 arguments one-by-one",
+        "input": "curriedAdd(1)(2)(3)",
+        "expected": 6,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Accepts 2 arguments then 1 argument",
+        "input": "curriedAdd(1, 2)(3)",
+        "expected": 6,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Accepts all 3 arguments at once",
+        "input": "curriedAdd(1, 2, 3)",
+        "expected": 6,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Currying converts a function taking N arguments `f(a, b, c)` into a sequence of N unary functions `f(a)(b)(c)`. When total collected arguments `>= fn.length`, the underlying function executes.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Fixed Arity Currying & Closures.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Fixed Arity Currying & Closures is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Not handling grouped arguments like `fn(1, 2)(3)` where multiple parameters are supplied in a single invocation."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

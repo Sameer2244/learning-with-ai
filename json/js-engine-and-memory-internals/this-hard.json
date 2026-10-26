@@ -4,7 +4,7 @@
   "difficulty": "Hard",
   "topicId": "engine-internals",
   "topicCategory": "1. JS Engine & Memory Internals",
-  "topicTitle": "JS Engine & Memory Internals",
+  "topicTitle": "Core Architecture",
   "subtopicId": "this-binding",
   "subtopicTitle": "'this' Keyword Mechanics & Binding Rules",
   "concept": "Currying, Prototype Chaining, and new.target Resolution",

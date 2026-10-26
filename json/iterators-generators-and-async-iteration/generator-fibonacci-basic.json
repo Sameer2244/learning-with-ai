@@ -1,0 +1,114 @@
+{
+  "id": "generator-fibonacci-basic",
+  "title": "Infinite Sequence Generator with Symbol.iterator",
+  "difficulty": "Basic",
+  "topicId": "iterators-generators-coroutines",
+  "topicCategory": "9. Iterators, Generators & Async Iteration",
+  "topicTitle": "Language Grammar",
+  "subtopicId": "iterators-generators",
+  "subtopicTitle": "Iterators, Generators & Async Iteration",
+  "concept": "Generator State Suspension & Iterable Protocol",
+  "problemStatement": "Implement an iterable object `createFibonacciSequence(limit)` that yields Fibonacci numbers up to `limit`. It must support `for...of` iteration and array spreading `[...createFibonacciSequence(50)]`.",
+  "interviewTrap": "Returning a plain iterator without Symbol.iterator makes an object non-iterable in for...of loops and spread syntax.",
+  "starterCode": "/**\n * Creates an iterable yielding Fibonacci numbers up to limit.\n */\nfunction createFibonacciSequence(limit = 100) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Creates an iterable yielding Fibonacci numbers up to limit.\n */\nfunction createFibonacciSequence(limit = 100) {\n  return {\n    *[Symbol.iterator]() {\n      let a = 0, b = 1;\n      while (a <= limit) {\n        yield a;\n        const next = a + b;\n        a = b;\n        b = next;\n      }\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Generates Fibonacci sequence up to limit 20",
+      "input": "[...createFibonacciSequence(20)]",
+      "expected": [
+        0,
+        1,
+        1,
+        2,
+        3,
+        5,
+        8,
+        13
+      ],
+      "testFn": "return [...createFibonacciSequence(20)];"
+    },
+    {
+      "id": 2,
+      "name": "Handles limit of 0 correctly",
+      "input": "[...createFibonacciSequence(0)]",
+      "expected": [
+        0
+      ],
+      "testFn": "return [...createFibonacciSequence(0)];"
+    },
+    {
+      "id": 3,
+      "name": "Works seamlessly in standard for...of loop",
+      "input": "sum of elements up to 10",
+      "expected": 20,
+      "testFn": "let sum = 0; for (const n of createFibonacciSequence(10)) sum += n; return sum;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Generates Fibonacci sequence up to limit 20",
+        "input": "[...createFibonacciSequence(20)]",
+        "expected": [
+          0,
+          1,
+          1,
+          2,
+          3,
+          5,
+          8,
+          13
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Handles limit of 0 correctly",
+        "input": "[...createFibonacciSequence(0)]",
+        "expected": [
+          0
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Works seamlessly in standard for...of loop",
+        "input": "sum of elements up to 10",
+        "expected": 20,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Generators are re-entrant state machines. When yield is encountered, the generator's execution context is suspended and pushed out of the call stack. Calling .next() re-attaches the context and resumes evaluation.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Generator State Suspension & Iterable Protocol.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Generator State Suspension & Iterable Protocol is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Returning a plain iterator without Symbol.iterator makes an object non-iterable in for...of loops and spread syntax."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

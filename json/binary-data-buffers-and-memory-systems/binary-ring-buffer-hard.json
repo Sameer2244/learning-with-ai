@@ -1,0 +1,104 @@
+{
+  "id": "binary-ring-buffer-hard",
+  "title": "Lockless Circular Ring Buffer with TypedArrays",
+  "difficulty": "Hard",
+  "topicId": "binary-typed-arrays-buffers",
+  "topicCategory": "11. Binary Data, Buffers & Memory Systems",
+  "topicTitle": "Binary & Buffers",
+  "subtopicId": "binary-data-buffers",
+  "subtopicTitle": "Binary Data, TypedArrays & Memory Buffers",
+  "concept": "Ring Buffer Head/Tail Pointers & Modulo Addressing",
+  "problemStatement": "Implement `createCircularBuffer(capacity)` that manages a fixed-size byte buffer. Methods: `write(byte)` (returns false if full), `read()` (returns byte or null if empty), `isFull()`, and `isEmpty()`.",
+  "interviewTrap": "In shared-memory multi-threaded Web Worker architectures, circular buffers prevent lock contention between audio/compute threads and the UI thread.",
+  "starterCode": "/**\n * Fixed-capacity circular byte buffer implemented over Uint8Array.\n */\nfunction createCircularBuffer(capacity = 8) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Fixed-capacity circular byte buffer implemented over Uint8Array.\n */\nfunction createCircularBuffer(capacity = 8) {\n  const buffer = new Uint8Array(capacity + 1);\n  let head = 0;\n  let tail = 0;\n  const size = capacity + 1;\n\n  return {\n    write(byte) {\n      if ((tail + 1) % size === head) return false; // Full\n      buffer[tail] = byte & 0xFF;\n      tail = (tail + 1) % size;\n      return true;\n    },\n    read() {\n      if (head === tail) return null; // Empty\n      const val = buffer[head];\n      head = (head + 1) % size;\n      return val;\n    },\n    isFull() {\n      return (tail + 1) % size === head;\n    },\n    isEmpty() {\n      return head === tail;\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Writes and reads bytes in FIFO order",
+      "input": "write 42, 84 then read both",
+      "expected": [
+        42,
+        84
+      ],
+      "testFn": "const ring = createCircularBuffer(4); ring.write(42); ring.write(84); return [ring.read(), ring.read()];"
+    },
+    {
+      "id": 2,
+      "name": "Detects full condition and rejects overflow writes",
+      "input": "write 3 items into capacity 2",
+      "expected": false,
+      "testFn": "const ring = createCircularBuffer(2); ring.write(1); ring.write(2); return ring.write(3);"
+    },
+    {
+      "id": 3,
+      "name": "Wraps around head and tail pointers seamlessly",
+      "input": "write 2, read 2, write 2 more",
+      "expected": [
+        30,
+        40
+      ],
+      "testFn": "const ring = createCircularBuffer(2); ring.write(10); ring.write(20); ring.read(); ring.read(); ring.write(30); ring.write(40); return [ring.read(), ring.read()];"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Writes and reads bytes in FIFO order",
+        "input": "write 42, 84 then read both",
+        "expected": [
+          42,
+          84
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Detects full condition and rejects overflow writes",
+        "input": "write 3 items into capacity 2",
+        "expected": false,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Wraps around head and tail pointers seamlessly",
+        "input": "write 2, read 2, write 2 more",
+        "expected": [
+          30,
+          40
+        ],
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "An ArrayBuffer is a contiguous chunk of raw heap memory. TypedArrays (Uint8Array, Int32Array) and DataViews provide structured lenses over the buffer. Endianness matters when parsing multi-byte integers across platforms.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Ring Buffer Head/Tail Pointers & Modulo Addressing.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Ring Buffer Head/Tail Pointers & Modulo Addressing is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "In shared-memory multi-threaded Web Worker architectures, circular buffers prevent lock contention between audio/compute threads and the UI thread."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

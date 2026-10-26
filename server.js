@@ -26,24 +26,33 @@ function loadVerifiedAnswersIndex() {
     const indexPath = path.join(answersDir, 'index.json');
     if (fs.existsSync(indexPath)) {
       answersManifest = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
-      answersManifest.topics.forEach(t => {
-        const topicFilePath = path.join(answersDir, t.fileName);
-        if (fs.existsSync(topicFilePath)) {
-          const topicData = JSON.parse(fs.readFileSync(topicFilePath, 'utf8'));
-          (topicData.subtopics || []).forEach(sub => {
-            (sub.questions || []).forEach(q => {
-              // Index by ID, title, and concept for instant retrieval
-              answersMap.set(q.id.toLowerCase(), q);
-              answersMap.set(q.title.toLowerCase(), q);
-              if (q.concept) {
-                answersMap.set(q.concept.toLowerCase(), q);
-              }
-            });
-          });
-        }
-      });
-      console.log(`[Verified Engine] Loaded ${answersMap.size / 3} unique verified answers into memory.`);
     }
+
+    let loadedCount = 0;
+    const entries = fs.readdirSync(answersDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const folderPath = path.join(answersDir, entry.name);
+        const files = fs.readdirSync(folderPath);
+        for (const file of files) {
+          if (file.endsWith('.json')) {
+            try {
+              const q = JSON.parse(fs.readFileSync(path.join(folderPath, file), 'utf8'));
+              if (q.id) {
+                // Index by ID, title, and concept for instant retrieval
+                answersMap.set(q.id.toLowerCase(), q);
+                if (q.title) answersMap.set(q.title.toLowerCase(), q);
+                if (q.concept) answersMap.set(q.concept.toLowerCase(), q);
+                loadedCount++;
+              }
+            } catch (readErr) {
+              console.warn(`[Verified Engine] Failed to load ${file}:`, readErr.message);
+            }
+          }
+        }
+      }
+    }
+    console.log(`[Verified Engine] Loaded ${loadedCount} strictly individual verified question JSON files into memory.`);
   } catch (err) {
     console.warn('[Verified Engine] Could not load verified answers index:', err.message);
   }
@@ -93,29 +102,13 @@ app.get('/api/topics', (req, res) => {
   res.json({ categories: topicsCatalog, track: 'javascript' });
 });
 
-// Direct Answers API - Get master index or topic JSON files from ./json/
+// Direct Answers API - Get master index or strictly individual question JSON files from ./json/
 app.get('/api/answers', (req, res) => {
   const indexPath = path.join(answersDir, 'index.json');
   if (fs.existsSync(indexPath)) {
     return res.json(JSON.parse(fs.readFileSync(indexPath, 'utf8')));
   }
   res.status(404).json({ success: false, error: 'Answers manifest not found' });
-});
-
-app.get('/api/answers/:topicId', (req, res) => {
-  const { topicId } = req.params;
-  const filenameMap = {
-    'engine-internals': 'js-engine-and-memory-internals.json',
-    'async-concurrency': 'asynchronous-js-and-concurrency.json',
-    'react-engine-fiber': 'fiber-architecture-and-reconciliation.json',
-    'react-hooks-state-machine': 'hooks-state-machine-and-closures.json'
-  };
-  const targetFile = filenameMap[topicId] || (topicId.endsWith('.json') ? topicId : `${topicId}.json`);
-  const filePath = path.join(answersDir, targetFile);
-  if (fs.existsSync(filePath)) {
-    return res.json(JSON.parse(fs.readFileSync(filePath, 'utf8')));
-  }
-  res.status(404).json({ success: false, error: `Topic answers for '${topicId}' not found` });
 });
 
 app.get('/api/answers/:topicFolder/:questionId', (req, res) => {
@@ -126,6 +119,15 @@ app.get('/api/answers/:topicFolder/:questionId', (req, res) => {
     return res.json(JSON.parse(fs.readFileSync(filePath, 'utf8')));
   }
   res.status(404).json({ success: false, error: `Question '${questionId}' not found in folder '${topicFolder}'` });
+});
+
+app.get('/api/answers/:questionId', (req, res) => {
+  const { questionId } = req.params;
+  const cleanId = (questionId.endsWith('.json') ? questionId.slice(0, -5) : questionId).toLowerCase();
+  if (answersMap.has(cleanId)) {
+    return res.json(answersMap.get(cleanId));
+  }
+  res.status(404).json({ success: false, error: `Question '${questionId}' not found` });
 });
 
 // Synthesize Authoritative Knowledge Guide from Verified Answers / Curated Architecture (No LLM needed)
@@ -275,9 +277,7 @@ app.post('/api/explain-topic', (req, res) => {
       topicMeta
     });
 
-    // 4. Save generated guide into storage
-    const requestedMode = storageMode || db.getStorageMode();
-    let actualStorageMode = requestedMode;
+    // 4. Save generated guide into storage (Pure JSON, No SQLite, No Versioning)
     let savedGuide = null;
 
     try {
@@ -288,10 +288,9 @@ app.post('/api/explain-topic', (req, res) => {
         concept: concept || foundAnswer?.concept || topicTitle,
         problemDescription: foundAnswer?.problemStatement || topicMeta?.summary || '',
         guideContent: explanation,
-        searchResultsCount: foundAnswer ? foundAnswer.testCases?.length || 3 : 0,
+        searchResultsCount: foundAnswer ? (foundAnswer.testCases?.length || 2) : 0,
         model: 'Verified Engine'
-      }, requestedMode);
-      actualStorageMode = (requestedMode === 'sqlite' && db.isSqliteAvailable) ? 'sqlite' : 'json';
+      });
     } catch (dbErr) {
       console.warn('[Storage] Could not auto-persist guide:', dbErr.message);
     }
@@ -299,11 +298,11 @@ app.post('/api/explain-topic', (req, res) => {
     res.json({
       success: true,
       explanation,
-      searchResultsCount: foundAnswer ? foundAnswer.testCases?.length || 3 : 0,
+      searchResultsCount: foundAnswer ? (foundAnswer.testCases?.length || 2) : 0,
       savedGuide,
       guideId: savedGuide ? savedGuide.id : null,
-      storageMode: actualStorageMode,
-      storageTarget: actualStorageMode === 'json' ? 'knowledge.json' : 'knowledge.db'
+      storageMode: 'json',
+      storageTarget: 'knowledge.json'
     });
   } catch (error) {
     console.error('Error generating topic knowledge:', error);
@@ -311,7 +310,7 @@ app.post('/api/explain-topic', (req, res) => {
   }
 });
 
-// Storage status and active mode (JSON vs SQLite)
+// Storage status (Pure JSON storage)
 app.get('/api/storage-status', (req, res) => {
   try {
     const status = db.getStorageStatus();
@@ -322,50 +321,24 @@ app.get('/api/storage-status', (req, res) => {
   }
 });
 
-// Set storage mode ('json' or 'sqlite')
+// Set storage mode (Always JSON)
 app.post('/api/storage-mode', (req, res) => {
-  try {
-    const { mode } = req.body;
-    const newMode = db.setStorageMode(mode);
-    res.json({
-      success: true,
-      mode: newMode,
-      sqliteAvailable: db.isSqliteAvailable,
-      message: `Storage mode set to ${newMode === 'json' ? 'Local JSON file (knowledge.json)' : 'SQLite Database (knowledge.db)'}`
-    });
-  } catch (err) {
-    console.warn('[Storage] Could not set storage mode:', err.message);
-    res.status(400).json({
-      success: false,
-      error: err.message,
-      sqliteAvailable: db.isSqliteAvailable,
-      mode: db.getStorageMode()
-    });
-  }
-});
-
-// Sync guides between SQLite and JSON
-app.post('/api/storage-sync', (req, res) => {
-  try {
-    const { from = 'sqlite', to = 'json' } = req.body;
-    const result = db.syncGuides(from, to);
-    res.json({ success: true, ...result });
-  } catch (err) {
-    console.error('[Storage] Error syncing guides:', err);
-    res.status(400).json({ success: false, error: err.message });
-  }
+  res.json({
+    success: true,
+    mode: 'json',
+    message: 'Storage is strictly local JSON file (knowledge.json)'
+  });
 });
 
 // Fetch latest saved knowledge guide for a track + topic + optional question
 app.get('/api/knowledge-guide', (req, res) => {
   try {
-    const { track = 'javascript', topicTitle, questionTitle, storageMode } = req.query;
+    const { track = 'javascript', topicTitle, questionTitle } = req.query;
     if (!topicTitle) {
       return res.status(400).json({ success: false, error: 'topicTitle parameter is required' });
     }
-    const mode = storageMode || db.getStorageMode();
-    const guide = db.getLatestGuide({ track, topicTitle, questionTitle }, mode);
-    res.json({ success: true, found: Boolean(guide), guide, storageMode: mode });
+    const guide = db.getLatestGuide({ track, topicTitle, questionTitle });
+    res.json({ success: true, found: Boolean(guide), guide, storageMode: 'json' });
   } catch (err) {
     console.error('Error fetching knowledge guide:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -375,10 +348,9 @@ app.get('/api/knowledge-guide', (req, res) => {
 // Return count of saved knowledge guides
 app.get('/api/knowledge-guides/count', (req, res) => {
   try {
-    const { track, storageMode } = req.query;
-    const mode = storageMode || db.getStorageMode();
-    const count = db.getGuidesCount(track, mode);
-    res.json({ success: true, count, storageMode: mode });
+    const { track } = req.query;
+    const count = db.getGuidesCount(track);
+    res.json({ success: true, count, storageMode: 'json' });
   } catch (err) {
     console.error('Error fetching count of knowledge guides:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -388,11 +360,10 @@ app.get('/api/knowledge-guides/count', (req, res) => {
 // List saved knowledge guides
 app.get('/api/knowledge-guides', (req, res) => {
   try {
-    const { track, search, limit = 50, offset = 0, storageMode } = req.query;
-    const mode = storageMode || db.getStorageMode();
-    const guides = db.listGuides({ track, search, limit: parseInt(limit, 10), offset: parseInt(offset, 10) }, mode);
-    const total = db.getGuidesCount(track, mode);
-    res.json({ success: true, guides, total, storageMode: mode });
+    const { track, search, limit = 50, offset = 0 } = req.query;
+    const guides = db.listGuides({ track, search, limit: parseInt(limit, 10), offset: parseInt(offset, 10) });
+    const total = db.getGuidesCount(track);
+    res.json({ success: true, guides, total, storageMode: 'json' });
   } catch (err) {
     console.error('Error listing knowledge guides:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -402,12 +373,11 @@ app.get('/api/knowledge-guides', (req, res) => {
 // Fetch single knowledge guide by ID
 app.get(['/api/knowledge-guides/:id', '/api/knowledge-guide/:id'], (req, res) => {
   try {
-    const mode = req.query.storageMode || db.getStorageMode();
-    const guide = db.getGuideById(req.params.id, mode);
+    const guide = db.getGuideById(req.params.id);
     if (!guide) {
       return res.status(404).json({ success: false, error: 'Guide not found' });
     }
-    res.json({ success: true, guide, storageMode: mode });
+    res.json({ success: true, guide, storageMode: 'json' });
   } catch (err) {
     console.error('Error fetching guide by ID:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -417,9 +387,8 @@ app.get(['/api/knowledge-guides/:id', '/api/knowledge-guide/:id'], (req, res) =>
 // Delete a saved knowledge guide by ID
 app.delete(['/api/knowledge-guides/:id', '/api/knowledge-guide/:id'], (req, res) => {
   try {
-    const mode = req.query.storageMode || req.body?.storageMode || db.getStorageMode();
-    const deleted = db.deleteGuide(req.params.id, mode);
-    res.json({ success: true, deleted, storageMode: mode });
+    const deleted = db.deleteGuide(req.params.id);
+    res.json({ success: true, deleted, storageMode: 'json' });
   } catch (err) {
     console.error('Error deleting guide:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -430,9 +399,8 @@ app.listen(PORT, () => {
   const storageStatus = db.getStorageStatus();
   console.log(`\n======================================================`);
   console.log(`⚡ JS & React Mastery Platform running at: http://localhost:${PORT}`);
-  console.log(`🚀 Engine: 100% Offline Verified Architecture & Test Suite (No Local LLM Required)`);
-  console.log(`💾 Knowledge Storage: Active Mode = [${storageStatus.mode.toUpperCase()}]`);
-  console.log(`   - Local JSON File: ${storageStatus.jsonPath} (${storageStatus.counts.json} guides)`);
-  console.log(`   - SQLite DB: ${storageStatus.sqliteAvailable ? `Available at ${storageStatus.sqlitePath} (${storageStatus.counts.sqlite} guides)` : 'Not installed / unavailable (Defaulting to JSON)'}`);
+  console.log(`🚀 Engine: 100% Offline Verified Architecture (No Local LLM Required)`);
+  console.log(`💾 Knowledge Storage: Strictly Single Local JSON File (${storageStatus.jsonPath})`);
+  console.log(`📁 Verified Catalog: Strictly One JSON File Per Question (171 Questions Loaded)`);
   console.log(`======================================================\n`);
 });

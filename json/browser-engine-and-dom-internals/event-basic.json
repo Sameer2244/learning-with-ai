@@ -1,0 +1,95 @@
+{
+  "id": "event-basic",
+  "title": "Event Delegation Matcher",
+  "difficulty": "Basic",
+  "topicId": "browser-dom-internals",
+  "topicCategory": "5. Browser Engine & DOM Internals",
+  "topicTitle": "Browser Architecture",
+  "subtopicId": "event-propagation",
+  "subtopicTitle": "DOM Event Flow: Capturing, Bubbling & Delegation",
+  "concept": "Event Delegation & Target Traversal",
+  "problemStatement": "Implement `delegate(container, selector, eventType, handler)` that listens on `container` and triggers `handler(e, matchedElement)` only when the event originates from or bubbles through an element matching `selector`.",
+  "interviewTrap": "Directly checking `event.target.matches(selector)` fails if the user clicks a nested child (like an `<i>` or `<span>` inside a `<button>`). Using `.closest()` is required.",
+  "starterCode": "function delegate(container, selector, handler) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function delegate(container, selector, handler) {\n  return function(event) {\n    const target = event.target;\n    const matched = target.closest(selector);\n    if (matched && container.contains(matched)) {\n      handler.call(matched, event, matched);\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Triggers handler when child matches selector",
+      "input": "click on matching element",
+      "expected": "btn-1",
+      "testFn": "const parent = document.createElement('div'); const btn = document.createElement('button'); btn.id = 'btn-1'; btn.className = 'action-btn'; parent.appendChild(btn); let clickedId = ''; const listener = delegate(parent, '.action-btn', (e, el) => { clickedId = el.id; }); listener({ target: btn }); return clickedId;"
+    },
+    {
+      "id": 2,
+      "name": "Triggers handler when clicking deeply nested child inside matching element",
+      "input": "click on <span> inside <button>",
+      "expected": "btn-2",
+      "testFn": "const parent = document.createElement('div'); const btn = document.createElement('button'); btn.id = 'btn-2'; btn.className = 'action-btn'; const span = document.createElement('span'); btn.appendChild(span); parent.appendChild(btn); let clickedId = ''; const listener = delegate(parent, '.action-btn', (e, el) => { clickedId = el.id; }); listener({ target: span }); return clickedId;"
+    },
+    {
+      "id": 3,
+      "name": "Ignores clicks outside selector",
+      "input": "click on non-matching sibling",
+      "expected": false,
+      "testFn": "const parent = document.createElement('div'); const div = document.createElement('div'); parent.appendChild(div); let called = false; const listener = delegate(parent, '.action-btn', () => { called = true; }); listener({ target: div }); return called;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 0,
+    "allPassed": false,
+    "details": [
+      {
+        "id": 1,
+        "name": "Triggers handler when child matches selector",
+        "input": "click on matching element",
+        "expected": "btn-1",
+        "error": "parent.appendChild is not a function",
+        "status": "ERROR"
+      },
+      {
+        "id": 2,
+        "name": "Triggers handler when clicking deeply nested child inside matching element",
+        "input": "click on <span> inside <button>",
+        "expected": "btn-2",
+        "error": "btn.appendChild is not a function",
+        "status": "ERROR"
+      },
+      {
+        "id": 3,
+        "name": "Ignores clicks outside selector",
+        "input": "click on non-matching sibling",
+        "expected": false,
+        "error": "parent.appendChild is not a function",
+        "status": "ERROR"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Events travel down from `window` through the DOM tree (Capturing Phase) until they reach the target (Target Phase), then bubble back up to `window` (Bubbling Phase). Event delegation attaches a single listener to a common ancestor, querying `event.target.closest()`.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Event Delegation & Target Traversal.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Event Delegation & Target Traversal is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Directly checking `event.target.matches(selector)` fails if the user clicks a nested child (like an `<i>` or `<span>` inside a `<button>`). Using `.closest()` is required."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

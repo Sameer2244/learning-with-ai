@@ -1,0 +1,92 @@
+{
+  "id": "array-medium",
+  "title": "Implement Array.prototype.myReduce (Compliant Spec)",
+  "difficulty": "Medium",
+  "topicId": "functional-patterns",
+  "topicCategory": "4. Functional Patterns & System Polyfills",
+  "topicTitle": "Design Patterns",
+  "subtopicId": "array-polyfills",
+  "subtopicTitle": "Core Array & Utility Polyfills from Scratch",
+  "concept": "Accumulator State & Initial Value Resolution",
+  "problemStatement": "Implement `myReduce(callback, initialValue)` on `Array.prototype`. If `initialValue` is not provided, the first non-empty element is used as the accumulator and iteration begins at the next non-empty index. Throws `TypeError` if invoked on an empty array without an initialValue.",
+  "interviewTrap": "Checking `if (!initialValue)` breaks when `initialValue` is `0`, `false`, or `''`! You MUST check `arguments.length > 1`.",
+  "starterCode": "Array.prototype.myReduce = function(callback, initialValue) {\n  // TODO: Implement solution\n};\n",
+  "solutionCode": "Array.prototype.myReduce = function(callback, initialValue) {\n  if (typeof callback !== 'function') throw new TypeError('Callback must be a function');\n  \n  let index = 0;\n  let accumulator;\n\n  if (arguments.length > 1) {\n    accumulator = initialValue;\n  } else {\n    // Find first non-empty slot\n    while (index < this.length && !(index in this)) {\n      index++;\n    }\n    if (index >= this.length) {\n      throw new TypeError('Reduce of empty array with no initial value');\n    }\n    accumulator = this[index++];\n  }\n\n  for (; index < this.length; index++) {\n    if (index in this) {\n      accumulator = callback(accumulator, this[index], index, this);\n    }\n  }\n\n  return accumulator;\n};\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Sums array without initialValue",
+      "input": "[1, 2, 3, 4].myReduce((acc, x) => acc + x)",
+      "expected": 10,
+      "testFn": "return [1, 2, 3, 4].myReduce((acc, x) => acc + x);"
+    },
+    {
+      "id": 2,
+      "name": "Handles 0 as explicit initialValue correctly",
+      "input": "[1, 2, 3].myReduce((acc, x) => acc + x, 0)",
+      "expected": 6,
+      "testFn": "return [1, 2, 3].myReduce((acc, x) => acc + x, 0);"
+    },
+    {
+      "id": 3,
+      "name": "Throws TypeError on empty array with no initialValue",
+      "input": "[].myReduce(fn) throws TypeError",
+      "expected": true,
+      "testFn": "try { [].myReduce((a, b) => a + b); return false; } catch (e) { return e instanceof TypeError; }"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Sums array without initialValue",
+        "input": "[1, 2, 3, 4].myReduce((acc, x) => acc + x)",
+        "expected": 10,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Handles 0 as explicit initialValue correctly",
+        "input": "[1, 2, 3].myReduce((acc, x) => acc + x, 0)",
+        "expected": 6,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Throws TypeError on empty array with no initialValue",
+        "input": "[].myReduce(fn) throws TypeError",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Native array methods must respect sparse arrays (`in` operator check), handle absent `initialValue` in `reduce` (skipping holes to find the first real element), and preserve the caller's prototype chain.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Accumulator State & Initial Value Resolution.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Accumulator State & Initial Value Resolution is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Checking `if (!initialValue)` breaks when `initialValue` is `0`, `false`, or `''`! You MUST check `arguments.length > 1`."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

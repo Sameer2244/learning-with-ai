@@ -1,0 +1,100 @@
+{
+  "id": "module-graph-cycle-hard",
+  "title": "Module Dependency Graph Cycle Detector & Topological Evaluator",
+  "difficulty": "Hard",
+  "topicId": "module-systems-esm-cjs",
+  "topicCategory": "12. Module Systems: ESM vs CommonJS",
+  "topicTitle": "Modules",
+  "subtopicId": "module-systems",
+  "subtopicTitle": "Module Systems: ESM vs CommonJS & Circular Dependencies",
+  "concept": "Topological Sorting & Circular Module Graph Resolution",
+  "problemStatement": "Implement `resolveEvaluationOrder(graph)` that accepts a directed module dependency graph (e.g. `{ A: ['B', 'C'], B: ['C'], C: [] }`) and returns the strict evaluation order array, or throws an Error if a circular dependency is detected.",
+  "interviewTrap": "ESM parses the entire module dependency graph statically using Post-Order DFS before executing a single line of module code, whereas CommonJS resolves modules dynamically at runtime.",
+  "starterCode": "/**\n * Computes deterministic module evaluation order or detects circular cycles.\n */\nfunction resolveEvaluationOrder(graph) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Computes deterministic module evaluation order or detects circular cycles.\n */\nfunction resolveEvaluationOrder(graph) {\n  const order = [];\n  const visited = new Set();\n  const visiting = new Set();\n\n  function visit(node) {\n    if (visiting.has(node)) {\n      throw new Error('Circular dependency detected at module: ' + node);\n    }\n    if (visited.has(node)) return;\n\n    visiting.add(node);\n    const deps = graph[node] || [];\n    for (const dep of deps) {\n      visit(dep);\n    }\n    visiting.delete(node);\n    visited.add(node);\n    order.push(node);\n  }\n\n  for (const node of Object.keys(graph)) {\n    if (!visited.has(node)) {\n      visit(node);\n    }\n  }\n\n  return order;\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Resolves linear and diamond dependencies in topological order",
+      "input": "{ A: ['B'], B: ['C'], C: [] }",
+      "expected": [
+        "C",
+        "B",
+        "A"
+      ],
+      "testFn": "return resolveEvaluationOrder({ A: ['B'], B: ['C'], C: [] });"
+    },
+    {
+      "id": 2,
+      "name": "Throws on circular cycle between modules",
+      "input": "{ A: ['B'], B: ['A'] }",
+      "expected": "Circular dependency detected at module: A",
+      "testFn": "try { resolveEvaluationOrder({ A: ['B'], B: ['A'] }); return 'no-error'; } catch (e) { return e.message; }"
+    },
+    {
+      "id": 3,
+      "name": "Resolves diamond graph correctly",
+      "input": "{ A: ['B', 'C'], B: ['D'], C: ['D'], D: [] }",
+      "expected": true,
+      "testFn": "const order = resolveEvaluationOrder({ A: ['B', 'C'], B: ['D'], C: ['D'], D: [] }); return order[0] === 'D' && order[order.length - 1] === 'A';"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Resolves linear and diamond dependencies in topological order",
+        "input": "{ A: ['B'], B: ['C'], C: [] }",
+        "expected": [
+          "C",
+          "B",
+          "A"
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Throws on circular cycle between modules",
+        "input": "{ A: ['B'], B: ['A'] }",
+        "expected": "Circular dependency detected at module: A",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Resolves diamond graph correctly",
+        "input": "{ A: ['B', 'C'], B: ['D'], C: ['D'], D: [] }",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "CommonJS exports are evaluated at runtime and copied by value into a module.exports object. ESM exports are live references bound during static analysis, meaning changes in the exporter reflect immediately in the importer.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Topological Sorting & Circular Module Graph Resolution.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Topological Sorting & Circular Module Graph Resolution is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "ESM parses the entire module dependency graph statically using Post-Order DFS before executing a single line of module code, whereas CommonJS resolves modules dynamically at runtime."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

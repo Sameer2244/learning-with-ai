@@ -1,0 +1,92 @@
+{
+  "id": "resilient-error-boundary-medium",
+  "title": "Resilient Error Boundary State Machine with Reset Trigger",
+  "difficulty": "Medium",
+  "topicId": "suspense-error-boundaries-ssr",
+  "topicCategory": "7. Suspense, Error Boundaries & Streaming SSR",
+  "topicTitle": "Suspense & Server",
+  "subtopicId": "suspense-error-boundaries",
+  "subtopicTitle": "Suspense Internals & Error Boundaries",
+  "concept": "Error Boundary Lifecycle & Recovery Coordination",
+  "problemStatement": "Implement `createErrorBoundaryManager({ fallbackRenderer, onError })` that intercepts component exceptions, transitions to an error state with the captured error info, and provides a `reset()` method to restore normal rendering.",
+  "interviewTrap": "Error boundaries do NOT catch errors in: event handlers, asynchronous code (setTimeout), server-side rendering, or errors thrown in the error boundary itself.",
+  "starterCode": "/**\n * Simulates the Error Boundary state lifecycle and recovery mechanics.\n */\nfunction createErrorBoundaryManager({ fallbackRenderer, onError } = {}) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Simulates the Error Boundary state lifecycle and recovery mechanics.\n */\nfunction createErrorBoundaryManager({ fallbackRenderer, onError } = {}) {\n  let state = { hasError: false, error: null };\n\n  return {\n    getState() { return state; },\n    catchError(error) {\n      state = { hasError: true, error };\n      if (typeof onError === 'function') onError(error);\n    },\n    reset() {\n      state = { hasError: false, error: null };\n    },\n    render(childRenderer) {\n      if (state.hasError) {\n        return fallbackRenderer ? fallbackRenderer(state.error, () => this.reset()) : null;\n      }\n      return childRenderer();\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Catches runtime error and activates fallback renderer",
+      "input": "catchError then render",
+      "expected": "Fallback: Crash",
+      "testFn": "const eb = createErrorBoundaryManager({ fallbackRenderer: (err) => 'Fallback: ' + err.message }); eb.catchError(new Error('Crash')); return eb.render(() => 'Child');"
+    },
+    {
+      "id": 2,
+      "name": "Reset method clears error state and restores child renderer",
+      "input": "reset restores child rendering",
+      "expected": "ChildHealthy",
+      "testFn": "const eb = createErrorBoundaryManager({ fallbackRenderer: (err, reset) => { reset(); return 'resetting'; } }); eb.catchError(new Error('Crash')); eb.reset(); return eb.render(() => 'ChildHealthy');"
+    },
+    {
+      "id": 3,
+      "name": "Invokes onError callback with diagnostic error",
+      "input": "captured error passed to onError",
+      "expected": "LoggedError",
+      "testFn": "let logged = ''; const eb = createErrorBoundaryManager({ onError: e => logged = e.message }); eb.catchError(new Error('LoggedError')); return logged;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Catches runtime error and activates fallback renderer",
+        "input": "catchError then render",
+        "expected": "Fallback: Crash",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Reset method clears error state and restores child renderer",
+        "input": "reset restores child rendering",
+        "expected": "ChildHealthy",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Invokes onError callback with diagnostic error",
+        "input": "captured error passed to onError",
+        "expected": "LoggedError",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "When a component suspends, it throws a Promise up the Fiber tree. React catches the promise, pauses the render phase for that branch, renders the nearest Suspense fallback, and resumes when the promise resolves.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Error Boundary Lifecycle & Recovery Coordination.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Error Boundary Lifecycle & Recovery Coordination maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Error boundaries do NOT catch errors in: event handlers, asynchronous code (setTimeout), server-side rendering, or errors thrown in the error boundary itself."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

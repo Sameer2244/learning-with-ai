@@ -1,0 +1,92 @@
+{
+  "id": "transactional-reconciler-commit-hard",
+  "title": "Transactional Commit Queue with Rollback Support",
+  "difficulty": "Hard",
+  "topicId": "compiler-custom-reconciler",
+  "topicCategory": "8. React Internals: Compiler & Custom Reconcilers",
+  "topicTitle": "Compiler & Internals",
+  "subtopicId": "custom-reconciler",
+  "subtopicTitle": "Custom Reconcilers: Host Config & react-reconciler",
+  "concept": "Two-Phase Commit & Rollback on Host Mutation Failures",
+  "problemStatement": "Implement `createTransactionalReconciler()` that stages host mutations in a queue. If any mutation in the batch throws during commit, all previously executed mutations in that batch MUST be rolled back to their previous state.",
+  "interviewTrap": "During Concurrent Mode, if React aborts a render, work-in-progress fibers are simply discarded without touching the host DOM. But once the commit phase starts, mutations must either succeed cleanly or trigger an error boundary.",
+  "starterCode": "/**\n * Reconciler commit queue with atomic rollback on mutation failure.\n */\nfunction createTransactionalReconciler() {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Reconciler commit queue with atomic rollback on mutation failure.\n */\nfunction createTransactionalReconciler() {\n  const operations = [];\n\n  return {\n    stage(op) {\n      operations.push(op);\n    },\n    commit() {\n      const executed = [];\n      try {\n        for (const op of operations) {\n          op.execute();\n          executed.push(op);\n        }\n        operations.length = 0;\n        return { success: true };\n      } catch (err) {\n        while (executed.length > 0) {\n          const op = executed.pop();\n          op.rollback();\n        }\n        operations.length = 0;\n        return { success: false, error: err.message };\n      }\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Commits staged mutations successfully",
+      "input": "stage 2 ops and commit",
+      "expected": true,
+      "testFn": "let a = 0; const r = createTransactionalReconciler(); r.stage({ execute: () => a += 1, rollback: () => a -= 1 }); const res = r.commit(); return res.success && a === 1;"
+    },
+    {
+      "id": 2,
+      "name": "Rolls back previously executed mutations if an error occurs mid-commit",
+      "input": "first op modifies val, second op throws -> val restored",
+      "expected": 0,
+      "testFn": "let state = 0; const r = createTransactionalReconciler(); r.stage({ execute: () => state = 10, rollback: () => state = 0 }); r.stage({ execute: () => { throw new Error('DOM Error'); }, rollback: () => {} }); r.commit(); return state;"
+    },
+    {
+      "id": 3,
+      "name": "Clears staged operations queue after execution",
+      "input": "re-committing empty queue succeeds with no extra operations",
+      "expected": true,
+      "testFn": "const r = createTransactionalReconciler(); r.stage({ execute: () => {}, rollback: () => {} }); r.commit(); return r.commit().success;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Commits staged mutations successfully",
+        "input": "stage 2 ops and commit",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Rolls back previously executed mutations if an error occurs mid-commit",
+        "input": "first op modifies val, second op throws -> val restored",
+        "expected": 0,
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Clears staged operations queue after execution",
+        "input": "re-committing empty queue succeeds with no extra operations",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React Reconciler is platform-agnostic. By defining a Host Config object with methods like createInstance, createTextInstance, and appendChild, React can render to Canvas, Three.js, PDF, or Terminal.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Two-Phase Commit & Rollback on Host Mutation Failures.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Two-Phase Commit & Rollback on Host Mutation Failures maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "During Concurrent Mode, if React aborts a render, work-in-progress fibers are simply discarded without touching the host DOM. But once the commit phase starts, mutations must either succeed cleanly or trigger an error boundary."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

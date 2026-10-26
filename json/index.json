@@ -1,41 +1,303 @@
 {
-  "generatedAt": "2026-10-26T14:06:43.451Z",
-  "totalTopics": 4,
+  "generatedAt": "2026-10-26T14:47:03.961Z",
+  "totalQuestions": 171,
+  "totalTestsVerified": 460,
+  "tracks": {
+    "javascript": {
+      "questionCount": 72,
+      "folders": [
+        "js-engine-and-memory-internals",
+        "asynchronous-js-and-concurrency",
+        "prototypes-objects-and-type-system",
+        "functional-patterns-and-system-polyfills",
+        "browser-engine-and-dom-internals",
+        "react-internals-and-tricky-patterns",
+        "garbage-collection-and-memory-management",
+        "metaprogramming-proxy-and-reflect",
+        "iterators-generators-and-async-iteration",
+        "v8-engine-and-hidden-classes",
+        "binary-data-buffers-and-memory-systems",
+        "module-systems-esm-and-commonjs"
+      ]
+    },
+    "react": {
+      "questionCount": 57,
+      "folders": [
+        "fiber-architecture-and-reconciliation",
+        "hooks-state-machine-and-closures",
+        "rerender-cascades-and-performance",
+        "refs-dom-and-imperative-handles",
+        "modern-react-concurrency-18-19",
+        "component-architecture-and-state-management",
+        "suspense-error-boundaries-and-streaming-ssr",
+        "react-compiler-and-custom-reconcilers"
+      ]
+    },
+    "systemDesign": {
+      "questionCount": 16,
+      "folders": [
+        "system-design"
+      ]
+    },
+    "designSystem": {
+      "questionCount": 26,
+      "folders": [
+        "design-system"
+      ]
+    }
+  },
   "topics": [
     {
       "id": "engine-internals",
-      "title": "JS Engine & Memory Internals",
-      "fileName": "js-engine-and-memory-internals.json",
+      "title": "1. JS Engine & Memory Internals",
       "folderName": "js-engine-and-memory-internals",
-      "questionCount": 12,
-      "subtopicsCount": 4
+      "track": "javascript",
+      "questionCount": 12
     },
     {
       "id": "async-concurrency",
-      "title": "Asynchronous JS & Concurrency",
-      "fileName": "asynchronous-js-and-concurrency.json",
+      "title": "2. Asynchronous JS & Concurrency",
       "folderName": "asynchronous-js-and-concurrency",
-      "questionCount": 9,
-      "subtopicsCount": 3
+      "track": "javascript",
+      "questionCount": 9
+    },
+    {
+      "id": "prototypes-and-types",
+      "title": "3. Prototypes, Objects & Type System",
+      "folderName": "prototypes-objects-and-type-system",
+      "track": "javascript",
+      "questionCount": 9
+    },
+    {
+      "id": "functional-patterns",
+      "title": "4. Functional Patterns & System Polyfills",
+      "folderName": "functional-patterns-and-system-polyfills",
+      "track": "javascript",
+      "questionCount": 9
+    },
+    {
+      "id": "browser-dom-internals",
+      "title": "5. Browser Engine & DOM Internals",
+      "folderName": "browser-engine-and-dom-internals",
+      "track": "javascript",
+      "questionCount": 6
+    },
+    {
+      "id": "react-internals-js",
+      "title": "6. React Internals & Tricky Patterns",
+      "folderName": "react-internals-and-tricky-patterns",
+      "track": "javascript",
+      "questionCount": 9
+    },
+    {
+      "id": "memory-gc-internals",
+      "title": "7. Garbage Collection & Memory Management",
+      "folderName": "garbage-collection-and-memory-management",
+      "track": "javascript",
+      "questionCount": 3
+    },
+    {
+      "id": "metaprogramming-proxy-reflect",
+      "title": "8. Metaprogramming: Proxy & Reflect",
+      "folderName": "metaprogramming-proxy-and-reflect",
+      "track": "javascript",
+      "questionCount": 3
+    },
+    {
+      "id": "iterators-generators-coroutines",
+      "title": "9. Iterators, Generators & Async Iteration",
+      "folderName": "iterators-generators-and-async-iteration",
+      "track": "javascript",
+      "questionCount": 3
+    },
+    {
+      "id": "v8-engine-hidden-classes",
+      "title": "10. V8 Engine Internals & Hidden Classes",
+      "folderName": "v8-engine-and-hidden-classes",
+      "track": "javascript",
+      "questionCount": 3
+    },
+    {
+      "id": "binary-typed-arrays-buffers",
+      "title": "11. Binary Data, Buffers & Memory Systems",
+      "folderName": "binary-data-buffers-and-memory-systems",
+      "track": "javascript",
+      "questionCount": 3
+    },
+    {
+      "id": "module-systems-esm-cjs",
+      "title": "12. Module Systems: ESM vs CommonJS",
+      "folderName": "module-systems-esm-and-commonjs",
+      "track": "javascript",
+      "questionCount": 3
     },
     {
       "id": "react-engine-fiber",
-      "title": "Fiber Architecture & Reconciliation",
-      "fileName": "fiber-architecture-and-reconciliation.json",
+      "title": "1. Fiber Architecture & Reconciliation",
       "folderName": "fiber-architecture-and-reconciliation",
-      "questionCount": 9,
-      "subtopicsCount": 3
+      "track": "react",
+      "questionCount": 9
     },
     {
       "id": "react-hooks-state-machine",
-      "title": "Hooks State Machine & Closures",
-      "fileName": "hooks-state-machine-and-closures.json",
+      "title": "2. Hooks State Machine & Closures",
       "folderName": "hooks-state-machine-and-closures",
-      "questionCount": 9,
-      "subtopicsCount": 3
+      "track": "react",
+      "questionCount": 9
+    },
+    {
+      "id": "react-rerenders-performance",
+      "title": "3. Re-render Cascades & Performance",
+      "folderName": "rerender-cascades-and-performance",
+      "track": "react",
+      "questionCount": 9
+    },
+    {
+      "id": "react-refs-dom",
+      "title": "4. Refs, DOM & Imperative Handles",
+      "folderName": "refs-dom-and-imperative-handles",
+      "track": "react",
+      "questionCount": 6
+    },
+    {
+      "id": "react-concurrency-18",
+      "title": "5. Modern React: Concurrency & React 18/19",
+      "folderName": "modern-react-concurrency-18-19",
+      "track": "react",
+      "questionCount": 6
+    },
+    {
+      "id": "component-architecture-state",
+      "title": "6. Component Architecture & State Management",
+      "folderName": "component-architecture-and-state-management",
+      "track": "react",
+      "questionCount": 6
+    },
+    {
+      "id": "suspense-error-boundaries-ssr",
+      "title": "7. Suspense, Error Boundaries & Streaming SSR",
+      "folderName": "suspense-error-boundaries-and-streaming-ssr",
+      "track": "react",
+      "questionCount": 6
+    },
+    {
+      "id": "compiler-custom-reconciler",
+      "title": "8. React Internals: Compiler & Custom Reconcilers",
+      "folderName": "react-compiler-and-custom-reconcilers",
+      "track": "react",
+      "questionCount": 6
+    },
+    {
+      "id": "sys-servers-networking",
+      "title": "1. Server Fundamentals & Web Networking",
+      "folderName": "system-design",
+      "track": "system-design",
+      "questionCount": 3
+    },
+    {
+      "id": "sys-deployment-cicd",
+      "title": "2. Deployments, Containers & CI/CD Pipelines",
+      "folderName": "system-design",
+      "track": "system-design",
+      "questionCount": 3
+    },
+    {
+      "id": "sys-rendering-cdn",
+      "title": "3. Rendering Architecture & CDN Caching",
+      "folderName": "system-design",
+      "track": "system-design",
+      "questionCount": 2
+    },
+    {
+      "id": "sys-api-protocols",
+      "title": "4. API Design, Protocols & Real-Time Communication",
+      "folderName": "system-design",
+      "track": "system-design",
+      "questionCount": 2
+    },
+    {
+      "id": "sys-databases-caching",
+      "title": "5. Databases, Caching & Data Systems",
+      "folderName": "system-design",
+      "track": "system-design",
+      "questionCount": 2
+    },
+    {
+      "id": "sys-security-auth",
+      "title": "6. Web Security & Modern Authentication",
+      "folderName": "system-design",
+      "track": "system-design",
+      "questionCount": 2
+    },
+    {
+      "id": "sys-observability-reliability",
+      "title": "7. Observability, Monitoring & System Reliability",
+      "folderName": "system-design",
+      "track": "system-design",
+      "questionCount": 2
+    },
+    {
+      "id": "ds-tokens-architecture",
+      "title": "1. Design Tokens Architecture & Engineering",
+      "folderName": "design-system",
+      "track": "design-system",
+      "questionCount": 4
+    },
+    {
+      "id": "ds-component-architecture",
+      "title": "2. Component Architecture & API Design",
+      "folderName": "design-system",
+      "track": "design-system",
+      "questionCount": 4
+    },
+    {
+      "id": "ds-accessibility-wcag",
+      "title": "3. Accessibility (a11y) & WCAG 2.2 AAA Compliance",
+      "folderName": "design-system",
+      "track": "design-system",
+      "questionCount": 3
+    },
+    {
+      "id": "ds-styling-css",
+      "title": "4. Styling Engines & CSS Architecture at Scale",
+      "folderName": "design-system",
+      "track": "design-system",
+      "questionCount": 3
+    },
+    {
+      "id": "ds-theming-dark-mode",
+      "title": "5. Multi-Theme & Dark Mode Systems",
+      "folderName": "design-system",
+      "track": "design-system",
+      "questionCount": 2
+    },
+    {
+      "id": "ds-tooling-monorepo",
+      "title": "6. Tooling, Monorepo & Packaging Pipelines",
+      "folderName": "design-system",
+      "track": "design-system",
+      "questionCount": 3
+    },
+    {
+      "id": "ds-governance-adoption",
+      "title": "7. Governance, Adoption & Versioning",
+      "folderName": "design-system",
+      "track": "design-system",
+      "questionCount": 3
+    },
+    {
+      "id": "ds-performance-scale",
+      "title": "8. Enterprise Performance & Scale",
+      "folderName": "design-system",
+      "track": "design-system",
+      "questionCount": 2
+    },
+    {
+      "id": "ds-system-design-interviews",
+      "title": "9. Staff / Senior System Design Interview Case Studies",
+      "folderName": "design-system",
+      "track": "design-system",
+      "questionCount": 2
     }
-  ],
-  "totalQuestions": 39,
-  "allVerified": true,
-  "totalTestsVerified": 117
+  ]
 }

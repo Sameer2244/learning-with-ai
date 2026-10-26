@@ -4,7 +4,7 @@
   "difficulty": "Basic",
   "topicId": "react-hooks-state-machine",
   "topicCategory": "2. Hooks State Machine & Closures",
-  "topicTitle": "Hooks State Machine & Closures",
+  "topicTitle": "Hooks Internals",
   "subtopicId": "stale-closures-effect",
   "subtopicTitle": "Stale Closures & Functional State Updates",
   "concept": "Avoiding Stale Snapshots in Asynchronous Callbacks",

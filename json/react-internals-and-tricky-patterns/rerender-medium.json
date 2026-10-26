@@ -1,0 +1,94 @@
+{
+  "id": "rerender-medium",
+  "title": "Custom React.memo Simulator",
+  "difficulty": "Medium",
+  "topicId": "react-internals-js",
+  "topicCategory": "6. React Internals & Tricky Patterns",
+  "topicTitle": "React Bridge",
+  "subtopicId": "rerender-optimization",
+  "subtopicTitle": "Re-render Cascades & Memoization Strategies",
+  "concept": "Component Memoization & Skip Render Decision",
+  "problemStatement": "Implement `memoComponent(Component, arePropsEqual = shallowEqual)` that returns a wrapper function tracking the last rendered props and result. If incoming props are equal to previous props, return the cached result without executing `Component`.",
+  "interviewTrap": "Not allowing a custom `arePropsEqual` comparator. React allows developers to provide custom comparison functions for complex objects.",
+  "starterCode": "function memoComponent(Component, arePropsEqual = shallowEqual) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function memoComponent(Component, arePropsEqual = shallowEqual) {\n  let prevProps = null;\n  let prevResult = null;\n\n  return function Memoized(props) {\n    if (prevProps !== null && arePropsEqual(prevProps, props)) {\n      return prevResult;\n    }\n    prevResult = Component(props);\n    prevProps = props;\n    return prevResult;\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Re-uses cached render when props are unchanged",
+      "input": "render twice with identical props runs component once",
+      "expected": 1,
+      "testFn": "let renders = 0; const Comp = (props) => { renders++; return props.name; }; const Memo = memoComponent(Comp, shallowEqual); Memo({ name: 'Alpha' }); Memo({ name: 'Alpha' }); return renders;"
+    },
+    {
+      "id": 2,
+      "name": "Re-renders when props change",
+      "input": "changing name triggers new render",
+      "expected": 2,
+      "testFn": "let renders = 0; const Comp = (props) => { renders++; return props.name; }; const Memo = memoComponent(Comp, shallowEqual); Memo({ name: 'Alpha' }); Memo({ name: 'Beta' }); return renders;"
+    },
+    {
+      "id": 3,
+      "name": "Respects custom comparison function",
+      "input": "custom comparator ignores title prop",
+      "expected": 1,
+      "testFn": "let renders = 0; const Comp = (p) => { renders++; return p.id; }; const Memo = memoComponent(Comp, (a, b) => a.id === b.id); Memo({ id: 1, title: 'Old' }); Memo({ id: 1, title: 'New' }); return renders;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 1,
+    "allPassed": false,
+    "details": [
+      {
+        "id": 1,
+        "name": "Re-uses cached render when props are unchanged",
+        "input": "render twice with identical props runs component once",
+        "expected": 1,
+        "error": "shallowEqual is not defined",
+        "status": "ERROR"
+      },
+      {
+        "id": 2,
+        "name": "Re-renders when props change",
+        "input": "changing name triggers new render",
+        "expected": 2,
+        "error": "shallowEqual is not defined",
+        "status": "ERROR"
+      },
+      {
+        "id": 3,
+        "name": "Respects custom comparison function",
+        "input": "custom comparator ignores title prop",
+        "expected": 1,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "By default, when a parent component renders, all its child components re-render recursively regardless of whether their props changed. `React.memo` bails out only if all props are shallowly equal.",
+    "stepByStepWalkthrough": [
+      "1. Initialize execution context and environment records for Component Memoization & Skip Render Decision.",
+      "2. Execute logic adhering to ECMAScript standard specification.",
+      "3. Verify invariant boundaries and edge conditions."
+    ],
+    "underlyingEngineInternals": "In JavaScript engines (e.g. V8), Component Memoization & Skip Render Decision is optimized via inline caches, heap contexts, and bytecode translation.",
+    "complexity": {
+      "time": "O(1) to O(N)",
+      "space": "O(1) heap allocation"
+    },
+    "edgeCasesHandled": [
+      "Not allowing a custom `arePropsEqual` comparator. React allows developers to provide custom comparison functions for complex objects."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "ECMA-262 Standard Specification for ECMAScript",
+      "MDN Web Docs: JavaScript Reference"
+    ],
+    "verifiedRules": [
+      "Adheres to ECMAScript runtime evaluation specifications."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

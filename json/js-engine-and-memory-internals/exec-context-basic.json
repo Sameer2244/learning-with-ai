@@ -4,7 +4,7 @@
   "difficulty": "Basic",
   "topicId": "engine-internals",
   "topicCategory": "1. JS Engine & Memory Internals",
-  "topicTitle": "JS Engine & Memory Internals",
+  "topicTitle": "Core Architecture",
   "subtopicId": "execution-context",
   "subtopicTitle": "Execution Context & Call Stack",
   "concept": "Call Stack Execution & Linear Frame Tracking",

@@ -1,0 +1,96 @@
+{
+  "id": "compiler-purity-linter-basic",
+  "title": "Static Purity Rule Analyzer for React Compiler",
+  "difficulty": "Basic",
+  "topicId": "compiler-custom-reconciler",
+  "topicCategory": "8. React Internals: Compiler & Custom Reconcilers",
+  "topicTitle": "Compiler & Internals",
+  "subtopicId": "compiler-forget-internals",
+  "subtopicTitle": "React Compiler (Forget) & Static Analysis",
+  "concept": "Rules of React Violation Detection for Compiler Optimization",
+  "problemStatement": "Implement `analyzeHookPurity(codeString)` that scans a function body for illegal mutations like `props.x =` or direct `state.x =` mutations, returning `{ compilable: boolean, violations: string[] }`.",
+  "interviewTrap": "If a component mutates existing props or state objects, the React Compiler marks the component as 'un-optimizable' and falls back to standard non-memoized compilation.",
+  "starterCode": "/**\n * Statically detects purity violations that disqualify components from React Compiler optimizations.\n */\nfunction analyzeHookPurity(codeString) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Statically detects purity violations that disqualify components from React Compiler optimizations.\n */\nfunction analyzeHookPurity(codeString) {\n  const violations = [];\n  if (/props\\.[a-zA-Z0-9_$]+(\\s*)=/.test(codeString)) {\n    violations.push('Direct mutation of props');\n  }\n  if (/state\\.[a-zA-Z0-9_$]+(\\s*)=/.test(codeString)) {\n    violations.push('Direct mutation of state');\n  }\n  return {\n    compilable: violations.length === 0,\n    violations\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Approves clean pure functional component code",
+      "input": "const double = count * 2; return double;",
+      "expected": true,
+      "testFn": "return analyzeHookPurity('const double = count * 2; return double;').compilable;"
+    },
+    {
+      "id": 2,
+      "name": "Catches direct props mutation violation",
+      "input": "props.name = 10",
+      "expected": [
+        "Direct mutation of props"
+      ],
+      "testFn": "return analyzeHookPurity('function Comp(props) { props.name = 10; }').violations;"
+    },
+    {
+      "id": 3,
+      "name": "Catches direct state mutation violation",
+      "input": "state.count = 10",
+      "expected": false,
+      "testFn": "return analyzeHookPurity('function Comp() { state.count = 10; }').compilable;"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Approves clean pure functional component code",
+        "input": "const double = count * 2; return double;",
+        "expected": true,
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Catches direct props mutation violation",
+        "input": "props.name = 10",
+        "expected": [
+          "Direct mutation of props"
+        ],
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Catches direct state mutation violation",
+        "input": "state.count = 10",
+        "expected": false,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "The React Compiler analyzes the Control Flow Graph (CFG) at build time, identifying reactive values and automatically wrapping computations and JSX in memo caches, rendering manual useMemo and useCallback obsolete.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Rules of React Violation Detection for Compiler Optimization.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Rules of React Violation Detection for Compiler Optimization maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "If a component mutates existing props or state objects, the React Compiler marks the component as 'un-optimizable' and falls back to standard non-memoized compilation."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

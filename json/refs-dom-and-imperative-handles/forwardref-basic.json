@@ -1,0 +1,92 @@
+{
+  "id": "forwardref-basic",
+  "title": "Simulate forwardRef Pipe",
+  "difficulty": "Basic",
+  "topicId": "react-refs-dom",
+  "topicCategory": "4. Refs, DOM & Imperative Handles",
+  "topicTitle": "DOM Interop",
+  "subtopicId": "forwardref-imperative",
+  "subtopicTitle": "forwardRef & useImperativeHandle",
+  "concept": "Ref Forwarding Through Higher-Order Components",
+  "problemStatement": "Implement `simulateForwardRef(Component)` that forwards a provided `ref` object as the second argument to `Component(props, ref)`.",
+  "interviewTrap": "Regular React function components do not accept a `ref` prop; trying to pass `ref` to a normal component warns with 'Function components cannot be given refs'. `forwardRef` is required.",
+  "starterCode": "function simulateForwardRef(renderFn) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "function simulateForwardRef(renderFn) {\n  return function Forwarded(props, ref) {\n    return renderFn(props, ref);\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Passes ref object to wrapped component",
+      "input": "ref forwarded to renderFn",
+      "expected": "custom-ref-val",
+      "testFn": "const Comp = simulateForwardRef((props, ref) => ({ type: 'input', refVal: ref.current })); const ref = { current: 'custom-ref-val' }; return Comp({}, ref).refVal;"
+    },
+    {
+      "id": 2,
+      "name": "Passes props along with ref",
+      "input": "props and ref delivered simultaneously",
+      "expected": "username",
+      "testFn": "const Comp = simulateForwardRef((props, ref) => ({ name: props.name })); return Comp({ name: 'username' }, {}).name;"
+    },
+    {
+      "id": 3,
+      "name": "Handles null ref gracefully",
+      "input": "ref is null",
+      "expected": "no-ref",
+      "testFn": "const Comp = simulateForwardRef((props, ref) => (ref ? 'has-ref' : 'no-ref')); return Comp({}, null);"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Passes ref object to wrapped component",
+        "input": "ref forwarded to renderFn",
+        "expected": "custom-ref-val",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Passes props along with ref",
+        "input": "props and ref delivered simultaneously",
+        "expected": "username",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Handles null ref gracefully",
+        "input": "ref is null",
+        "expected": "no-ref",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "Normally, refs point directly to the underlying DOM node (`<input>`). `useImperativeHandle(ref, () => ({ customMethod }))` customizes the ref instance exposed to the parent component, hiding raw DOM methods and exposing only clean, intentional APIs.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Ref Forwarding Through Higher-Order Components.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Ref Forwarding Through Higher-Order Components maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Regular React function components do not accept a `ref` prop; trying to pass `ref` to a normal component warns with 'Function components cannot be given refs'. `forwardRef` is required."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

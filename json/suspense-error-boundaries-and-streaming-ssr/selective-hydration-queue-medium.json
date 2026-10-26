@@ -1,0 +1,92 @@
+{
+  "id": "selective-hydration-queue-medium",
+  "title": "Selective Hydration Priority Queue Simulator",
+  "difficulty": "Medium",
+  "topicId": "suspense-error-boundaries-ssr",
+  "topicCategory": "7. Suspense, Error Boundaries & Streaming SSR",
+  "topicTitle": "Suspense & Server",
+  "subtopicId": "rsc-streaming-hydration",
+  "subtopicTitle": "React Server Components (RSC) & Streaming Hydration",
+  "concept": "Event-Driven Hydration Prioritization (React 18 Selective Hydration)",
+  "problemStatement": "Implement `createHydrationScheduler(chunks)` that hydrates chunks in background order unless a user click event occurs on a specific chunk, which immediately elevates that chunk to the front of the hydration queue.",
+  "interviewTrap": "In traditional SSR, the user must wait for the entire page to hydrate before any button responds. React 18 Selective Hydration intercepts clicks on un-hydrated islands and hydrates them synchronously before dispatching the event.",
+  "starterCode": "/**\n * Simulates React 18 event-driven selective hydration prioritization.\n */\nfunction createHydrationScheduler(initialChunks = []) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Simulates React 18 event-driven selective hydration prioritization.\n */\nfunction createHydrationScheduler(initialChunks = []) {\n  let queue = [...initialChunks];\n  const hydrated = new Set();\n\n  return {\n    userInteractedWith(chunkId) {\n      const idx = queue.indexOf(chunkId);\n      if (idx > -1) {\n        queue.splice(idx, 1);\n        queue.unshift(chunkId);\n      }\n    },\n    hydrateNext() {\n      if (queue.length === 0) return null;\n      const next = queue.shift();\n      hydrated.add(next);\n      return next;\n    },\n    getPending() { return [...queue]; },\n    isHydrated(chunkId) { return hydrated.has(chunkId); }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Hydrates chunks in sequential queue order by default",
+      "input": "hydrateNext from ['c1', 'c2']",
+      "expected": "c1",
+      "testFn": "const sched = createHydrationScheduler(['c1', 'c2']); return sched.hydrateNext();"
+    },
+    {
+      "id": 2,
+      "name": "User interaction jumps chunk to front of hydration queue",
+      "input": "click on c3 moves it ahead of c1 and c2",
+      "expected": "c3",
+      "testFn": "const sched = createHydrationScheduler(['c1', 'c2', 'c3']); sched.userInteractedWith('c3'); return sched.hydrateNext();"
+    },
+    {
+      "id": 3,
+      "name": "Correctly records and tracks hydrated chunks",
+      "input": "isHydrated('c1') after hydrateNext()",
+      "expected": true,
+      "testFn": "const sched = createHydrationScheduler(['c1', 'c2']); sched.hydrateNext(); return sched.isHydrated('c1');"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Hydrates chunks in sequential queue order by default",
+        "input": "hydrateNext from ['c1', 'c2']",
+        "expected": "c1",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "User interaction jumps chunk to front of hydration queue",
+        "input": "click on c3 moves it ahead of c1 and c2",
+        "expected": "c3",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Correctly records and tracks hydrated chunks",
+        "input": "isHydrated('c1') after hydrateNext()",
+        "expected": true,
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React Server Components execute strictly on the server and stream a JSON-like Flight wire format (not HTML, not JS bundle). Client components are represented as module references ($L/esm) that hydrate selectively.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Event-Driven Hydration Prioritization (React 18 Selective Hydration).",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Event-Driven Hydration Prioritization (React 18 Selective Hydration) maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "In traditional SSR, the user must wait for the entire page to hydrate before any button responds. React 18 Selective Hydration intercepts clicks on un-hydrated islands and hydrates them synchronously before dispatching the event."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

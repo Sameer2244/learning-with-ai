@@ -1,0 +1,92 @@
+{
+  "id": "canvas-grid-reconciler-medium",
+  "title": "Terminal / Canvas 2D Text Buffer Reconciler",
+  "difficulty": "Medium",
+  "topicId": "compiler-custom-reconciler",
+  "topicCategory": "8. React Internals: Compiler & Custom Reconcilers",
+  "topicTitle": "Compiler & Internals",
+  "subtopicId": "custom-reconciler",
+  "subtopicTitle": "Custom Reconcilers: Host Config & react-reconciler",
+  "concept": "Host Config Mutation & Canvas Grid Painting",
+  "problemStatement": "Implement `createGridRenderer(width, height)` that mounts instances with `{ x, y, char }` props onto a 2D character buffer and renders the composed screen string via `renderScreen()`.",
+  "interviewTrap": "Host configs provide commitMount or finalizeInitialChildren to perform post-insertion side-effects like focusing inputs or painting coordinates.",
+  "starterCode": "/**\n * Renders virtual React elements onto an ASCII 2D grid matrix.\n */\nfunction createGridRenderer(width = 10, height = 5) {\n  // TODO: Implement solution\n}\n",
+  "solutionCode": "/**\n * Renders virtual React elements onto an ASCII 2D grid matrix.\n */\nfunction createGridRenderer(width = 10, height = 5) {\n  const grid = Array.from({ length: height }, () => Array(width).fill('.'));\n\n  return {\n    createInstance(type, props) {\n      return { type, props: { ...props } };\n    },\n    commitMount(instance) {\n      const { x, y, char = '#' } = instance.props;\n      if (y >= 0 && y < height && x >= 0 && x < width) {\n        grid[y][x] = char;\n      }\n    },\n    renderScreen() {\n      return grid.map(row => row.join('')).join('|');\n    }\n  };\n}\n",
+  "testCases": [
+    {
+      "id": 1,
+      "name": "Mounts character at specific x, y coordinate",
+      "input": "place '@' at x: 1, y: 1 in 3x3 grid",
+      "expected": "...|.@.|...",
+      "testFn": "const r = createGridRenderer(3, 3); const node = r.createInstance('char', { x: 1, y: 1, char: '@' }); r.commitMount(node); return r.renderScreen();"
+    },
+    {
+      "id": 2,
+      "name": "Renders composite 2D grid screen string with multiple instances",
+      "input": "render two chars on screen",
+      "expected": "X.O",
+      "testFn": "const r = createGridRenderer(3, 1); r.commitMount(r.createInstance('c', { x: 0, y: 0, char: 'X' })); r.commitMount(r.createInstance('c', { x: 2, y: 0, char: 'O' })); return r.renderScreen();"
+    },
+    {
+      "id": 3,
+      "name": "Ignores out-of-bounds coordinates safely without crash",
+      "input": "place char at x: 99, y: 99",
+      "expected": "...",
+      "testFn": "const r = createGridRenderer(3, 1); r.commitMount(r.createInstance('c', { x: 99, y: 99, char: 'Z' })); return r.renderScreen();"
+    }
+  ],
+  "testVerification": {
+    "totalTests": 3,
+    "passedTests": 3,
+    "allPassed": true,
+    "details": [
+      {
+        "id": 1,
+        "name": "Mounts character at specific x, y coordinate",
+        "input": "place '@' at x: 1, y: 1 in 3x3 grid",
+        "expected": "...|.@.|...",
+        "status": "PASSED"
+      },
+      {
+        "id": 2,
+        "name": "Renders composite 2D grid screen string with multiple instances",
+        "input": "render two chars on screen",
+        "expected": "X.O",
+        "status": "PASSED"
+      },
+      {
+        "id": 3,
+        "name": "Ignores out-of-bounds coordinates safely without crash",
+        "input": "place char at x: 99, y: 99",
+        "expected": "...",
+        "status": "PASSED"
+      }
+    ]
+  },
+  "detailedExplanation": {
+    "conceptualOverview": "React Reconciler is platform-agnostic. By defining a Host Config object with methods like createInstance, createTextInstance, and appendChild, React can render to Canvas, Three.js, PDF, or Terminal.",
+    "stepByStepWalkthrough": [
+      "1. Render Phase: Fiber node evaluation and hooks linked-list dispatch for Host Config Mutation & Canvas Grid Painting.",
+      "2. Reconciliation: Double buffering and fiber diffing mechanics.",
+      "3. Commit Phase: Synchronous/passive effect execution and DOM mutation."
+    ],
+    "underlyingEngineInternals": "In React Fiber, Host Config Mutation & Canvas Grid Painting maintains state across work-in-progress trees and lanes scheduling priority.",
+    "complexity": {
+      "time": "O(1) per hook / O(N) fiber traversal",
+      "space": "O(1) memoized state overhead"
+    },
+    "edgeCasesHandled": [
+      "Host configs provide commitMount or finalizeInitialChildren to perform post-insertion side-effects like focusing inputs or painting coordinates."
+    ]
+  },
+  "onlineVerification": {
+    "specifications": [
+      "React Fiber Architecture Specification & Runtime Implementation",
+      "React 18/19 Concurrent Mode Specifications"
+    ],
+    "verifiedRules": [
+      "Hooks must be called in exact order matching the fiber memoizedState linked list."
+    ],
+    "verificationStatus": "VERIFIED_AND_TESTED"
+  }
+}

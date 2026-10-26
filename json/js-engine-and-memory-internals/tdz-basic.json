@@ -4,7 +4,7 @@
   "difficulty": "Basic",
   "topicId": "engine-internals",
   "topicCategory": "1. JS Engine & Memory Internals",
-  "topicTitle": "JS Engine & Memory Internals",
+  "topicTitle": "Core Architecture",
   "subtopicId": "hoisting-tdz",
   "subtopicTitle": "Hoisting & Temporal Dead Zone (TDZ)",
   "concept": "Variable Lifecycle & Declaration Hoisting",
