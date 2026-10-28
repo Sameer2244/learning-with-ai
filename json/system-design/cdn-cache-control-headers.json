@@ -77,5 +77,57 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Explain the exact semantics of `Cache-Control: public, max-age=31536000, immutable`. Where and when should it be used?",
+      "answer": "`public` allows both browser and shared intermediate caches (CDNs, reverse proxies) to store the response. `max-age=31536000` caches the asset for 1 full year (31,536,000 seconds). `immutable` indicates that the resource's content will NEVER change during its lifetime; when the user refreshes or navigates, the browser does not even send a conditional `If-Modified-Since` or `If-None-Match` 304 revalidation request. This header should ONLY be used for content-hashed assets (e.g. `main.a8f9c1.js`, `styles.99b2e3.css`). Using it on `index.html` is disastrous because users would never receive code updates.",
+      "difficulty": "medium",
+      "whyAsked": "Tests practical production HTTP caching standards and prevention of cache poisoning."
+    },
+    {
+      "question": "How does `stale-while-revalidate` (RFC 5861) eliminate latency for dynamic API responses?",
+      "answer": "With `Cache-Control: max-age=60, stale-while-revalidate=600`: During the first 60 seconds, requests are served fresh directly from cache. Between 60 and 660 seconds (the stale window), when a request arrives, the CDN or browser immediately returns the cached stale response with 0ms latency, while asynchronously in the background firing a revalidation request to the origin server to refresh the cache. Users never experience origin latency, and subsequent requests receive the newly cached content.",
+      "difficulty": "advanced",
+      "whyAsked": "High-value caching pattern for modern web performance and e-commerce applications."
+    },
+    {
+      "question": "How do Cache-Tags / Surrogate-Keys work, and how do they enable instant purge of 100,000 pages on a CMS update?",
+      "answer": "URLs are often an ineffective way to invalidate cache (e.g. a product price change affects the product page, category listing, homepage, and search results). When origin servers generate responses, they attach a `Surrogate-Key` header (e.g. `Surrogate-Key: product-1234 category-electronics`). The CDN strips this header before sending to the client, but indexes the cached objects by those tags. When product 1234 is updated in the CMS, the backend sends a single API call to the CDN: `PURGE /tags/product-1234`. The CDN instantly invalidates all associated URLs globally across hundreds of edge locations in under 150ms.",
+      "difficulty": "staff",
+      "whyAsked": "Tests understanding of modern CDN edge architecture (Fastly, Cloudflare, Akamai) at enterprise scale."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Global Breaking News Site (NYTimes, BBC)",
+      "architecture": "Article pages cached at CDN edge with `Cache-Control: s-maxage=30, stale-while-revalidate=300`. CDN absorbs 99.8% of traffic spikes during breaking news. Editorial CMS triggers instantaneous Cache-Tag purges for immediate correction propagation.",
+      "impact": "Origin server capacity handled 50x traffic surges with zero downtime and sub-20ms edge latency."
+    }
+  ],
+  "howToExplain": {
+    "opening": "HTTP caching operates on a two-tier strategy: immutable, permanently-cached assets referenced by content hashes, and dynamic HTML/API responses managed via short TTLs, `stale-while-revalidate`, and tag-based edge invalidation.",
+    "keyPoints": [
+      "Content Hashing: Asset files (JS/CSS) get `max-age=1year, immutable`; `index.html` gets `no-cache` to force revalidation.",
+      "Browser vs Shared Caches: `max-age` dictates browser cache; `s-maxage` overrides for shared edge CDNs.",
+      "Asynchronous Revalidation: `stale-while-revalidate` returns cached data immediately while updating in the background.",
+      "Targeted Invalidation: Surrogate-Keys / Cache-Tags decouple invalidation from strict URL paths."
+    ],
+    "closingImpression": "The fastest request is the one that never hits your origin server. Proper HTTP headers turn global CDNs into high-speed application shields.",
+    "analogies": "Immutable caching is like printing a book with an ISBN number; once published, it never changes. Stale-while-revalidate is like a convenience store clerk handing you the morning newspaper from the stack while their delivery driver restocks the new edition in the background."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Setting `Cache-Control: max-age=3600` on the root `index.html` file.",
+      "whyWrong": "When a new deployment occurs with new hashed asset filenames, users who visited within the last hour have the old `index.html` cached; they continue requesting old/deleted JS chunks, leading to runtime 404 errors and broken apps.",
+      "correctApproach": "Always set `Cache-Control: no-cache` or `no-store` on `index.html` so the browser always verifies freshness against the origin or CDN."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the difference between `no-cache` and `no-store` in HTTP Cache-Control?",
+      "deepDiveAnswer": "`no-store` forbids the browser and CDN from storing any copy of the response on disk or in memory (strictly required for sensitive banking data). `no-cache` allows the browser to store the response, but mandates that the browser MUST revalidate with the origin (via ETag / If-None-Match) before using it. If the content has not changed, the origin returns HTTP 304 Not Modified without sending the body.",
+      "rfcOrSourceReference": "IETF RFC 7234 (Hypertext Transfer Protocol -- Caching) & RFC 5861 (HTTP Cache-Control Extensions for Stale Content)"
+    }
+  ]
 }

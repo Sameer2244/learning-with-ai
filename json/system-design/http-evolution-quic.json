@@ -77,5 +77,61 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is Head-of-Line (HoL) blocking, and how did HTTP/2 solve it at the application layer while leaving it at the transport layer?",
+      "answer": "In HTTP/1.1, HoL blocking occurs because a single TCP connection can only process one request-response cycle at a time; if one slow request blocks the pipe, all subsequent requests must queue up. HTTP/2 solved application-layer HoL blocking by introducing binary framing and stream multiplexing over a single TCP connection: requests and responses are split into independent frames tagged with Stream IDs. However, TCP is a byte-stream protocol that guarantees in-order packet delivery. If a single TCP packet drops on a lossy cellular network, the OS TCP stack pauses ALL multiplexed streams until the missing packet is retransmitted (Transport-layer HoL blocking). HTTP/3 eliminates transport-layer HoL blocking by running over QUIC (UDP), where each stream has independent packet tracking.",
+      "difficulty": "advanced",
+      "whyAsked": "The gold standard interview question distinguishing surface-level HTTP knowledge from deep networking expertise."
+    },
+    {
+      "question": "How does QUIC achieve Connection Migration, and why is this revolutionary for mobile devices?",
+      "answer": "Traditional TCP connections are identified by a 4-tuple: (Source IP, Source Port, Destination IP, Destination Port). When a smartphone switches from Wi-Fi to 5G cellular, its IP address changes, which immediately breaks the 4-tuple and forces all active TCP sockets and TLS sessions to tear down and reconnect. QUIC replaces IP-based identification with a 64-bit Connection ID (CID) negotiated during connection setup. When the client's IP changes, packets continue flowing seamlessly with the same CID, enabling zero-interruption connection migration for live video streams and active downloads.",
+      "difficulty": "advanced",
+      "whyAsked": "Assesses mobile-first systems thinking and modern UDP-based transport protocols."
+    },
+    {
+      "question": "Compare HTTP/2 HPACK vs HTTP/3 QPACK header compression. Why was HPACK unsuitable for QUIC?",
+      "answer": "HTTP/2 HPACK uses static and dynamic compression tables where each header is encoded as an index. HPACK relies strictly on in-order frame delivery: both client and server update their dynamic tables synchronously. Because QUIC delivers streams out of order (no transport-layer HoL blocking), a stream referencing a dynamic index from an earlier packet might arrive before that packet does, causing decoding deadlocks. HTTP/3 QPACK resolves this by decoupling the stream data from the table updates using dedicated unidirectional encoder and decoder control streams, allowing out-of-order decoding with controlled head-of-line blocking only when explicit dependencies exist.",
+      "difficulty": "staff",
+      "whyAsked": "Tests understanding of distributed synchronization and stateful compression under out-of-order packet delivery."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Uber/DoorDash Real-Time Driver Tracking on Fluctuating Networks",
+      "architecture": "Mobile apps use HTTP/3 (QUIC) to communicate with API gateways. When a courier drives through tunnels or transitions between Wi-Fi and cell towers, QUIC Connection Migration prevents socket resets, maintaining continuous telemetry streams without app-level retry churn.",
+      "impact": "Reduced mobile reconnection failure rate by 82% in transit dead zones."
+    },
+    {
+      "scenario": "E-Commerce High-Density Asset Loading (Shopify)",
+      "architecture": "CDN serves product media over HTTP/2 and HTTP/3 with prioritized streaming. Hero images and critical CSS receive high priority stream dependencies; non-critical script assets run on lower-weight streams.",
+      "impact": "Improved Largest Contentful Paint (LCP) by 450ms across cellular connections."
+    }
+  ],
+  "howToExplain": {
+    "opening": "HTTP evolution is the story of maximizing network pipeline efficiency: HTTP/1.1 introduced persistent connections but suffered application HoL blocking; HTTP/2 multiplexed streams over a single TCP pipe via binary framing; and HTTP/3 moved to QUIC over UDP to eliminate transport-layer HoL blocking and enable zero-RTT connection migration.",
+    "keyPoints": [
+      "HTTP/1.1: Text-based, one request per connection at a time, required domain sharding hack.",
+      "HTTP/2: Binary framing layer, stream multiplexing, HPACK compression, but TCP packet loss stalls all streams.",
+      "HTTP/3 (QUIC): Built on UDP, independent stream packet accounting, 1-RTT combined transport+crypto handshake, Connection ID migration."
+    ],
+    "closingImpression": "HTTP/3 solves the fundamental impedance mismatch between application-level concurrency and TCP's monolithic sequential byte-stream guarantee.",
+    "analogies": "HTTP/1.1 is a one-lane highway with one car at a time. HTTP/2 is a single highway lane with multiple cars merged bumper-to-bumper; if the front car gets a flat tire, everyone stops. HTTP/3 is a multi-lane highway over UDP where each car has its own lane; a flat tire in lane 1 doesn't slow down lane 2."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Claiming HTTP/3 is unreliable because it runs over UDP.",
+      "whyWrong": "QUIC implements its own connection state machine, packet sequence numbers, selective acknowledgments (SACK), and congestion control (BBR/Cubic) entirely in user space on top of UDP datagrams.",
+      "correctApproach": "Explain that QUIC provides all the reliability and ordered delivery of TCP, but with per-stream granularity."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does the BBR (Bottleneck Bandwidth and RTT) congestion control algorithm differ from loss-based Cubic in HTTP/3?",
+      "deepDiveAnswer": "Cubic treats packet loss as the sole signal of congestion, scaling back transmission window sharply even when packets are lost to transient Wi-Fi noise. BBR builds an explicit physical model of the network by measuring maximum delivery rate and minimum round-trip time, pacing packets to keep queues empty and sustaining high throughput on lossy networks without bufferbloat.",
+      "rfcOrSourceReference": "IETF RFC 9000 (QUIC: A UDP-Based Multiplexed and Secure Transport) & RFC 9114 (HTTP/3)"
+    }
+  ]
 }

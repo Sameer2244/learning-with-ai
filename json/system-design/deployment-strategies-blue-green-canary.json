@@ -77,5 +77,57 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Compare Blue-Green vs Canary vs Rolling deployments across cost, rollback speed, and database schema compatibility.",
+      "answer": "1) Blue-Green: Runs two identical production environments (Blue=active, Green=idle). New release deploys to Green; router/DNS flips 100% traffic to Green. Pros: Instant zero-downtime cutover and instant 1-click rollback. Cons: Doubles infrastructure costs; risky if database schema has breaking changes. 2) Canary: Deploys the new version to a small subset of instances (e.g. 2%), routing 2% of real user traffic via service mesh (Envoy/Istio). Monitors error rates and p99 latency; if green, scales up to 10%, 50%, 100%. Pros: Minimal blast radius; catches production bugs before all users are impacted. Cons: Requires traffic splitting infrastructure; complex telemetry. 3) Rolling Update: Gradually replaces old pods with new pods one by one. Pros: Zero additional infrastructure cost. Cons: Both versions run simultaneously for extended periods; rollback requires another rolling deployment.",
+      "difficulty": "advanced",
+      "whyAsked": "Core architectural question assessing reliability engineering, cost awareness, and release safety."
+    },
+    {
+      "question": "How do you handle Database Migrations during zero-downtime deployments without locking tables or breaking running older instances?",
+      "answer": "Zero-downtime deployments mandate the Expand and Contract (Parallel Run) pattern across 3 distinct phases: 1) Expand: Deploy backward-compatible database schema changes (e.g. add a new nullable column `phone_number_v2`). The existing application version continues reading the old column. 2) Deploy: Roll out the new application version (Blue-Green or Canary) which writes to both old and new columns and reads from the new column. Run a background data backfill script. 3) Contract: Once all legacy application instances are terminated and data is synchronized, deploy a final migration to drop the old column `phone_number`. Never execute destructive schema migrations (e.g. renaming columns or dropping constraints) in the same release as code changes.",
+      "difficulty": "staff",
+      "whyAsked": "Separates engineers who understand continuous delivery at scale from those whose deployments require scheduled maintenance windows."
+    },
+    {
+      "question": "What metrics should trigger an Automated Canary Rollback, and what is the difference between p99 latency and mean latency in detection?",
+      "answer": "Canary rollbacks must be driven by automated telemetry thresholds: 1) HTTP 5xx error rate (e.g. >0.1% increase over baseline). 2) Application unhandled exceptions via Sentry. 3) P99/P95 latency percentiles. Mean (average) latency hides catastrophic tail degradations; if 1% of users experience 30-second database timeouts while 99% get 10ms responses, the mean remains seemingly healthy (~310ms), but the service is deeply broken. P99 reflects the worst 1% user experience and immediately detects threadpool starvation, database lock contention, or memory GC pauses.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of statistical observability and automated safety guardrails."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Automated Canary Analysis at Netflix (Kayenta)",
+      "architecture": "New release deploys alongside a control cluster running the baseline version. Kayenta evaluates 50+ health metrics (CPU, GC pauses, error rates, p99 latency) over 60 minutes. If the statistical confidence score drops below 80, the canary automatically terminates and traffic returns to baseline.",
+      "impact": "Prevented over 120 production-wide outages per year from reaching 100% of subscribers."
+    }
+  ],
+  "howToExplain": {
+    "opening": "Deployment strategies dictate how new software is released to users while preserving system availability. The choice between Blue-Green, Canary, and Rolling updates depends on cost tolerance, rollback speed, and traffic routing sophistication.",
+    "keyPoints": [
+      "Blue-Green: Instant switchover and instant rollback, but requires 2x idle infrastructure.",
+      "Canary: Incremental percentage-based traffic routing, minimizing blast radius through automated metric gating.",
+      "Rolling: Resource-efficient pod-by-pod replacement in Kubernetes via `maxSurge` and `maxUnavailable`.",
+      "Database Migrations: Always follow the Expand and Contract pattern across backward-compatible releases."
+    ],
+    "closingImpression": "A deployment strategy is only as good as its automated rollback trigger; without automated telemetry gating, manual human verification will fail under pressure.",
+    "analogies": "Blue-Green is opening a new bridge right next to an old bridge and swinging the traffic cones over instantly. Canary is sending a few test vehicles across the bridge with sensors before allowing full commuter traffic."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Renaming a database column in the same deployment step as updating the application code.",
+      "whyWrong": "During a rolling or canary update, both old and new code versions run concurrently; the old version crashes when it cannot find the old column, and rolling back immediately crashes the new version.",
+      "correctApproach": "Decouple schema changes into Add (Expand), Write to both, Backfill, Read from new, and Drop (Contract) phases."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does Envoy Proxy implement weighted traffic splitting for Canary releases?",
+      "deepDiveAnswer": "In Envoy's route configuration, a route can specify `weighted_clusters`. For example, `cluster_production` has weight 95 and `cluster_canary` has weight 5. Envoy hashes request attributes or uses an in-memory random distribution to split requests precisely at the connection or request level without DNS caching delays.",
+      "rfcOrSourceReference": "Envoy Proxy Route Configuration (weighted_clusters) & Netflix Kayenta Canary Specification"
+    }
+  ]
 }

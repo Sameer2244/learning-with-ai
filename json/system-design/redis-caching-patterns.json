@@ -77,5 +77,57 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Differentiate the three primary caching patterns: Cache-Aside, Write-Through, and Write-Behind (Write-Back).",
+      "answer": "1) Cache-Aside (Lazy Loading): The application code coordinates between cache and DB. On read: read cache; on miss: read DB, write back to cache, return. On write: write to DB, invalidate (delete) cache key. Pros: Resilient to cache failure, only active data is cached. Cons: Cache miss penalty on first request. 2) Write-Through: The application writes to the cache layer, which synchronously writes through to the DB before returning success. Pros: Cache is always up-to-date. Cons: Write latency increased by dual write. 3) Write-Behind (Write-Back): Application writes to cache immediately; cache asynchronously batches writes to DB in the background. Pros: Ultra-low write latency and write absorption. Cons: Risk of data loss if cache crashes before dirty writes flush to disk.",
+      "difficulty": "advanced",
+      "whyAsked": "Core architectural caching question assessing consistency, durability, and latency trade-offs."
+    },
+    {
+      "question": "Explain the three catastrophic cache failure modes: Cache Stampede (Thundering Herd), Cache Penetration, and Cache Avalanche. How do you prevent each?",
+      "answer": "1) Cache Stampede (Thundering Herd): A high-traffic key expires, and 10,000 concurrent requests simultaneously experience a cache miss, all querying the DB at once. Mitigation: Distributed Mutex Lock (via Redis `SET NX EX`), or Probabilistic Early Expiration (XFetch algorithm). 2) Cache Penetration: Malicious requests query non-existent keys (e.g. ID -9999). Every request misses cache and hits DB. Mitigation: Bloom Filter at the edge, or cache empty null values with short TTL. 3) Cache Avalanche: Thousands of keys are set with the exact same 3600s TTL; they all expire simultaneously, causing widespread DB overload. Mitigation: Add random jitter to TTLs (`TTL = baseTTL + random(0, 300)`).",
+      "difficulty": "staff",
+      "whyAsked": "The classic system reliability grilling assessing protection against production outages."
+    },
+    {
+      "question": "Why should you DELETE a cache key on database updates instead of UPDATING the cache value?",
+      "answer": "Updating the cache value on DB write introduces severe race conditions under concurrent writes. If Client A updates DB to 1, and Client B updates DB to 2: due to network jitter, Client B's cache write might reach Redis first, followed by Client A's stale cache write. Now the DB has value 2, but the cache permanently has stale value 1. By simply DELETING the cache key (`redis.del(key)`) inside a database transaction, subsequent reads safely repopulate the freshest committed DB value on the next lazy load.",
+      "difficulty": "advanced",
+      "whyAsked": "Separates real-world distributed caching practitioners from theoretical candidates."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Twitter / X User Profile Caching",
+      "architecture": "Uses Cache-Aside with Redis Cluster. Hot celebrity profile keys utilize distributed locks (`SET key val NX EX 10`) on cache misses so only 1 worker queries PostgreSQL while the rest poll or await pub/sub broadcast.",
+      "impact": "Prevented database connection pool exhaustion during viral global events, absorbing 99.9% of read traffic."
+    }
+  ],
+  "howToExplain": {
+    "opening": "Caching places hot data in fast, volatile in-memory storage (RAM) to bypass disk I/O and expensive database computation. Effective caching requires matching the update pattern to data volatility and systematically defending against stampedes, penetrations, and avalanches.",
+    "keyPoints": [
+      "Pattern Selection: Cache-Aside is the production standard for read-heavy web apps; Write-Behind for write-heavy gaming telemetries.",
+      "Key Invalidation: Delete cache keys on write rather than updating values to prevent concurrent race conditions.",
+      "Stampede Defense: Guard hot key repopulation with distributed locks (`SET NX`) or probabilistic early refresh.",
+      "Jittered TTLs: Always apply random jitter to TTLs to prevent simultaneous cluster-wide expiration avalanches."
+    ],
+    "closingImpression": "A cache is an optimization, not a database. If your system cannot gracefully degrade and survive a sudden cache eviction without taking down the primary database, the architecture is fundamentally flawed.",
+    "analogies": "Cache-Aside is keeping sticky notes on your desk of frequent phone numbers; when a number changes, you throw the sticky note away and write a new one next time you look it up in the company directory."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Treating Redis as a primary permanent database without configuring eviction policies and persistence.",
+      "whyWrong": "When RAM fills up without an eviction policy (e.g. `allkeys-lru`), Redis throws OOM errors on all write operations, halting the application.",
+      "correctApproach": "Explicitly set `maxmemory` and an appropriate eviction policy (`volatile-lru` or `allkeys-lru`), and configure RDB snapshots + AOF append-only logs for durability."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does the XFetch probabilistic early expiration algorithm prevent cache stampedes without distributed locking?",
+      "deepDiveAnswer": "XFetch calculates a probabilistic condition based on remaining TTL, delta computation time, and an aggressiveness factor beta: `-(delta * beta * ln(random())) >= remainingTTL`. As a key nears expiration under high read volume, requests probabilistically trigger background cache repopulation before expiration occurs, ensuring the key is never stale and never requires lock synchronization.",
+      "rfcOrSourceReference": "Optimal Probabilistic Cache Stampede Prevention (Vattani, Chierichetti, Lowenstein, VLDB 2015)"
+    }
+  ]
 }

@@ -77,5 +77,73 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Trace the exact DNS resolution steps when resolving an uncached domain. Where do Root, TLD, and Authoritative servers fit in?",
+      "answer": "When a browser requests a domain (e.g. app.stripe.com): 1) Local browser cache and OS hosts/resolver cache are checked. 2) The query goes to the Recursive Resolver (ISP or 1.1.1.1/8.8.8.8). 3) If not cached, the recursive resolver queries a Root Name Server (one of 13 root server IPs using Anycast), which responds with the .com TLD Name Server referral. 4) The recursive resolver queries the .com TLD server, which returns the Authoritative Name Server NS records for stripe.com. 5) The resolver queries Stripe's Authoritative server (e.g., Route53), which returns the A/AAAA record with a TTL. 6) The recursive resolver caches this record and returns the IP to the OS, which returns it to the browser.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests foundational Internet architecture knowledge and distinguishes between recursive vs iterative DNS resolution."
+    },
+    {
+      "question": "How does TLS 1.3 reduce handshake latency compared to TLS 1.2, and what are the security trade-offs of 0-RTT resumption?",
+      "answer": "TLS 1.2 required 2 full round trips (2-RTT) before application data could flow: 1 RTT for TCP SYN/ACK, then ClientHello/ServerHello, Certificate, Key Exchange (2 RTTs for TLS). TLS 1.3 reduces the handshake to 1-RTT by mandating Diffie-Hellman Ephemeral (ECDHE) and having the client send its public key shares speculatively in the ClientHello. For returning clients, TLS 1.3 offers 0-RTT Early Data using a Pre-Shared Key (PSK) derived from a prior session ticket. However, 0-RTT data is vulnerable to Replay Attacks because an attacker can capture and retransmit the initial packet. Therefore, production systems must restrict 0-RTT to idempotent GET requests and never allow non-idempotent POST/PATCH state mutations in 0-RTT payloads.",
+      "difficulty": "staff",
+      "whyAsked": "Evaluates cryptographic understanding, modern RFC 8446 protocol mechanics, and replay attack prevention."
+    },
+    {
+      "question": "What is Anycast routing in DNS, and how does it provide DDoS resilience and geographic latency reduction?",
+      "answer": "Anycast assigns the exact same BGP IP address to multiple geographically distributed servers across the globe. Internet routers use BGP (Border Gateway Protocol) to route packets to the topologically closest server with the lowest AS hop count. For DNS, Anycast delivers two huge benefits: 1) Low Latency: Clients resolve DNS queries against the nearest edge node in under 10ms. 2) DDoS Mitigation: Volumetric attack traffic is localized and absorbed by the nearest edge clusters rather than overwhelming a single centralized origin server cluster.",
+      "difficulty": "advanced",
+      "whyAsked": "Validates high-scale global infrastructure design and BGP network topology understanding."
+    },
+    {
+      "question": "What happens during TCP Slow Start, and why is `tcp_slow_start_after_idle` critical for low-latency web services?",
+      "answer": "TCP does not transmit at full bandwidth immediately. It initializes a Congestion Window (initcwnd, modern default 10 packets ~14KB) and doubles cwnd every RTT upon receiving ACKs until packet loss occurs or ssthresh is hit. When an HTTP connection remains idle across keep-alive timeouts, the Linux kernel default resets cwnd back to initcwnd (`tcp_slow_start_after_idle = 1`). For API servers with bursts of requests, this causes latency spikes because subsequent requests must re-ramp their window. Setting `sysctl -w net.ipv4.tcp_slow_start_after_idle=0` prevents window collapse on idle keep-alive connections.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests Linux kernel networking tuning and TCP congestion control mechanics at high scale."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Global Edge API Gateway at Stripe/Cloudflare",
+      "architecture": "Anycast DNS resolution directs client traffic to the nearest Point of Presence (PoP). TLS termination occurs at the edge PoP with TLS 1.3 session tickets. TCP connections from the edge PoP to origin data centers are pre-warmed, persistent, and multiplexed, eliminating 3-way handshakes for upstream requests.",
+      "impact": "Reduced global p99 API handshake latency from 320ms to 24ms."
+    },
+    {
+      "scenario": "Preventing 0-RTT Replay Attacks on Banking APIs",
+      "architecture": "Reverse proxy terminates TLS 1.3 0-RTT. Nginx/Envoy inspects the `Early-Data` header. If the incoming request is non-idempotent (e.g. POST /transfer), the proxy responds with HTTP 425 'Too Early' to force the client to replay the request over a confirmed 1-RTT handshake.",
+      "impact": "Zero financial duplicate transactions under adversary packet capture."
+    }
+  ],
+  "howToExplain": {
+    "opening": "I evaluate web networking as a layered progression: starting with DNS hierarchical resolution to discover the IP, followed by the TCP 3-way handshake to establish reliable byte-stream transport, and finalized by TLS 1.3 to authenticate the host and negotiate forward-secret symmetric keys.",
+    "keyPoints": [
+      "DNS: Recursive vs Iterative resolution across Root, TLD, and Authoritative servers with Anycast BGP routing.",
+      "TCP: 3-way handshake (SYN, SYN-ACK, ACK) combined with congestion control (initcwnd and Slow Start).",
+      "TLS 1.3: 1-RTT key exchange via ECDHE public shares; strict idempotency guardrails on 0-RTT early data.",
+      "Edge Termination: Terminating TCP and TLS at edge PoPs isolates latency from long-haul origin round-trips."
+    ],
+    "closingImpression": "By terminating TLS at the Anycast edge and reusing persistent origin pools, we compress multi-round-trip handshakes into a single localized hop.",
+    "analogies": "DNS is the international phone book directory; TCP is dialing the number and confirming both sides can hear each other; TLS is closing the soundproof booth door and agreeing on a one-time secret language."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming DNS lookups happen on every single HTTP request.",
+      "whyWrong": "Operating systems, browsers, local routers, and recursive resolvers cache DNS records according to the TTL header; subsequent requests reuse the cached IP or the open keep-alive TCP socket.",
+      "correctApproach": "Clarify that DNS resolution occurs only when no unexpired socket or DNS cache entry exists in the local resolver cache."
+    },
+    {
+      "mistake": "Believing TLS 1.3 0-RTT can be safely used for all API endpoints.",
+      "whyWrong": "0-RTT early data lacks replay protection; an attacker replaying a captured 0-RTT POST request can cause double billing or unauthorized duplicate orders.",
+      "correctApproach": "Specify that 0-RTT must only be permitted for idempotent GET requests, or rejected with HTTP 425 Too Early."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does EDNS Client Subnet (ECS, RFC 7871) solve geolocation routing when users utilize third-party DNS resolvers like 1.1.1.1?",
+      "deepDiveAnswer": "When a user in Tokyo uses a public DNS resolver hosted in Singapore, standard DNS would return Singapore IPs. RFC 7871 allows the resolver to append the client's anonymized IP subnet (/24) in the EDNS payload to the authoritative server, allowing Route53/Cloudflare to return Tokyo IPs without exposing full client PII.",
+      "rfcOrSourceReference": "IETF RFC 7871 (Client Subnet in DNS Queries) & RFC 8446 (The Transport Layer Security (TLS) Protocol Version 1.3)"
+    }
+  ]
 }

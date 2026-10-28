@@ -77,5 +77,57 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Compare REST, GraphQL, gRPC, and tRPC. In what architectural scenarios would you choose each?",
+      "answer": "1) REST: Industry standard for public APIs and third-party integrations; leverages standard HTTP caching, status codes, and tooling, but suffers from over-fetching/under-fetching. 2) GraphQL: Ideal for complex client applications (mobile/web) querying disparate graph entities; client defines exact query shapes, preventing over-fetching, but loses native HTTP edge caching and introduces the N+1 database problem. 3) gRPC: High-throughput internal microservice communication; uses Protocol Buffers (compact binary serialization) over HTTP/2 multiplexed streams, delivering 5-10x performance gains and bidirectional streaming, but lacks native browser support without gRPC-Web proxies. 4) tRPC: End-to-end type safety for full-stack TypeScript monorepos with zero code generation.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests architectural protocol selection, performance trade-offs, and communication topology."
+    },
+    {
+      "question": "What is the N+1 Query Problem in GraphQL, and how does DataLoader solve it via batching and caching?",
+      "answer": "When resolving nested relationships (e.g. 50 posts, each with an author), a naive GraphQL resolver executes 1 query for the 50 posts, and then 50 separate queries to fetch each author (`N+1` queries), exhausting database connection pools. DataLoader solves this by utilizing the JavaScript Event Loop microtask queue. As resolver functions call `authorLoader.load(authorId)` synchronously during the execution phase, DataLoader collects all requested IDs. In the next microtask (before I/O), DataLoader batches the collected IDs into a single database query (`SELECT * FROM authors WHERE id IN (...)`) and dispatches the results to the respective promises, reducing 51 round trips to 2.",
+      "difficulty": "advanced",
+      "whyAsked": "Essential database optimization and async execution loop question for GraphQL systems."
+    },
+    {
+      "question": "Why is Protocol Buffers serialization faster than JSON, and how does field tagging provide backward compatibility?",
+      "answer": "JSON is human-readable text requiring ASCII/UTF-8 character parsing, string allocation, and repetitive key name serialization (e.g. `\"user_id\": 12345` repeats `user_id` in every record). Protobuf encodes fields into a compact binary format using Varints (variable-length integers) and field tags (combining field number and wire type into 1 byte). Field names are never transmitted over the wire. Backward compatibility is guaranteed because Protobuf identifies fields strictly by integer tags (e.g. `int32 user_id = 1;`). New fields can be added with new tag numbers without breaking legacy clients; legacy clients simply skip unrecognized tags during binary decoding.",
+      "difficulty": "staff",
+      "whyAsked": "Examines binary encoding mechanics, serialization efficiency, and schema evolution."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Uber / Airbnb Microservice Mesh Migration to gRPC",
+      "architecture": "Public web/mobile traffic terminates at an API Gateway (GraphQL/REST). Internal service-to-service calls across 2,000+ backend microservices communicate via gRPC with strict Protobuf schemas, service mesh mTLS, and client-side load balancing.",
+      "impact": "Reduced internal network bandwidth consumption by 65% and cut p99 RPC latency from 45ms to 6ms."
+    }
+  ],
+  "howToExplain": {
+    "opening": "API protocol selection is driven by client environment, bandwidth constraints, and type contracts: REST for universal public interoperability, GraphQL for flexible client data aggregation, gRPC for high-throughput internal microservices, and tRPC for full-stack TypeScript monorepos.",
+    "keyPoints": [
+      "Public vs Internal: REST/GraphQL for public web clients; gRPC over HTTP/2 for internal service mesh.",
+      "Over-fetching vs Complexity: GraphQL eliminates over-fetching but requires DataLoader to prevent N+1 queries.",
+      "Serialization Performance: Protobuf binary tags outperform JSON string parsing by orders of magnitude.",
+      "Schema Evolution: Protobuf numeric tags and GraphQL schema directives enable non-breaking API evolution."
+    ],
+    "closingImpression": "A mature enterprise architecture rarely uses a single protocol; it uses REST/GraphQL at the edge and gRPC in the internal microservice core.",
+    "analogies": "REST is like buying a pre-packaged combo meal at a fast-food drive-through. GraphQL is a custom salad bar where you pick exact ingredients. gRPC is a pneumatic tube system shooting compressed coded canisters between bank teller desks."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using GraphQL for public high-volume APIs without query complexity analysis or depth limits.",
+      "whyWrong": "Malicious clients can submit deeply nested circular queries (e.g. `author { posts { author { posts ... } } }`) that generate exponential database queries, causing immediate DoS resource exhaustion.",
+      "correctApproach": "Implement strict query depth limiting, cost/complexity calculation, and persisted queries in production."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does GraphQL Apollo Federation compose multiple microservice subgraphs into a unified gateway?",
+      "deepDiveAnswer": "Apollo Federation uses declarative schema directives (`@key`, `@extends`, `@external`). Each microservice owns its domain entities and schema. The Apollo Gateway queries the subgraphs' service capabilities, composes a unified schema AST, and plans optimized parallel execution query plans across subgraphs via `_entities` queries.",
+      "rfcOrSourceReference": "GraphQL Specification (October 2021) & Apollo Federation 2.0 Core Specification"
+    }
+  ]
 }

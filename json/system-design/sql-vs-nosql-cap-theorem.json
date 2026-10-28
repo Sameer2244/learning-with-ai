@@ -77,5 +77,62 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Explain the CAP theorem and why the classic 'pick 2 out of 3' framing is technically misleading in real distributed systems.",
+      "answer": "The CAP theorem states that in a distributed data store, you can only simultaneously guarantee two of: Consistency (every read receives the most recent write or an error), Availability (every non-failing node returns a non-error response), and Partition Tolerance (the system continues operating despite arbitrary network dropped/delayed packets). The 'pick 2 out of 3' framing is misleading because network partitions (P) are an inevitable physical reality of distributed infrastructure (cables get cut, switches fail). Therefore, a distributed system NEVER gets to choose 'CA without P'. When a network partition occurs, the system must choose between: CP (reject writes or wait for partition to heal to preserve strict consistency, sacrificing availability) or AP (allow writes on partitioned nodes, sacrificing consistency and accepting divergent state).",
+      "difficulty": "staff",
+      "whyAsked": "Tests fundamental distributed systems theory and exposes memorized textbook answers."
+    },
+    {
+      "question": "What is the PACELC theorem, and how does it extend CAP to normal non-partitioned operation?",
+      "answer": "CAP only describes system behavior during a network partition. PACELC states: If there is a Partition (P), how does the system trade off Availability (A) and Consistency (C); Else (E), when the network is running normally, how does the system trade off Latency (L) and Consistency (C)? For example: MongoDB is PC/EC (prefers consistency over availability during partitions; prefers consistency over latency during normal operations by routing writes to the primary). DynamoDB / Cassandra is PA/EL (prefers availability during partitions; prefers low latency over strict consistency in normal operations via tunable eventual consistency).",
+      "difficulty": "advanced",
+      "whyAsked": "High-level staff architectural question assessing latency vs consistency trade-offs."
+    },
+    {
+      "question": "How does PostgreSQL implement Multi-Version Concurrency Control (MVCC), and why does it avoid read locks?",
+      "answer": "In traditional 2-Phase Locking (2PL), readers lock out writers and writers lock out readers, causing severe concurrency bottlenecks. PostgreSQL MVCC avoids read locks entirely: when a row is updated or deleted, PostgreSQL does not overwrite the existing data in-place. Instead, each row header contains `xmin` (the transaction ID that created the row) and `xmax` (the transaction ID that updated/deleted the row). When a transaction runs, it takes a snapshot of active transaction IDs. Readers evaluate row visibility by comparing their snapshot against `xmin` and `xmax`, reading the version committed before their transaction began. Thus, 'readers never block writers, and writers never block readers'. Old dead row versions are reclaimed asynchronously by the `VACUUM` process.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests deep database engine storage internals and concurrency transaction models."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Financial Ledger at Stripe / Revolut",
+      "architecture": "Strict ACID relational database (PostgreSQL / CockroachDB) with Serializable isolation level. Enforces strict primary key constraints, foreign key referential integrity, and distributed two-phase commit (2PC) to ensure zero double-spending or money creation.",
+      "impact": "Guarantees 100% mathematical auditability and ledger balance consistency."
+    },
+    {
+      "scenario": "Amazon DynamoDB High-Scale Shopping Cart",
+      "architecture": "AP distributed key-value store using Consistent Hashing and tunable consistency (Read: Eventual, Write: Quorum W=2, R=2). Prioritizes 100% write availability: customers must always be able to add items to their shopping cart even if a data center partition is occurring.",
+      "impact": "Sustains 100M+ operations per minute during Black Friday with single-digit millisecond latency."
+    }
+  ],
+  "howToExplain": {
+    "opening": "Choosing between SQL and NoSQL is not about trends; it is a mathematical trade-off between strict transactional consistency (ACID) and horizontal scale with partition tolerance (BASE / CAP).",
+    "keyPoints": [
+      "Relational (SQL): Structured schemas, complex JOINs, ACID guarantees, vertical scaling, optimal for financial and transactional cores.",
+      "Non-Relational (NoSQL): Document, Key-Value, Columnar, or Graph; denormalized models, horizontal sharding, BASE eventual consistency.",
+      "CAP Reality: Partitions are unavoidable in physical networks; you choose between CP (banking, inventory) and AP (social feeds, shopping carts).",
+      "PACELC: When healthy, systems must still choose between low latency (replication lag) and synchronous consistency."
+    ],
+    "closingImpression": "Modern enterprise systems embrace Polyglot Persistence: relational SQL for ledger and customer accounts; distributed NoSQL for high-throughput activity logs and time-series telemetry.",
+    "analogies": "A SQL database is like a Swiss bank vault where every deposit requires a countersigned paper trail and physical verification. An AP NoSQL store is like a whiteboard in a busy kitchen where cooks write orders rapidly; occasional duplicate notes are sorted out later."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Claiming NoSQL databases do not support ACID transactions.",
+      "whyWrong": "Modern document and distributed databases (MongoDB 4.0+, DynamoDB, Couchbase) support multi-document ACID transactions, though with distributed coordination overhead.",
+      "correctApproach": "Clarify that while NoSQL engines can support ACID transactions, doing so incurs distributed consensus latency, diminishing the primary performance benefit of distributed sharding."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does the Quorum equation (R + W > N) guarantee strong consistency in distributed databases like Cassandra?",
+      "deepDiveAnswer": "In a cluster with replication factor N, R is the number of nodes read from, and W is the number of nodes written to before acknowledging success. If `R + W > N`, the Pigeonhole Principle guarantees that the set of nodes written to and the set of nodes read from must overlap by at least one node. That overlapping node will contain the latest vector clock / timestamp, guaranteeing strong consistency.",
+      "rfcOrSourceReference": "Werner Vogels: Eventually Consistent (Communications of the ACM, 2009) & Brewer's CAP Conjecture"
+    }
+  ]
 }

@@ -77,5 +77,57 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Break down the architectural trade-offs between CSR, SSR, SSG, ISR, and React Server Components (RSC).",
+      "answer": "1) CSR (Client-Side Rendering): Server returns empty HTML shell; browser downloads JavaScript, fetches data, and renders UI. Pros: Zero server rendering CPU; instant subsequent page navigations. Cons: Slow FCP/LCP; blank screen on slow mobile devices. 2) SSR (Server-Side Rendering): Server renders HTML on every request. Pros: Fast FCP and optimal SEO. Cons: High server CPU load; Time-to-Interactive (TTI) delayed by heavy hydration. 3) SSG (Static Site Generation): HTML rendered once at build time. Pros: Sub-10ms TTFB via CDN edge caching. Cons: Stale data; build times scale linearly with page count. 4) ISR (Incremental Static Regeneration): CDN serves static HTML and regenerates pages in the background on traffic via `stale-while-revalidate`. 5) RSC (React Server Components): Server renders components to a streaming binary Flight format. Zero server code or heavy libraries (markdown parsers, date formatters) ship in the client bundle; client merges server UI directly into the existing client DOM state without destructive re-mounting.",
+      "difficulty": "advanced",
+      "whyAsked": "The definitive full-stack frontend architecture question covering performance, scalability, and UX."
+    },
+    {
+      "question": "What is the Hydration Mismatch problem in SSR, and why does hydration make SSR expensive?",
+      "answer": "In traditional SSR, the server generates HTML strings and sends them to the browser. The browser displays the HTML immediately (fast FCP), but it is completely non-interactive. The browser must download the entire JavaScript bundle, parse it, execute it, recreate the Virtual DOM tree in memory, and walk the entire DOM to attach event listeners ('Hydration'). A Hydration Mismatch occurs when the server-rendered HTML does not match the client-rendered output (e.g. using `window`, `localStorage`, or localized timestamps). React detects the discrepancy, logs an error, and in worst cases tears down the server DOM and recreates it from scratch, destroying performance and causing visible UI flicker.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of the DOM reconciliation boundary between server and client."
+    },
+    {
+      "question": "How does the RSC Flight Protocol stream UI to the client, and why is it superior to sending raw JSON or raw HTML?",
+      "answer": "Raw HTML cannot preserve client component state (e.g. form inputs, active modals) during re-renders. Raw JSON requires the client to download the component template and rendering logic in the JS bundle. The RSC Flight wire format is a streaming, newline-delimited format containing: 1) Client component module references (`$L1`), 2) Serialized server component element trees, and 3) Streamed Suspense chunks. The client reconciles this wire format directly into the React tree, streaming completed UI sections without waiting for the entire page to finish data fetching and with zero hydration cost for server-only components.",
+      "difficulty": "staff",
+      "whyAsked": "Evaluates cutting-edge Next.js / React 19 architecture and streaming wire protocols."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Global E-Commerce Product Listing at Vercel/Next.js Scale",
+      "architecture": "Product layout and marketing navigation use SSG/ISR cached on global CDN. Product details use React Server Components to fetch from internal database with zero client JS overhead. Stock availability and Add-to-Cart button use Client Components (`'use client'`) with selective hydration.",
+      "impact": "Reduced client JavaScript bundle by 54%; improved Core Web Vitals (INP and LCP) by 38%."
+    }
+  ],
+  "howToExplain": {
+    "opening": "Rendering strategies govern where and when data is transformed into UI: on the client at runtime (CSR), on the server per request (SSR), at build time (SSG), asynchronously in the background (ISR), or split along the server-client component boundary (RSC).",
+    "keyPoints": [
+      "CSR: Interactive apps (dashboards, authenticated tools) where SEO is secondary.",
+      "SSR: Dynamic, user-personalized pages requiring instant FCP and SEO.",
+      "SSG/ISR: High-traffic public content (blogs, documentation, e-commerce catalog) where TTFB must be sub-50ms.",
+      "RSC: The modern hybrid; keeps heavy dependencies and data fetching on the server while streaming interactive islands to the client."
+    ],
+    "closingImpression": "Architecture is not one-size-fits-all; modern systems blend static edge caching for shells with streaming server components for personalized data.",
+    "analogies": "CSR is shipping raw ingredients to the customer's house for them to cook. SSR is cooking the meal in a restaurant kitchen and delivering it hot. SSG is buying canned food made at the factory last week. RSC is having the chef cook the steak in the kitchen while you mix your own drink at the table."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming Server-Side Rendering (SSR) always improves page load speed.",
+      "whyWrong": "SSR shifts computation to the origin server. If database queries or external API calls take 800ms, the user stares at a blank screen waiting for TTFB. Furthermore, hydration can lock the main thread on mobile devices, degrading Time-to-Interactive.",
+      "correctApproach": "Combine SSR with streaming Suspense so the page shell and cached content render instantly while slow data fetches stream in progressively."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React 18 Selective Hydration leverage HTML streaming and Suspense?",
+      "deepDiveAnswer": "With `renderToPipeableStream`, React streams HTML chunks wrapped in Suspense boundaries immediately. When HTML arrives, React begins hydrating completed subtrees before the rest of the page has finished downloading. If a user clicks on an unhydrated component, React prioritizes hydrating that specific subtree immediately to respond to user input.",
+      "rfcOrSourceReference": "React Working Group: Architectural Overview of React 18 Streaming SSR"
+    }
+  ]
 }

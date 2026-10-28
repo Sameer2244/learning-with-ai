@@ -20,6 +20,8 @@ const enhancementsAdvanced = require('./enhancements-advanced');
 const enhancementsReactCore = require('./enhancements-react-core');
 const enhancementsReactPerfState = require('./enhancements-react-perf-state');
 const enhancementsReactAdvanced = require('./enhancements-react-advanced');
+const enhancementsSysDesignInfra = require('./enhancements-system-design-infra');
+const enhancementsSysDesignDataArch = require('./enhancements-system-design-data-arch');
 
 const allEnhancements = {
   ...enhancementsEngine,
@@ -28,7 +30,9 @@ const allEnhancements = {
   ...enhancementsAdvanced,
   ...enhancementsReactCore,
   ...enhancementsReactPerfState,
-  ...enhancementsReactAdvanced
+  ...enhancementsReactAdvanced,
+  ...enhancementsSysDesignInfra,
+  ...enhancementsSysDesignDataArch
 };
 
 // Mock DOM for layout hook tests
@@ -1886,7 +1890,12 @@ async function generateAllAnswers() {
             'Connection pooling, rate limiting, and backpressure eliminate memory exhaustions.'
           ],
           verificationStatus: 'VERIFIED_AND_TESTED'
-        }
+        },
+        interviewCrossQuestions: allEnhancements[topic.id]?.interviewCrossQuestions || [],
+        realWorldUseCases: allEnhancements[topic.id]?.realWorldUseCases || [],
+        howToExplain: allEnhancements[topic.id]?.howToExplain || null,
+        commonMistakes: allEnhancements[topic.id]?.commonMistakes || [],
+        followUpDeepDive: allEnhancements[topic.id]?.followUpDeepDive || []
       };
 
       globalTestPassCount += testCases.length;

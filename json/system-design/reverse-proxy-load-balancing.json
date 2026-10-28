@@ -77,5 +77,62 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does Nginx achieve 100,000+ concurrent connections on a single server, and what is the difference between epoll and select/poll?",
+      "answer": "Traditional web servers (like Apache MPM Prefork) used a thread-per-connection model where OS context switching, thread stack allocations (typically 2MB-8MB per thread), and memory thrashing limited concurrency to a few thousand clients. Nginx uses an asynchronous, single-threaded (per CPU core) event loop powered by OS I/O multiplexing: `epoll` on Linux or `kqueue` on BSD. With `select`/`poll`, the kernel iterates over an O(N) array of all file descriptors to check readiness. With `epoll` (epoll_create, epoll_ctl, epoll_wait), the kernel uses an internal red-black tree to track descriptors and a ready-list linked list populated by hardware interrupts, providing O(1) event notification regardless of total connection count.",
+      "difficulty": "advanced",
+      "whyAsked": "Examines low-level OS kernel primitives, system call complexity, and high-concurrency architecture."
+    },
+    {
+      "question": "Compare Layer 4 (Transport) vs Layer 7 (Application) load balancing. When would you choose Envoy or HAProxy over an AWS NLB?",
+      "answer": "Layer 4 (L4) load balancing operates at the TCP/UDP layer without decrypting or parsing the payload. It routes packets based on IP address and TCP port (e.g. AWS NLB, IPVS). It delivers ultra-high throughput (millions of packets/sec) with sub-millisecond latency and zero TLS decryption CPU overhead. Layer 7 (L7) load balancing operates at the application layer: it decrypts TLS, parses HTTP headers, cookies, and URL paths (e.g. Envoy, Nginx, ALB). L7 is required for path-based routing (/api/checkout vs /api/search), header-based canary deployments, rate limiting, and sticky sessions, but incurs TLS decryption and buffer parsing compute costs.",
+      "difficulty": "advanced",
+      "whyAsked": "Core architectural decision interviewers use to test trade-offs between raw throughput and application-aware routing."
+    },
+    {
+      "question": "How does Consistent Hashing work in load balancing, and why is it preferred over `hash(key) % N` for caching clusters?",
+      "answer": "In a naive modulo hash `hash(key) % N`, adding or removing a single server node changes the divisor from N to N+1 or N-1. This causes nearly 100% (specifically N/(N+1)) of all cache keys to map to different servers, resulting in a catastrophic cache stampede that overwhelms backend databases. Consistent Hashing maps both servers and cache keys onto an abstract 360-degree ring (0 to 2^32-1). Keys are assigned to the first server encountered moving clockwise. When a server is added or removed, only K/N keys are remapped on average. To ensure uniform load distribution and avoid hotspots, each physical server is represented by 100-200 'virtual nodes' placed pseudo-randomly around the ring.",
+      "difficulty": "staff",
+      "whyAsked": "Tests distributed systems partitioning, caching resiliency, and mathematical algorithms."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Netflix Global Ingress with Envoy Proxy",
+      "architecture": "Envoy acts as the front-door L7 edge proxy. It terminates TLS, evaluates JWT headers for authentication, performs rate limiting via a gRPC ratelimit service, and routes traffic dynamically to regional microservices based on canary routing tags.",
+      "impact": "Processes over 2 million RPS with dynamic traffic shifting and sub-second health-check failover."
+    },
+    {
+      "scenario": "Sticky WebSocket Gateway with Consistent Hashing",
+      "architecture": "Nginx load balancer hashes client user IDs to pin them to the same real-time gateway instance. If an instance crashes, only the users connected to that specific instance migrate clockwise to the neighboring node; all other connections remain undisturbed.",
+      "impact": "Eliminated cross-node broadcast messaging overhead by 70%."
+    }
+  ],
+  "howToExplain": {
+    "opening": "A reverse proxy acts as an intermediary between public clients and private backend services, providing SSL termination, caching, compression, and request routing. Load balancing distributes traffic across backend pools using Layer 4 connection-level or Layer 7 content-aware routing algorithms.",
+    "keyPoints": [
+      "Concurrency Model: Event-driven non-blocking I/O (`epoll`/`kqueue`) scales to 100K+ connections on minimal RAM.",
+      "L4 vs L7: L4 routes raw TCP packets for raw speed; L7 inspects HTTP headers, paths, and cookies for intelligent routing.",
+      "Balancing Algorithms: Round Robin, Least Connections, Weighted Response Time, and Consistent Hashing for stateful affinity.",
+      "Resilience: Passive and active health checks, circuit breaking, and keep-alive backend connection pooling."
+    ],
+    "closingImpression": "Selecting between L4 and L7 is a deliberate trade-off between throughput and packet efficiency versus intelligent application routing and security policy enforcement.",
+    "analogies": "L4 is an airport runway controller directing planes to open gates based strictly on flight numbers and gate availability. L7 is customs and passport control, inspecting baggage and passports to direct passengers to specific specialized terminals."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Placing SSL termination on every individual internal microservice.",
+      "whyWrong": "Internal microservices waste significant CPU on repeated TLS handshakes; reverse proxies should terminate external TLS and communicate over private VPC networks or lightweight mTLS.",
+      "correctApproach": "Terminate public TLS at the edge reverse proxy/ingress controller to simplify certificate rotation and offload cryptographic operations from application nodes."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is SO_REUSEPORT in Linux socket programming, and how does Nginx use it to eliminate accept mutex contention?",
+      "deepDiveAnswer": "Prior to Linux 3.9, multiple worker processes had to fight over a single listening socket via an accept mutex, leading to lock contention and thundering herd wakeups. `SO_REUSEPORT` allows multiple independent worker processes to bind to the exact same IP and port; the Linux kernel distributes incoming SYN packets across workers using an in-kernel round-robin hash, completely eliminating user-space lock contention.",
+      "rfcOrSourceReference": "Linux kernel commit c617f398edd0 (net: SO_REUSEPORT implementation) & Nginx Architecture Guide"
+    }
+  ]
 }

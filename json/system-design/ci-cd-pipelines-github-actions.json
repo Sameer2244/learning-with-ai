@@ -77,5 +77,57 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do you secure secrets in GitHub Actions and prevent unauthorized workflows or malicious PRs from exfiltrating credentials?",
+      "answer": "1) Never use long-lived cloud credentials (e.g. AWS Access Key / Secret Key). Instead, configure OIDC (OpenID Connect) federation: GitHub Actions requests a short-lived OIDC JWT token which AWS/GCP IAM validates and exchanges for a temporary 15-minute STS credential scoped to the specific repository and branch. 2) For pull requests from public forks, GitHub Actions defaults to `pull_request` triggers where secrets are strictly omitted; never use `pull_request_target` carelessly with an explicit `checkout` of untrusted PR code, as that grants malicious PRs access to production repository secrets. 3) Enforce environment protection rules with required manual approval before deploying to production.",
+      "difficulty": "staff",
+      "whyAsked": "High-priority security question addressing software supply chain attacks and CI/CD credential exfiltration."
+    },
+    {
+      "question": "How do you optimize a CI/CD pipeline to reduce execution time from 25 minutes to under 3 minutes?",
+      "answer": "1) Dependency Caching: Cache `~/.npm` or `node_modules` keyed by `package-lock.json` hash. 2) Pipeline Parallelization: Split linting, unit tests, end-to-end tests, and security scans into independent concurrent matrix jobs. 3) Test Sharding: Use Jest or Playwright test sharding (`--shard=1/4`) across 4 parallel runner nodes. 4) Remote Build Caching: Use tools like Turborepo or Nx to cache build and test outputs; unchanged packages execute in 0 milliseconds. 5) Multi-stage Docker Caching: Utilize GitHub Actions cache backend (`type=gha`) for Docker BuildKit layer reuse.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests developer productivity engineering and pipeline parallelization optimization."
+    },
+    {
+      "question": "What is SLSA (Supply-chain Levels for Software Artifacts) and why are cryptographic artifact attestations important?",
+      "answer": "SLSA is a security framework that protects against tampering across the build pipeline. Even if code is reviewed, a compromised CI runner could inject malware into the compiled Docker image or npm package. SLSA Level 3 requires provenance generation: the build platform cryptographically signs the generated artifact (e.g. using Sigstore/Cosign) with an attestation verifying the exact git commit, build workflow, and repository that produced it. Production deployment systems verify this cryptographic signature before admitting the container into Kubernetes.",
+      "difficulty": "staff",
+      "whyAsked": "Evaluates modern DevSecOps standards and zero-trust build systems."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Zero-Secret AWS Deployments with OIDC Federation",
+      "architecture": "GitHub Actions workflow requests an ambient OIDC token from GitHub's token service. AWS IAM AssumeRoleWithWebIdentity validates the token's `sub` claim (matching `repo:org/app:ref:refs/heads/main`) and assumes a scoped IAM role. Zero static AWS keys are stored in GitHub repository secrets.",
+      "impact": "Completely eliminated credential leak risks from stale developer API keys."
+    }
+  ],
+  "howToExplain": {
+    "opening": "A production CI/CD pipeline is the automated assembly line for software delivery. It validates correctness through fast feedback loops, builds immutable artifacts, enforces security policies, and deploys to target environments with zero human intervention.",
+    "keyPoints": [
+      "Fast Feedback: Parallel matrix jobs, dependency caching, and test sharding reduce feedback times to minutes.",
+      "Security & OIDC: Zero long-lived cloud keys; short-lived federated tokens via OpenID Connect.",
+      "Artifact Immutability: Build once, test, and promote the exact same container image digest across Staging and Production.",
+      "Gated Approvals: Branch protection rules, required status checks, and environment review approvals."
+    ],
+    "closingImpression": "CI/CD should be treated as production code: version-controlled, tested, monitored for performance, and locked down with least-privilege security controls.",
+    "analogies": "CI/CD is like an automated vehicle crash test and quality inspection facility; every vehicle is rigorously tested on the factory line before it is cleared for the public highway."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Rebuilding container images separately for Staging and Production.",
+      "whyWrong": "Building twice creates two different image digests with potential dependency drift or timing discrepancies; what passed testing in staging is not identical to what runs in production.",
+      "correctApproach": "Build and sign the container image once in CI, push it to the registry, and deploy that exact same immutable cryptographic SHA digest across Staging and Production."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does GitHub Actions OIDC token claim validation prevent unauthorized fork attacks?",
+      "deepDiveAnswer": "The GitHub OIDC token contains JWT claims such as `repository`, `ref`, and `actor`. AWS IAM trust policies enforce conditions like `\"token.actions.githubusercontent.com:sub\": \"repo:myorg/myapp:ref:refs/heads/main\"`. If an attacker forks the repository and runs the workflow, the `sub` claim will reflect `repo:attacker/myapp`, causing AWS IAM to reject the token exchange instantly.",
+      "rfcOrSourceReference": "OpenID Connect Core 1.0 & GitHub Actions OIDC Documentation"
+    }
+  ]
 }

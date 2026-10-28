@@ -77,5 +77,57 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Compare Stateful Database Sessions vs Stateless JWTs. Why is immediate token revocation notoriously hard with JWTs?",
+      "answer": "1) Stateful Sessions: Client receives an opaque session ID stored in an HttpOnly cookie; session data lives on the server (Redis/DB). Pros: Instant revocation (delete session record in Redis immediately terminates user access). Cons: Requires state lookup on every single request, adding Redis network hops. 2) Stateless JWTs: Token contains signed user claims (payload) encoded in base64url. Server verifies the cryptographic signature (HMAC-SHA256 or RSA/ECDSA) locally without database lookups. Pros: Completely stateless, works across disparate microservices without shared session stores. Cons: Immediate revocation is nearly impossible because the token remains mathematically valid until its `exp` timestamp. If a user changes their password, is banned, or has their laptop stolen, an attacker holding a valid JWT retains access. Workarounds (token blacklists in Redis) destroy the stateless benefit of JWTs.",
+      "difficulty": "advanced",
+      "whyAsked": "The single most common security and architectural debate in modern web authentication."
+    },
+    {
+      "question": "Where should you store authentication tokens in browser single-page applications, and why is `localStorage` dangerous?",
+      "answer": "Storing JWTs in `localStorage` or `sessionStorage` exposes tokens directly to JavaScript. Any Cross-Site Scripting (XSS) vulnerability (e.g. in a third-party npm package, CDN script, or markdown renderer) allows an attacker to execute `localStorage.getItem('token')` and instantly exfiltrate credentials to an external server. Best practice mandates storing tokens in `HttpOnly`, `Secure`, `SameSite=Strict` (or `Lax`) cookies. The browser automatically sends the cookie on requests, but the `HttpOnly` flag renders the cookie completely invisible and inaccessible to client-side JavaScript, rendering XSS token exfiltration impossible.",
+      "difficulty": "advanced",
+      "whyAsked": "Fundamental web application security requirement distinguishing senior engineers from juniors."
+    },
+    {
+      "question": "Explain the OAuth 2.0 Authorization Code Flow with PKCE (Proof Key for Code Exchange). Why is PKCE required for SPAs and mobile apps?",
+      "answer": "Public clients (SPAs and mobile apps) cannot keep a `client_secret` confidential because their client code can be decompiled or inspected in the browser. In standard Authorization Code flow, an intercepted authorization code could be exchanged by a malicious app for tokens. PKCE (RFC 7636) prevents this: 1) Client creates a cryptographically random secret string called `code_verifier`. 2) Client hashes it with SHA-256 to create `code_challenge`. 3) Client redirects user to Auth server with `code_challenge`. 4) Auth server returns an authorization code. 5) Client exchanges the authorization code for tokens, passing the original plaintext `code_verifier`. 6) Auth server hashes the verifier; if it matches the earlier challenge, it issues tokens. Even if an attacker intercepts the authorization code, they cannot exchange it without the unhashed `code_verifier` held only in client memory.",
+      "difficulty": "staff",
+      "whyAsked": "Tests cutting-edge identity standards, OAuth 2.1 RFC compliance, and public client security."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Enterprise Single Sign-On (SSO) with Okta / Auth0",
+      "architecture": "Client authenticates via OAuth 2.0 / OpenID Connect Authorization Code + PKCE. Browser receives a short-lived (15 min) JWT Access Token and an HttpOnly Refresh Token stored with sliding window rotation.",
+      "impact": "Enforced zero-trust identity verification across 80+ internal microservices with seamless 1-click SSO."
+    }
+  ],
+  "howToExplain": {
+    "opening": "Authentication verifies who a user is; authorization verifies what they are allowed to do. Choosing between stateful sessions and stateless JWTs is a direct trade-off between instant revocation control and distributed scalability.",
+    "keyPoints": [
+      "Stateful Sessions: Opaque IDs in HttpOnly cookies; server controls revocation, ideal for monolithic and dashboard apps.",
+      "Stateless JWTs: Cryptographically signed self-contained tokens; scale across microservices, but revocation requires short TTLs.",
+      "Hybrid Token Architecture: Short-lived access tokens (15 mins) paired with stateful refresh tokens stored in Redis for fast revocation.",
+      "Token Storage: Always use HttpOnly, Secure, SameSite cookies to neutralize XSS token exfiltration."
+    ],
+    "closingImpression": "Never store sensitive auth tokens in localStorage. The best modern architecture is a hybrid: short-lived stateless access tokens paired with rotating, stateful refresh tokens stored in HttpOnly cookies.",
+    "analogies": "A stateful session is a hotel room keycard; the front desk computer can deactivate it instantly. A JWT is an airline boarding pass stamped with a flight time; TSA checks the ink signature without calling the airline, but cannot easily cancel it until it expires."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Setting JWT expiration to 30 days or never expiring tokens.",
+      "whyWrong": "Stateless JWTs cannot be revoked without maintaining a global distributed blacklist; a compromised 30-day token gives an attacker full access for a month with zero defense.",
+      "correctApproach": "Set access tokens to short lifespans (5-15 minutes) and issue long-lived refresh tokens stored in HttpOnly cookies with automatic reuse detection."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the 'alg: none' vulnerability in JWT verification libraries?",
+      "deepDiveAnswer": "The JWT header specifies the algorithm (e.g. `{\"alg\": \"HS256\"}`). Early library implementations naively trusted the header without verifying against the server's expected algorithm. Attackers modified the header to `{\"alg\": \"none\"}`, stripped the signature, and changed their role claim to `admin`. Flawed libraries accepted the unverified token as valid. Modern libraries require explicit algorithm whitelisting.",
+      "rfcOrSourceReference": "IETF RFC 7519 (JSON Web Token) & RFC 7636 (PKCE for OAuth 2.0 Public Clients)"
+    }
+  ]
 }

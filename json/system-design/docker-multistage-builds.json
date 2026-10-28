@@ -77,5 +77,57 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do Docker Multi-Stage builds work, and what is the difference between build-time layers and runtime layers?",
+      "answer": "Every instruction in a Dockerfile (RUN, COPY, ADD) creates an immutable read-only layer in the image. In single-stage builds, compilers, build toolchains (gcc, node-gyp, python), devDependencies, and test suites are baked permanently into the final image, bloating images to 1-2GB and expanding the CVE attack surface. Multi-stage builds use multiple `FROM` instructions in a single Dockerfile. Intermediate stages compile assets and run linters. The final runtime stage starts with a pristine, minimal base image (e.g. `node:alpine` or `gcr.io/distroless/nodejs`) and selectively copies only the compiled production artifacts using `COPY --from=builder /app/dist /app/dist`. The intermediate build layers and compiler toolchains are discarded from the final image.",
+      "difficulty": "medium",
+      "whyAsked": "Assesses production DevOps standards, image footprint minimization, and cloud cost efficiency."
+    },
+    {
+      "question": "Why should you NEVER run containerized Node.js applications as `root` (UID 0), and how do you configure proper user isolation?",
+      "answer": "By default, Docker executes processes inside containers as UID 0 (root). If an attacker exploits a remote code execution (RCE) vulnerability in an npm dependency or a container escape vulnerability (e.g. Dirty COW or runc CVEs), they gain root privileges on the underlying host OS. Best practice mandates creating an unprivileged user or using the built-in `node` user: `USER node` in the Dockerfile. Furthermore, Kubernetes manifests must enforce `securityContext: runAsNonRoot: true`, `readOnlyRootFilesystem: true`, and drop all Linux capabilities (`drop: ['ALL']`).",
+      "difficulty": "advanced",
+      "whyAsked": "Crucial web security and container hardening question for senior engineers."
+    },
+    {
+      "question": "What is the PID 1 zombie process problem in Docker, and why is `dumb-init` or `tini` needed for Node.js?",
+      "answer": "In Linux, PID 1 (init) is responsible for two critical tasks: 1) Reaping zombie orphan child processes when their parent terminates. 2) Handling OS signals (SIGTERM, SIGINT) and forwarding them to child processes. Node.js was not designed to run as PID 1; by default, it does not reap adopted zombie processes, leading to PID exhaustion over time. Furthermore, Node.js ignores SIGTERM by default when run as PID 1, preventing graceful shutdown when Kubernetes scales down a pod (leading to Kubernetes issuing a violent SIGKILL after 30 seconds). Using an init wrapper like `dumb-init` or Docker's `--init` (tini) ensures clean signal forwarding and automatic zombie reaping.",
+      "difficulty": "staff",
+      "whyAsked": "Separates senior engineers who understand Linux process semantics from junior container users."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Next.js / Node.js Production Docker Optimization",
+      "architecture": "Stage 1 (deps): Installs full dependencies with npm ci. Stage 2 (builder): Compiles TypeScript and runs Next.js build. Stage 3 (runner): Minimal Google Distroless Node image, copying only `.next/standalone` and `node_modules`. Runs as unprivileged user `nodejs` with dumb-init.",
+      "impact": "Reduced container image size from 1.4GB to 76MB; deployment download time dropped from 45s to 3s."
+    }
+  ],
+  "howToExplain": {
+    "opening": "Docker multi-stage builds separate the build environment from the execution environment in a single Dockerfile, ensuring that development dependencies, compilers, and source files never enter production container images.",
+    "keyPoints": [
+      "Layer Caching: Order instructions from least-frequently changed (package.json) to most-frequently changed (source code).",
+      "Minimal Runtimes: Use Alpine or Distroless to eliminate unnecessary shells, package managers, and vulnerable binaries.",
+      "Security: Enforce non-root execution (`USER node`) and drop Linux capabilities.",
+      "Process Management: Use `dumb-init` or `tini` for PID 1 signal forwarding and zombie process reaping."
+    ],
+    "closingImpression": "A production container should be an immutable, minimalist appliance containing only the executable binary and its production runtime dependencies.",
+    "analogies": "A multi-stage build is like building a house with scaffolding and cranes, but removing all the scaffolding before the family moves in so they only live in the finished house."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Copying all project source code before running `npm install` in the Dockerfile.",
+      "whyWrong": "Any single character edit in any source file invalidates Docker's layer cache for `COPY . .`, forcing a full, slow re-run of `npm install` on every single build.",
+      "correctApproach": "Copy `package.json` and `package-lock.json` first, run `npm ci`, and only then copy the remaining application source code."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do Distroless container images prevent shell injection attacks?",
+      "deepDiveAnswer": "Distroless images contain only your application runtime (e.g. Node.js binary and libc/libssl). They contain no package manager (apt/apk), no shell (`/bin/sh`, `/bin/bash`), and no core utilities (curl, wget). Even if an attacker executes arbitrary code via command injection, they cannot spawn an interactive shell or download external malicious payload binaries.",
+      "rfcOrSourceReference": "GoogleContainerTools/distroless & OCI Image Specification v1.0"
+    }
+  ]
 }

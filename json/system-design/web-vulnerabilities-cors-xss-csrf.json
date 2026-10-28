@@ -77,5 +77,57 @@
       "Connection pooling, rate limiting, and backpressure eliminate memory exhaustions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Explain Cross-Origin Resource Sharing (CORS). Why does CORS provide zero security protection for your backend servers?",
+      "answer": "CORS is a browser security mechanism, NOT a backend firewall or server defense. The Same-Origin Policy (SOP) forbids browsers from allowing web pages on one origin (domain/protocol/port) to read responses from another origin. When a browser initiates a cross-origin request with custom headers or non-simple HTTP methods (PUT/DELETE/JSON POST), the browser automatically sends a preflight `OPTIONS` request. If the server does not respond with matching `Access-Control-Allow-Origin` headers, the BROWSER blocks the JavaScript application from reading the response. However, non-browser clients (Postman, curl, Python scripts, malicious bots) completely ignore CORS headers and can query backend servers directly. CORS protects users from malicious websites using their browser to read authenticated data, but does not secure the server from direct API attacks.",
+      "difficulty": "advanced",
+      "whyAsked": "The #1 misunderstood concept in web development. Distinguishes candidates who truly understand the browser security model."
+    },
+    {
+      "question": "Contrast XSS (Cross-Site Scripting) and CSRF (Cross-Site Request Forgery). How does `SameSite` cookie attribute mitigate CSRF?",
+      "answer": "1) XSS: Attacker injects malicious JavaScript into a trusted website (Stored, Reflected, or DOM-based). When the victim views the page, the script executes in the victim's browser, stealing DOM data, logging keystrokes, or exfiltrating tokens. 2) CSRF: Attacker tricks an authenticated user's browser into submitting an unauthorized HTTP request to a target site where the user is currently logged in. Because browsers automatically attached cookies to cross-site requests historically, the server trusted the request. `SameSite=Strict` cookies completely forbid the browser from attaching the cookie on any cross-site request (even clicking a link). `SameSite=Lax` allows cookies on safe top-level GET navigations (clicking a link) but blocks cookies on cross-site POST/PUT/DELETE forms, neutralizing classical CSRF without requiring anti-CSRF tokens for standard forms.",
+      "difficulty": "advanced",
+      "whyAsked": "Assesses mastery of OWASP Top 10 vulnerabilities and modern browser defenses."
+    },
+    {
+      "question": "How does a Content Security Policy (CSP) with cryptographic nonces neutralize Stored and Reflected XSS?",
+      "answer": "A CSP header (`Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-rAnd0m123'`) instructs the browser to refuse execution of any inline `<script>` tags or injected script strings (`eval()`, `innerHTML`) unless the script tag contains an exact matching `nonce=\"rAnd0m123\"` attribute. The server generates a cryptographically random, unique nonce for every single HTTP response and injects it into legitimate server-rendered script tags. Even if an attacker injects a `<script>alert(1)</script>` tag into a database comment or user profile, the browser blocks execution because the injected tag lacks the secret one-time nonce generated for that specific HTTP response.",
+      "difficulty": "staff",
+      "whyAsked": "Tests understanding of defense-in-depth security architectures and CSP Level 3 standards."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Banking Platform OWASP Hardening",
+      "architecture": "Strict Content-Security-Policy with per-request nonces, `X-Frame-Options: DENY` (anti-clickjacking), `X-Content-Type-Options: nosniff`, and `Strict-Transport-Security` (HSTS). All session cookies configured with `SameSite=Strict; Secure; HttpOnly`. Database queries enforce 100% parameterized prepared statements via ORM.",
+      "impact": "Zero successful XSS, CSRF, or SQL injection incidents across 10 million transactions."
+    }
+  ],
+  "howToExplain": {
+    "opening": "Web security is built on defense-in-depth: the browser's Same-Origin Policy enforces client isolation, CORS negotiates cross-origin resource sharing, CSP neutralizes malicious script execution, and SameSite cookies eliminate cross-site request forgery.",
+    "keyPoints": [
+      "CORS: A browser-enforced reading restriction, not a server-side firewall; backend APIs must enforce their own authentication.",
+      "XSS Defense: Context-aware HTML sanitization, avoiding dangerous sinks (`dangerouslySetInnerHTML`), and enforcing strict nonce-based CSP.",
+      "CSRF Defense: Modern `SameSite=Lax` or `Strict` cookies combined with anti-CSRF double-submit tokens for state-modifying requests.",
+      "SQL Injection: Never concatenate strings into queries; always use parameterized prepared statements."
+    ],
+    "closingImpression": "Security is not an add-on; it is architectural hygiene. Defense-in-depth means if one layer fails (e.g. an unescaped string), subsequent layers (CSP, HttpOnly cookies) prevent exploitation.",
+    "analogies": "CORS is an embassy guard checking whether a visitor has permission to see classified files. CSRF is a trickster forging a bank withdrawal slip with your signature. XSS is an intruder sneaking a spy microphone inside your living room."
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Setting `Access-Control-Allow-Origin: *` while simultaneously setting `Access-Control-Allow-Credentials: true`.",
+      "whyWrong": "Browsers strictly reject this combination as a fatal security violation; wildcards can never be used when credentials (cookies, auth headers) are transmitted.",
+      "correctApproach": "Explicitly reflect the specific validated origin from a whitelist in `Access-Control-Allow-Origin` when credentials are required."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does DOMPurify sanitize untrusted HTML strings to prevent DOM-based XSS attacks in React/Vue?",
+      "deepDiveAnswer": "DOMPurify builds a DOM tree in an inert `HTMLDocument` using `DOMParser`, walks all nodes, strips forbidden elements (`<script>`, `<iframe>`, `<object>`), inspects all attributes, removes dangerous schemes (`javascript:`, `data:`), and neutralizes mXSS (mutation XSS) before serializing clean HTML back to the DOM.",
+      "rfcOrSourceReference": "W3C Content Security Policy Level 3 & OWASP Top 10 Web Application Security Risks"
+    }
+  ]
 }
