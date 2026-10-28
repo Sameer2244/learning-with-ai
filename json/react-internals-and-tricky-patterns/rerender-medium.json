@@ -90,5 +90,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "When should you NOT use React.memo?",
+      "answer": "1) Components that render cheaply (the overhead of shallowEqual can exceed render cost). 2) Components that almost always receive different props (memoization check runs and fails 100% of the time, wasting CPU). 3) Components accepting un-memoized object literals or functions as props.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests practical performance profiling discernment vs premature optimization."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Large Data Grid Cells",
+      "description": "Wrapping cell components in React.memo so updating row 5 doesn't re-render 500 other visible rows.",
+      "companies": "Google Sheets Web, Notion",
+      "codeSnippet": "const Cell = React.memo(({ value }) => <td>{value}</td>);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React.memo is a higher-order component that skips rendering when incoming props are shallowly equal to previous props, recycling the previous Fiber.",
+    "keyPoints": [
+      "Wraps component and intercepts render dispatch.",
+      "Uses shallowEqual by default; accepts custom comparator.",
+      "Only checks props; internal state changes (useState) still trigger re-renders.",
+      "Must be paired with useMemo and useCallback on parent props to be effective."
+    ],
+    "closingImpression": "React.memo is a surgical tool for expensive components, not a blanket wrapper for every component.",
+    "analogies": [
+      "A cache of printed documents: if the content didn't change, hand out another copy instead of running the printing press again."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming React.memo prevents re-renders when internal state updates.",
+      "why": "React.memo ONLY checks props. If the component's own useState or useContext updates, it re-renders unconditionally.",
+      "correct": "Clarify that memoization only skips renders caused by parent updates."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does the upcoming React Compiler (React Forget) change the need for React.memo?",
+      "answer": "The React Compiler automatically injects fine-grained memoization at the Babel/build step, memoizing values and component JSX blocks automatically, largely eliminating manual `React.memo`, `useMemo`, and `useCallback`.",
+      "specReference": "React Labs: The React Compiler Architecture"
+    }
+  ]
 }

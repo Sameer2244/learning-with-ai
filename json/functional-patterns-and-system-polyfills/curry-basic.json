@@ -88,5 +88,60 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between Currying and Partial Application?",
+      "answer": "Currying transforms a function of arity N into a chain of N unary functions (each taking exactly 1 argument): `f(a, b, c)` -> `f(a)(b)(c)`. Partial Application takes a function and fixes a subset of its arguments, returning a function that accepts the remaining arguments in a single call: `f(a, b, c)` -> `f(a)(b, c)`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Universal functional programming terminology check."
+    },
+    {
+      "question": "How do default parameters affect fn.length in currying?",
+      "answer": "`fn.length` reports the number of formal parameters up to the FIRST parameter with a default value or rest parameter (`...args`). If a function is `(a, b = 1, c) => {}`, `fn.length` is strictly `1`, not 3. Currying algorithms relying purely on `fn.length` will fail if default parameters are present.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of ECMA-262 function arity reflection."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Redux Middleware Architecture",
+      "description": "Redux middlewares are curried functions composed together: `store => next => action => next(action)`.",
+      "companies": "Redux Core",
+      "codeSnippet": "const logger = store => next => action => { console.log(action); return next(action); };"
+    },
+    {
+      "scenario": "Configurable API Endpoint Handlers",
+      "description": "Pre-configuring authorization tokens and base URLs before passing route-specific handlers.",
+      "companies": "Axios, Express",
+      "codeSnippet": "const withAuth = token => endpoint => fetch(endpoint, { headers: { Authorization: token } });"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Currying is a functional transformation that decomposes a multi-argument function into a sequence of nested single-argument functions using closures.",
+    "keyPoints": [
+      "Currying enables point-free function composition and partial argument reuse.",
+      "Accumulates arguments in closure scope until the target arity is satisfied.",
+      "fn.length is used to dynamically detect expected parameter count.",
+      "Redux middlewares and Ramda rely fundamentally on currying."
+    ],
+    "closingImpression": "Currying turns static multi-argument functions into flexible, composable building blocks.",
+    "analogies": [
+      "An espresso machine where you first set the grind size, then lock in the temperature, and finally press brew."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming rest parameters count towards fn.length.",
+      "why": "Rest parameters (...args) have a length of 0.",
+      "correct": "Check arguments dynamically or allow passing an explicit arity parameter."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does Ramda implement curry with placeholder support (R.__)?",
+      "answer": "Ramda checks for a sentinel Symbol (`R.__`). If present, it records the argument slot as unfilled, allowing subsequent curried calls to fill the gap before invoking the target function.",
+      "specReference": "Ramda.js internal curry implementation"
+    }
+  ]
 }

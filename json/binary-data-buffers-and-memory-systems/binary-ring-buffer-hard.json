@@ -100,5 +100,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does a Circular Ring Buffer achieve lockless O(1) reads and writes?",
+      "answer": "A Ring Buffer uses a fixed-size TypedArray with two integer pointers: `head` (read index) and `tail` (write index). Pointers advance using modulo arithmetic (`(tail + 1) % capacity`). In single-producer single-consumer scenarios, writes and reads never contend for the same memory slot, operating in lockless O(1) time without garbage collection.",
+      "difficulty": "advanced",
+      "whyAsked": "Classic systems engineering data structure question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Web Audio Worklet Audio Streaming",
+      "description": "Streaming audio PCM chunks from the main thread to an AudioWorkletProcessor thread via a SharedArrayBuffer ring buffer.",
+      "companies": "Zoom Web, Discord Voice",
+      "codeSnippet": "ringBuffer.write(audioChunk); // lockless transfer"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A circular ring buffer uses a fixed-size typed array and wrapping pointers to provide a lockless, zero-allocation FIFO queue.",
+    "keyPoints": [
+      "Fixed-size array eliminates dynamic memory allocation and GC churn.",
+      "Modulo arithmetic wraps head and tail pointers seamlessly.",
+      "Distinguishes full from empty states by tracking element count.",
+      "Ideal for real-time audio processing and high-frequency message streams."
+    ],
+    "closingImpression": "Ring buffers provide deterministic latency by eliminating memory re-allocation in critical audio and networking paths.",
+    "analogies": [
+      "A sushi conveyor belt: the chef places plates at the tail, customers pick plates from the head; the belt loops in a circle without needing to expand."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Confusing an empty buffer with a full buffer when head === tail.",
+      "why": "When head === tail, the buffer could be either 100% empty or 100% full.",
+      "correct": "Maintain an explicit `count` variable, or leave one slot empty as a guard."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do Atomics and SharedArrayBuffer enable multi-threaded ring buffers in Web Workers?",
+      "answer": "`SharedArrayBuffer` allows two threads to share memory. `Atomics.wait()` and `Atomics.notify()` allow the consumer thread to sleep until the producer notifies it of new data, implementing true zero-CPU thread synchronization.",
+      "specReference": "ECMA-262 §25.4 Atomics"
+    }
+  ]
 }

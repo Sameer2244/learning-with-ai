@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does the 'children as props' pattern prevent component re-renders without using React.memo?",
+      "answer": "When Component A passes `<Child />` to Component B as children (`<B><Child /></B>`), `<Child />` is evaluated in Component A's render scope. When Component B re-renders due to its own internal state changes, Component B receives the exact same `props.children` object reference that was created by Component A. Because the element reference hasn't changed, React bails out of re-rendering `<Child />` during reconciliation!",
+      "difficulty": "advanced",
+      "whyAsked": "One of the highest-signal React interview questions; tests deep understanding of element reference stability."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Scroll Position & Theme Container Wrappers",
+      "description": "Wrapping an entire expensive dashboard in a scroll-listener container without re-rendering the dashboard on scroll.",
+      "companies": "Meta, Next.js",
+      "codeSnippet": "function ScrollTracker({ children }) { const [y, setY] = useState(0); return <div onScroll={...}>{children}</div>; }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The children-as-props pattern isolates component re-renders by lifting children out of the re-rendering component's JSX scope, preserving element reference identity.",
+    "keyPoints": [
+      "JSX elements are objects; child elements are created in the parent scope.",
+      "State changes in wrapper component do not recreate props.children.",
+      "React bails out of rendering children if element reference is unchanged.",
+      "Achieves zero-cost re-render isolation without React.memo."
+    ],
+    "closingImpression": "Component composition is React's natural, built-in optimization tool that should be reached for before using useMemo or React.memo.",
+    "analogies": [
+      "A picture frame: repainting the wooden frame (wrapper) does not require repainting the artwork inside (children)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Creating children inline inside the wrapper component body.",
+      "why": "Evaluating JSX inside the wrapper recreates the element on every render, breaking the bailout.",
+      "correct": "Pass children as props from above."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Where in React Fiber reconciler does this element bailout occur?",
+      "answer": "In `packages/react-reconciler/src/ReactFiberBeginWork.js` inside `checkScheduledUpdateOrContext()`, React checks `oldProps.children === newProps.children` and bails out via `bailoutOnAlreadyFinishedWork()`.",
+      "specReference": "packages/react-reconciler/src/ReactFiberBeginWork.js"
+    }
+  ]
 }

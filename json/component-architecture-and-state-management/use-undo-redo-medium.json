@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the State Machine structure of an immutable Undo/Redo hook?",
+      "answer": "State is an object: `{ past: [], present: T, future: [] }`. 1) **Set**: pushes `present` onto `past`, sets new `present`, clears `future`. 2) **Undo**: pops previous from `past`, moves `present` to `future`, sets previous as `present`. 3) **Redo**: pops next from `future`, moves `present` to `past`, sets next as `present`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Classic data structure state machine question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Rich Text Editors & Document Builders",
+      "description": "Maintaining undo/redo history stacks in WYSIWYG editors.",
+      "companies": "Notion, Google Docs Web",
+      "codeSnippet": "const { state, set, undo, redo, canUndo, canRedo } = useUndo(initialText);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "An undo/redo state machine partitions history into past, present, and future stacks, maintaining strict immutability across transitions.",
+    "keyPoints": [
+      "State shape: { past: [], present, future: [] }.",
+      "New action pushes to past and clears future.",
+      "Undo shifts from past to future; redo shifts from future to past.",
+      "useReducer provides clean, predictable state transitions."
+    ],
+    "closingImpression": "Implementing undo/redo with useReducer ensures state history transitions remain atomic and testable.",
+    "analogies": [
+      "A browser history: clicking a new link clears your forward history; back moves you to previous pages; forward moves you back ahead."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Forgetting to clear the future array when a new state update occurs.",
+      "why": "Making a new edit after an undo invalidates all subsequent redo states.",
+      "correct": "Always reset future: [] on new actions."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do you bound memory consumption in an undo stack?",
+      "answer": "Enforce a maximum history limit (e.g. `maxHistory = 50`) using `past.slice(-maxHistory)` to evict oldest entries and prevent unbounded memory growth.",
+      "specReference": "Redux Documentation: Implementing Undo History"
+    }
+  ]
 }

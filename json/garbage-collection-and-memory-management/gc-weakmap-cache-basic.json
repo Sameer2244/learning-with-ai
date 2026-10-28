@@ -88,5 +88,60 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why do WeakMaps hold keys weakly, and why can primitives NOT be WeakMap keys?",
+      "answer": "A `WeakMap` holds 'weak' references to its keys, meaning an object's presence as a WeakMap key does NOT count as a reachability path for V8's Garbage Collector. If no other live references to the key object exist, V8 reclaims the object and silently removes the key-value pair from the WeakMap. Primitives (strings, numbers) cannot be keys because primitives are immutable values that do not have distinct object identities and are never garbage collected.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of garbage collection reachability graphs and memory retention."
+    },
+    {
+      "question": "Why is WeakMap non-iterable (no .keys(), no .size, no for...of)?",
+      "answer": "Because garbage collection is non-deterministic! If WeakMap exposed `.size` or `.keys()`, the number of elements returned would depend on the unpredictable timing of when V8's GC runs (Scavenger / Mark-Sweep). To preserve deterministic language execution semantics, WeakMap hides enumeration entirely.",
+      "difficulty": "advanced",
+      "whyAsked": "Checks understanding of language design invariants regarding GC non-determinism."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "DOM Node Metadata Associated Storage",
+      "description": "Storing custom component metadata or event handlers associated with DOM elements without leaking memory when elements are removed from the DOM.",
+      "companies": "jQuery, Google Closure Library, Web Components",
+      "codeSnippet": "const nodeMeta = new WeakMap(); nodeMeta.set(domElement, { clicks: 0 });"
+    },
+    {
+      "scenario": "Private State in ES6 Classes",
+      "description": "Before private fields (#field), WeakMap was the standard pattern for truly private instance variables.",
+      "companies": "Babel, TypeScript transpilers",
+      "codeSnippet": "const privates = new WeakMap(); class User { constructor() { privates.set(this, { password: 'secret' }); } }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "WeakMap associates ephemeral metadata with object keys without preventing garbage collection, eliminating memory leaks when target objects are discarded.",
+    "keyPoints": [
+      "Keys must be objects; values can be arbitrary types.",
+      "Keys are held weakly: if no external references remain, entries are garbage collected.",
+      "Non-iterable by design to prevent non-deterministic GC timing exposure.",
+      "The standard mechanism for DOM metadata association and private state."
+    ],
+    "closingImpression": "WeakMap is the only data structure in JavaScript that coordinates directly with the engine's garbage collection lifecycle.",
+    "analogies": [
+      "A coat check ticket: if the person leaves the venue forever without their coat, the coat check tag becomes meaningless and the locker is emptied automatically."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Attempting to use a string or number as a WeakMap key.",
+      "why": "WeakMap keys must be objects; passing a primitive throws TypeError: Invalid value used as weak map key.",
+      "correct": "Use Map for primitives, or WeakMap strictly for object instances."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is an Ephemeron in computer science and how does WeakMap implement it?",
+      "answer": "An Ephemeron is a key-value pair where the value is reachable if and only if the key is reachable. Even if the value contains a reference back to the key (a cycle), V8's GC recognizes that the key is unreachable from roots and reclaims both.",
+      "specReference": "Barry Hayes: Ephemerons: A New Mechanism for Weak Associates (1997)"
+    }
+  ]
 }

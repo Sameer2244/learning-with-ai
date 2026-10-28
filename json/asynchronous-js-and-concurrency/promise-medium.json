@@ -127,5 +127,66 @@
       "Result objects adhere strictly to { status: 'fulfilled', value } and { status: 'rejected', reason } shapes."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does Promise.allSettled differ from Promise.all in failure scenarios?",
+      "answer": "`Promise.all` fast-fails: if any single promise rejects, the returned promise immediately rejects with that error, ignoring all other pending or resolved promises. In contrast, `Promise.allSettled` NEVER rejects; it waits for every single promise to settle and returns an array of descriptors: `{ status: 'fulfilled', value }` or `{ status: 'rejected', reason }`.",
+      "difficulty": "basic",
+      "whyAsked": "Foundational Promise combinator question."
+    },
+    {
+      "question": "How do you ensure results in a custom allSettled maintain input order?",
+      "answer": "By pre-allocating an array of the exact input length (`const results = new Array(promises.length)`) and populating each index `i` when that specific promise resolves (`results[i] = descriptor`). A separate counter tracks `settledCount++`. When `settledCount === promises.length`, the outer promise resolves with `results`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of async ordering and array index stability."
+    },
+    {
+      "question": "What is the difference between Promise.any and Promise.race?",
+      "answer": "`Promise.race` settles with the FIRST promise to settle (whether fulfilled OR rejected). `Promise.any` ignores rejections and settles with the FIRST FULFILLED promise. It only rejects if ALL input promises reject, throwing an `AggregateError`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Checks knowledge of all 4 ES2020/ES2021 Promise combinators (all, race, allSettled, any)."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Bulk Notification Dispatch (Email / SMS)",
+      "description": "Sending 10,000 notifications in parallel: failure to deliver to 5 users should not abort or obscure successful delivery to the other 9,995 users.",
+      "companies": "Twilio, SendGrid",
+      "codeSnippet": "const results = await Promise.allSettled(notifications.map(send));"
+    },
+    {
+      "scenario": "Multi-Source Analytics Dashboards",
+      "description": "A dashboard fetching metrics from 5 independent microservices renders partial widgets for services that succeeded while displaying retry buttons for failed widgets.",
+      "companies": "Datadog, Grafana",
+      "codeSnippet": "const [cpu, mem, disk] = await Promise.allSettled([getCpu(), getMem(), getDisk()]);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Promise.allSettled is a concurrency combinator that guarantees complete outcome tracking by awaiting all promises without short-circuiting on failure.",
+    "keyPoints": [
+      "Never rejects; always fulfills with an array of outcome descriptors.",
+      "Each outcome conforms strictly to { status: 'fulfilled', value } or { status: 'rejected', reason }.",
+      "Preserves exact input order even when promises settle out of order.",
+      "Essential for batch operations where partial success is acceptable."
+    ],
+    "closingImpression": "Using allSettled instead of all prevents one failing non-critical request from crashing an entire page.",
+    "analogies": [
+      "A teacher grading exams: they don't stop grading the whole class just because one student failed; they grade everyone and hand back the full report card."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Pushing results into an array using array.push() on completion.",
+      "why": "Pushing as promises resolve scrambles the order: a fast 10ms promise will appear before a slow 100ms promise regardless of their original array order.",
+      "correct": "Store results by index: `results[i] = descriptor`."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is an AggregateError and which Promise combinator throws it?",
+      "answer": "Introduced in ES2021 alongside `Promise.any`, `AggregateError` is a native error subclass that wraps multiple individual errors into an `.errors` array property when all promises passed to `Promise.any` reject.",
+      "specReference": "ECMA-262 §20.5.7 AggregateError Objects & §27.2.4.3 Promise.any"
+    }
+  ]
 }

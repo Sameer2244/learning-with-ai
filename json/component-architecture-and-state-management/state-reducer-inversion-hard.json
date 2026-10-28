@@ -96,5 +96,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is Kent C. Dodds' State Reducer pattern and what problem does it solve?",
+      "answer": "The State Reducer pattern allows consumers of a custom hook to intercept and modify internal state changes before they are applied. The hook accepts an optional `stateReducer(state, action)` function from the user. Inside the hook's reducer, it passes the default proposed state change to the user's reducer: `userReducer(state, action) ?? defaultState`. This gives users 100% control over state transitions without forking the hook.",
+      "difficulty": "advanced",
+      "whyAsked": "Advanced component architecture pattern popularized in Downshift."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Downshift Autocomplete Menu Prevention",
+      "description": "Preventing a dropdown menu from closing when a specific item is selected, by intercepting the `ItemClick` action in the state reducer.",
+      "companies": "PayPal, Stripe",
+      "codeSnippet": "const { isOpen } = useSelect({ stateReducer: (state, action) => { if (action.type === 'ITEM_CLICK') return { ...state, isOpen: true }; } });"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The State Reducer pattern inverts control by allowing consumers to intercept, modify, or cancel internal state transitions before they are applied.",
+    "keyPoints": [
+      "Hook accepts an optional user-provided stateReducer function.",
+      "Internal actions are exposed with descriptive action.type strings.",
+      "User can return modified state or fall back to default behavior.",
+      "Eliminates the need to add dozens of special-case boolean props."
+    ],
+    "closingImpression": "State Reducers provide infinite extensibility for custom hooks without bloating the core API.",
+    "analogies": [
+      "A customs border checkpoint: goods pass through automatically unless the border agent (state reducer) inspects and reroutes a specific crate."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Throwing an error when user reducer does not handle an action.",
+      "why": "User reducers only handle actions they care about; all other actions must fall back to the default state.",
+      "correct": "Always return default changes if the user reducer returns undefined."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does the State Reducer pattern compare to Redux Middlewares?",
+      "answer": "Middlewares intercept actions before they hit reducers; State Reducers intercept the resulting state transition itself, acting as a post-processor for state changes.",
+      "specReference": "Kent C. Dodds: The State Reducer Pattern with React Hooks"
+    }
+  ]
 }

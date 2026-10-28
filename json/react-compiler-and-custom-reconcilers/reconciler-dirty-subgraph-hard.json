@@ -98,5 +98,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React reconciler bailout on a clean subtree during beginWork?",
+      "answer": "During `beginWork`, React checks two conditions: 1) `oldProps === newProps` and no state/context updates on the fiber. 2) `!includesSomeLane(wipLanes, renderLanes)`. If true, the component itself has no work. React then checks `includesSomeLane(childLanes, renderLanes)`: if false, NO descendant in the entire subtree has pending work! React calls `bailoutOnAlreadyFinishedWork()` and completely skips traversing the entire subtree in O(1) time.",
+      "difficulty": "advanced",
+      "whyAsked": "The core performance bailout logic in the React reconciler engine."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Large Enterprise Tree Invalidation Skipping",
+      "description": "Skipping reconciliation on 10,000 clean fibers when an update only affects a single small component leaf.",
+      "companies": "Meta, Salesforce",
+      "codeSnippet": "if (!checkScheduledUpdateOrContext(current, renderLanes)) return bailoutOnAlreadyFinishedWork(wip);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React achieves sub-millisecond updates in massive trees by bailing out on clean subtrees when lane priority bitmasks indicate no pending work.",
+    "keyPoints": [
+      "Fiber checks if its own lanes match the current render lane.",
+      "Checks childLanes to see if any descendant needs work.",
+      "If childLanes has no matching work, skips the entire subtree in O(1).",
+      "Propagates dirty lane flags upwards during completeWork."
+    ],
+    "closingImpression": "Lane-based dirty subtree skipping is how React renders massive applications at 60fps.",
+    "analogies": [
+      "An inspection team: before entering a 50-story building, they check the sensor board in the lobby; if all green lights show on floors 10-50, they skip taking the elevator to those floors."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming React always visits every fiber node in the tree on every setState.",
+      "why": "React skips clean subtrees in O(1) time using childLanes bitmasks.",
+      "correct": "Explain that childLanes enables early bailout without tree traversal."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is bailoutOnAlreadyFinishedWork in ReactFiberBeginWork.js?",
+      "answer": "It clones the fiber's child from `current.child` to `workInProgress.child` and returns null, instructing the work loop to ascend rather than descend.",
+      "specReference": "packages/react-reconciler/src/ReactFiberBeginWork.js: bailoutOnAlreadyFinishedWork"
+    }
+  ]
 }

@@ -106,5 +106,54 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is react-reconciler and what are the essential HostConfig methods?",
+      "answer": "`react-reconciler` is the core package that powers ReactDOM, React Native, and React Three Fiber. To create a custom renderer, you supply a `HostConfig` implementing host environment methods: `createInstance(type, props)` (creates host element), `createTextInstance(text)`, `appendChild(parent, child)`, `removeChild(parent, child)`, `insertBefore(parent, child, before)`, and `commitUpdate(instance, updatePayload)`.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of how React decouples reconciliation from host platform rendering."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React Three Fiber (WebGL Scene Graph Rendering)",
+      "description": "Compiling JSX into 3D Three.js scene graphs (`<mesh><boxGeometry /></mesh>`) instead of DOM nodes.",
+      "companies": "Poimandres, Three.js",
+      "codeSnippet": "const reconciler = ReactReconciler({ createInstance(type) { return new THREE[type](); } });"
+    },
+    {
+      "scenario": "Ink (Interactive CLI Terminal Applications)",
+      "description": "Rendering React components into interactive command line terminal output using ANSI escape sequences.",
+      "companies": "Vercel, Prisma CLI",
+      "codeSnippet": "import { render, Text } from 'ink'; render(<Text color='green'>Hello CLI</Text>);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "react-reconciler decouples declarative React component diffing from host platform rendering via a pluggable HostConfig interface.",
+    "keyPoints": [
+      "HostConfig bridges React Fiber to any platform (DOM, WebGL, Terminal, Mobile).",
+      "createInstance instantiates native platform objects.",
+      "appendChild and removeChild manage physical tree structure.",
+      "commitUpdate applies prop changes during the commit phase."
+    ],
+    "closingImpression": "React is not a DOM library; React is a reconciliation engine that can render to any platform.",
+    "analogies": [
+      "A universal adapter: React Fiber is the standard power outlet; HostConfig is the adapter plug that converts it to US, UK, or European sockets."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming ReactDOM is where React's diffing algorithm lives.",
+      "why": "ReactDOM is just a thin HostConfig wrapper around react-reconciler.",
+      "correct": "Clarify that react-reconciler contains the diffing engine; ReactDOM only handles browser DOM mutations."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is supportsMutation vs supportsPersistence in HostConfig?",
+      "answer": "`supportsMutation: true` indicates a mutable host tree (like browser DOM where nodes are mutated in place). `supportsPersistence: true` indicates an immutable host tree (where trees are cloned on every change, like some graphics renderers).",
+      "specReference": "packages/react-reconciler/src/forks/ReactFiberHostConfig.dom.js"
+    }
+  ]
 }

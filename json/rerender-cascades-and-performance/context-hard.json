@@ -94,5 +94,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do external selector stores (Zustand / Redux) achieve fine-grained invalidation compared to React Context?",
+      "answer": "They move state management outside of React's reconciler! The store is a plain JavaScript object maintaining a `Set` of listener callbacks. When state updates, the store iterates listeners, evaluates each subscriber's selector (`state => state.field`), and uses `Object.is` to compare with the previous slice. If equal, it does nothing; if changed, it calls the listener to trigger a targeted update via `useSyncExternalStore`.",
+      "difficulty": "advanced",
+      "whyAsked": "High-level state management architecture interview question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Zustand Micro-Store Architecture",
+      "description": "Managing thousands of dynamic state properties in 3D canvas and canvas editors with zero context re-renders.",
+      "companies": "Figma, Linear, Discord",
+      "codeSnippet": "const bears = useStore(state => state.bears);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Fine-grained selector stores achieve O(1) targeted re-renders by moving state outside React and notifying only components whose selected slices fail equality checks.",
+    "keyPoints": [
+      "State lives in an external JS store outside React Context.",
+      "Selectors extract fine-grained state slices.",
+      "useSyncExternalStore coordinates updates without tearing.",
+      "Only components with changed slices re-render."
+    ],
+    "closingImpression": "Selector stores solve the context performance dilemma by decoupling state storage from component tree hierarchy.",
+    "analogies": [
+      "A pager system: instead of shouting over a megaphone to the entire room (context), only the doctor whose pager buzzes (subscriber) stands up."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Selecting the entire store state: const state = useStore(state => state).",
+      "why": "Defeats all fine-grained optimizations by re-rendering on every state change.",
+      "correct": "Always select the smallest slice needed: `useStore(s => s.user.name)`."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does useSyncExternalStore prevent infinite re-render loops with non-primitive selectors?",
+      "answer": "`useSyncExternalStore` relies on `Object.is(getSnapshot(), prevSnapshot)`. If a selector returns a new object reference every time (`state => ({ a: state.a })`), React detects an unstable snapshot and throws a Maximum update depth exceeded error.",
+      "specReference": "React Documentation: useSyncExternalStore Caveats"
+    }
+  ]
 }

@@ -91,5 +91,48 @@
       "Direct state value references in async callbacks are inherently vulnerable to stale closures."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is a Stale Closure in React and why does it occur?",
+      "answer": "A stale closure occurs when a callback or effect captures a state or prop variable from an older render pass's lexical scope. Because that callback was not recreated on subsequent renders, it still references the older snapshot value. Using a functional state updater (`setCount(prev => prev + 1)`) resolves this by reading from the reducer queue rather than the closed-over variable.",
+      "difficulty": "basic",
+      "whyAsked": "Universal React mental model question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Concurrent Button Clicking & Rapid Event Streams",
+      "description": "Clicking a like button 5 times rapidly: with `setLikes(likes + 1)`, it resolves to 1; with `setLikes(l => l + 1)`, it resolves accurately to 5.",
+      "companies": "Twitter, Instagram, YouTube",
+      "codeSnippet": "setCount(prev => prev + 1); // safe from closure capture"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Functional state updates solve stale closures by evaluating against the live update queue rather than the closed-over lexical state snapshot.",
+    "keyPoints": [
+      "Async callbacks hold closure snapshots of state from creation time.",
+      "Direct state references (count + 1) overwrite intervening updates.",
+      "Functional updaters (prev => prev + 1) guarantee monotonic updates.",
+      "Essential for timers, network responses, and WebSocket handlers."
+    ],
+    "closingImpression": "Whenever an update depends on previous state, functional updates are mandatory.",
+    "analogies": [
+      "A savings account: instead of telling the teller 'make my balance $100' (direct), you tell them 'add $10 to whatever is in the account' (functional)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using setCount(count + 1) inside async fetch callbacks.",
+      "why": "By the time the network request returns, count in the closure is stale.",
+      "correct": "Always use `setCount(c => c + 1)` in async handlers."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React process pending functional updaters during render?",
+      "answer": "During update phase, React iterates through `queue.pending`: `newState = typeof action === 'function' ? action(currentState) : action`. It applies them as a mathematical reducer pipeline.",
+      "specReference": "packages/react-reconciler/src/ReactFiberHooks.js: updateReducer"
+    }
+  ]
 }

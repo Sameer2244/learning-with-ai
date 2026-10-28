@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How should state clamps (min, max, step) be enforced in reusable custom hooks?",
+      "answer": "By creating bounded setter functions that enforce constraints before calling the underlying state updater: `Math.min(max, Math.max(min, nextValue))`. Exposing bounded modifiers (`increment`, `decrement`, `set(val)`) guarantees the component state can never violate domain invariant boundaries.",
+      "difficulty": "basic",
+      "whyAsked": "Tests custom hook encapsulation and state invariant enforcement."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "E-Commerce Quantity Selectors",
+      "description": "Quantity steppers that enforce inventory limits (`max: item.stock`) and minimum purchase limits (`min: 1`).",
+      "companies": "Amazon, Shopify",
+      "codeSnippet": "const { count, increment, decrement } = useCounter({ min: 1, max: stock, step: 1 });"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Custom hooks encapsulate state transitions behind bounded modifier functions, guaranteeing domain constraints are never violated.",
+    "keyPoints": [
+      "Clamps values between min and max bounds.",
+      "Supports dynamic step increments.",
+      "Exposes clean, declarative control methods.",
+      "Enforces single source of truth for business logic."
+    ],
+    "closingImpression": "Encapsulating constraints inside custom hooks prevents UI components from duplicating validation logic.",
+    "analogies": [
+      "A thermostat: you can press up or down, but the device physically clamps the temperature between 50°F and 90°F to protect the furnace."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Allowing external callers to pass raw unclamped numbers to set().",
+      "why": "Allows callers to bypass min/max invariants.",
+      "correct": "Clamp values inside the set() method as well."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do you handle floating point rounding issues in stepped counters (e.g. 0.1 + 0.2)?",
+      "answer": "Use integer arithmetic (scale up by power of 10) or format using `Number(val.toFixed(precision))` to avoid IEEE 754 precision artifacts like `0.30000000000000004`.",
+      "specReference": "IEEE 754 Floating-Point Arithmetic in JavaScript"
+    }
+  ]
 }

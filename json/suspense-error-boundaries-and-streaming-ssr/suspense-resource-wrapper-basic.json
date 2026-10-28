@@ -88,5 +88,54 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React Suspense work under the hood? What does a component throw?",
+      "answer": "React Suspense relies on **throwing Promises**! When a component attempts to read data that is not yet ready, the resource reader literally throws the pending Promise: `throw promise;`. React catches the thrown Promise inside its render work loop (via `throwException`), suspends rendering of that component subtree, mounts the nearest `<Suspense fallback={...}>` fallback to the screen, and attaches `.then()` to the promise. When the promise resolves, React restarts the render pass!",
+      "difficulty": "advanced",
+      "whyAsked": "The #1 core architectural question for React Suspense."
+    },
+    {
+      "question": "What are the three states of a Suspense resource wrapper?",
+      "answer": "1) `pending`: reading throws the Promise. 2) `success`: reading returns the resolved data. 3) `error`: reading throws the caught Error instance (caught by nearest Error Boundary).",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of the wrapPromise protocol."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Relay & React 19 use() Hook",
+      "description": "The underlying protocol driving React 19's `use(promise)` hook and Relay's data-driven Suspense queries.",
+      "companies": "Meta, Next.js",
+      "codeSnippet": "function Profile() { const user = use(fetchUserPromise); return <h1>{user.name}</h1>; }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React Suspense works by catching thrown Promises during the render phase, pausing component rendering and displaying a fallback until the Promise resolves.",
+    "keyPoints": [
+      "Components throw a Promise when data is pending.",
+      "React catches the Promise and mounts the Suspense fallback.",
+      "Attaches .then() to re-trigger rendering upon resolution.",
+      "Standardized in React 19 as the native use(promise) hook."
+    ],
+    "closingImpression": "Suspense turns asynchronous data fetching into declarative synchronous-looking code.",
+    "analogies": [
+      "A waiter at a restaurant: you ask for soup; the waiter says 'the soup is simmering, here is some bread (fallback) while you wait', and brings the soup when ready."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Creating a new fetch promise inside the render body without caching.",
+      "why": "On every render retry, a fresh promise is instantiated, causing infinite suspense loops.",
+      "correct": "Cache promises outside render or use React.cache / SWR / TanStack Query."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Where in React reconciler source is the thrown Promise caught?",
+      "answer": "In `packages/react-reconciler/src/ReactFiberWorkLoop.js` inside `throwException()`, which marks the fiber with `ShouldCapture` and finds the nearest `SuspenseComponent`.",
+      "specReference": "packages/react-reconciler/src/ReactFiberWorkLoop.js: throwException"
+    }
+  ]
 }

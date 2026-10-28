@@ -110,5 +110,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Walk through the workLoop algorithm using child, sibling, and return pointers.",
+      "answer": "1) `beginWork(node)`: descend to `node.child` if it exists. 2) If no child, `completeWork(node)`: check `node.sibling`. If sibling exists, pivot to sibling and repeat step 1. 3) If no sibling, ascend to `node.return`, complete parent, and check parent's sibling. 4) Terminate when reaching root with no siblings.",
+      "difficulty": "advanced",
+      "whyAsked": "The ultimate React Fiber traversal algorithm question."
+    },
+    {
+      "question": "How does this iterative traversal allow React to pause work during Concurrent Mode?",
+      "answer": "Because traversal is an iterative `while` loop tracking a single global pointer `workInProgress`, pausing is as simple as saving the current pointer and breaking out of the loop: `if (shouldYield()) break;`. When the browser has idle time, React calls `workLoop()` and picks up exactly from `workInProgress` without unwinding.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of how linked lists enable cooperative multitasking."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React Concurrent workLoop (workLoopConcurrent)",
+      "description": "The core engine loop driving React 18/19 concurrent rendering.",
+      "companies": "Meta",
+      "codeSnippet": "while (workInProgress !== null && !shouldYield()) { workInProgress = performUnitOfWork(workInProgress); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React reconciles components using an iterative Depth-First Search over child, sibling, and return pointers, enabling interruptible, time-sliced rendering.",
+    "keyPoints": [
+      "beginWork descends down child pointers.",
+      "completeWork bubbles up return pointers.",
+      "Pivots laterally across sibling pointers.",
+      "Can pause at any unit of work and resume without losing position."
+    ],
+    "closingImpression": "By removing recursive call frames, React achieved the holy grail of UI engineering: interruptible rendering.",
+    "analogies": [
+      "Exploring a cave with a rope: you walk in (child), check side passages (sibling), and backtrack along the rope (return). You can drop the rope for lunch and pick it up right where you stood."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using recursion to traverse Fibers.",
+      "why": "Recursion defeats the entire purpose of Fiber: recursive calls cannot be paused or yielded.",
+      "correct": "Always use an iterative while loop with pointer assignments."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What are Effect Flags (flags & subtreeFlags) in modern React Fibers?",
+      "answer": "In React 18+, `flags` stores bitwise mutations (Placement, Update, Deletion) on the fiber. `subtreeFlags` aggregates whether any descendant in the subtree has pending mutations, allowing React to skip traversing entire clean subtrees in O(1) time.",
+      "specReference": "React source: packages/react-reconciler/src/ReactFiberFlags.js"
+    }
+  ]
 }

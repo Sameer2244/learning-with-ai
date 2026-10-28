@@ -102,5 +102,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React Lanes scheduling resolve priority conflicts between urgent and transition work?",
+      "answer": "React represents update priority using a 31-bit bitmask (`Lanes`). When an urgent update (`SyncLane`) arrives while a low-priority transition (`TransitionLane`) is rendering, React detects that `wipLanes` has lower priority than the pending lane. It immediately halts the transition work loop, saves the incomplete work, switches context to `SyncLane`, renders and commits the urgent update to the screen, and then resumes or restarts the transition work.",
+      "difficulty": "advanced",
+      "whyAsked": "The pinnacle React 18 scheduler internals question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Interactive Canvas & Typing Synchronization",
+      "description": "Keystrokes in an input field preempting 3D WebGL scene rendering updates.",
+      "companies": "Figma, Canva",
+      "codeSnippet": "lanes & (SyncLane | InputContinuousLane)"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React Lanes use 31-bit integer bitmasks to represent task priority, allowing urgent tasks to preempt, suspend, and resume transition work.",
+    "keyPoints": [
+      "Lanes replace legacy expiration times with composable bitmasks.",
+      "SyncLane (urgent) preempts TransitionLanes (non-urgent).",
+      "High-priority updates commit immediately without waiting for background work.",
+      "Background work resumes automatically once the main thread is clear."
+    ],
+    "closingImpression": "Bitwise lane scheduling gives React the preemptive prioritization capabilities of a real-time operating system.",
+    "analogies": [
+      "An air traffic control tower: a commercial airliner on final approach (transition) is told to circle the runway if an emergency medevac flight (urgent) needs to land immediately."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming low-priority work can be starved indefinitely.",
+      "why": "React assigns expiration timestamps to all lanes. If a transition is preempted too many times, it expires and is upgraded to SyncLane, forcing it to commit.",
+      "correct": "Explain that lane expiration prevents transition starvation."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is getHighestPriorityLane in React reconciler source?",
+      "answer": "It uses bitwise math: `lane & -lane` (extracts the lowest set bit) to determine the highest priority lane in O(1) CPU operations.",
+      "specReference": "packages/react-reconciler/src/ReactFiberLane.js: getHighestPriorityLane"
+    }
+  ]
 }

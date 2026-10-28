@@ -107,5 +107,72 @@
       "queueMicrotask is the standard explicit API for scheduling microtasks."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the exact execution priority between Microtasks, Macrotasks, and requestAnimationFrame?",
+      "answer": "Execution proceeds as: 1) Synchronous code runs to completion on the Call Stack. 2) The entire Microtask Queue is drained to exhaustion (Promises, queueMicrotask, MutationObserver). 3) If rendering is due (typically 60Hz/120Hz refresh interval), the browser executes requestAnimationFrame callbacks, followed by Style calculation, Layout, and Paint. 4) The event loop picks exactly ONE task from the Macrotask Queue (setTimeout, setInterval, I/O), after which it immediately checks and drains any new microtasks again.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests comprehensive understanding of the HTML Living Standard event loop lifecycle."
+    },
+    {
+      "question": "Why does Promise.resolve().then() run before setTimeout(fn, 0)?",
+      "answer": "Promises schedule jobs into the Microtask Queue (ECMAScript Job Queue), whereas `setTimeout` schedules tasks into the host Macrotask Queue. Per HTML specification §8.1.6, the 'microtask checkpoint' runs immediately at the end of the current script task before the event loop advances to the next task in the macrotask queue.",
+      "difficulty": "basic",
+      "whyAsked": "The universal junior-to-mid interviewer filter question."
+    },
+    {
+      "question": "What happens if a microtask recursively enqueues another microtask?",
+      "answer": "The event loop stays trapped in the microtask checkpoint until the queue is 100% empty. Recursive microtasks cause 'Microtask Starvation' (infinite loop), completely freezing the browser tab or Node.js process: user clicks cannot register, rendering cannot occur, and macrotasks (like timers and I/O) are starved indefinitely.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of microtask queue draining behavior vs macrotask single-item execution."
+    },
+    {
+      "question": "How does process.nextTick in Node.js compare to queueMicrotask?",
+      "answer": "`process.nextTick` is specific to Node.js and runs in its own dedicated Next Tick Queue, which has HIGHER priority than the standard Promise microtask queue. In Node.js, the nextTick queue is drained immediately after the current operation finishes, BEFORE the Promise microtask queue.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests Node.js libuv runtime knowledge vs browser web standards."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React Batching & State Flush Timing",
+      "description": "React batches multiple setState updates and schedules a single re-render pass via a microtask, collapsing 50 synchronous state updates into 1 DOM reconciliation.",
+      "companies": "Meta, Vercel",
+      "codeSnippet": "queueMicrotask(() => flushWork());"
+    },
+    {
+      "scenario": "Asynchronous Cache Normalization (Zalgo Prevention)",
+      "description": "Libraries that return cached data synchronously wrap responses in `queueMicrotask` to guarantee that API callbacks always execute asynchronously, preventing race conditions.",
+      "companies": "Node.js Core, Axios",
+      "codeSnippet": "function getData(cb) { if (cache) queueMicrotask(() => cb(cache)); else fetch(cb); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The JavaScript event loop coordinates code execution, event handling, and task scheduling. Synchronous code runs on the Call Stack, while asynchronous work is partitioned into Microtasks and Macrotasks.",
+    "keyPoints": [
+      "Microtasks (Promises, queueMicrotask) have strict priority and drain completely before any macrotask.",
+      "Macrotasks (setTimeout, I/O) execute one at a time per event loop cycle.",
+      "Browser rendering (rAF, style, layout) occurs between macrotask turns when the display is ready.",
+      "Recursive microtasks starve the event loop, freezing rendering and I/O."
+    ],
+    "closingImpression": "Knowing the microtask-to-macrotask priority is fundamental for building stutter-free 60fps UIs and high-throughput Node.js servers.",
+    "analogies": [
+      "Microtasks are VIP backstage guests who all get served before the door opens for the next general admission ticket holder (macrotask)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Saying 'setTimeout(0) runs immediately after the current line'.",
+      "why": "setTimeout(0) only queues a macrotask. All synchronous statements and ALL queued microtasks will execute before the timer fires.",
+      "correct": "Explain that setTimeout(0) must wait for the current call stack to clear AND all microtasks to drain."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why does setTimeout have a minimum 4ms clamping delay in browsers?",
+      "answer": "Per the HTML Living Standard §8.6, when a timer nesting level exceeds 5 (e.g. 5 nested `setTimeout` calls), browsers enforce a minimum clamping delay of 4 milliseconds to prevent background timers from spinning the CPU at 100% utilization.",
+      "specReference": "HTML Living Standard §8.6 Timers: 'If nesting level is greater than 5, and timeout is less than 4, set timeout to 4.'"
+    }
+  ]
 }

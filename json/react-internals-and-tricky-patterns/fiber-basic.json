@@ -96,5 +96,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is a Fiber Node in React and what are its core pointers?",
+      "answer": "A Fiber Node is a plain JavaScript object representing a unit of work. It replaces recursive call stack frames with linked-list pointers: `child` (points to first child), `sibling` (points to next sibling), and `return` (points to parent fiber). This structure allows React to traverse, pause, resume, and abort rendering loops without call stack limitations.",
+      "difficulty": "intermediate",
+      "whyAsked": "Core React internal architecture check."
+    },
+    {
+      "question": "What is the purpose of the 'alternate' pointer on a Fiber node?",
+      "answer": "The `alternate` pointer links the currently rendered Fiber (`current`) to its counterpart being constructed in memory (`workInProgress`). React uses a Double Buffering strategy: it recycles the alternate fiber on re-renders, avoiding garbage collection object churn.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of React's memory allocation and double-buffering strategy."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React 16-19 Reconciler Engine",
+      "description": "The internal representation of all components in React applications.",
+      "companies": "Meta, Next.js, Gatsby",
+      "codeSnippet": "function FiberNode(tag, pendingProps, key) { this.child = null; this.sibling = null; this.return = null; }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A Fiber node is a unit of work with child, sibling, and return linked-list pointers that transforms component hierarchy into an interruptible work queue.",
+    "keyPoints": [
+      "Replaced the synchronous recursive Stack Reconciler in React 16.",
+      "Linked-list pointers (child, sibling, return) enable iterative tree traversal.",
+      "Stores memoizedState, memoizedProps, and pending work flags.",
+      "Alternate pointer provides double buffering to minimize GC overhead."
+    ],
+    "closingImpression": "Fiber transformed React from a synchronous UI library into an asynchronous UI operating system.",
+    "analogies": [
+      "A git repository: 'current' is the main production branch; 'workInProgress' is a feature branch where you make changes, merging (committing) when complete."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Confusing Fiber nodes with React Elements.",
+      "why": "React Elements are ephemeral objects created by JSX on every render. Fibers are persistent, stateful nodes that survive across renders.",
+      "correct": "Clarify that Elements are transient descriptors; Fibers are persistent units of work."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do React Lanes replace expiration times in Fiber priority scheduling?",
+      "answer": "In React 17+, Lanes use 31-bit integers where each bit represents a priority lane (SyncLane, InputContinuousLane, DefaultLane). Bitwise operators (`&`, `|`) allow React to combine, check, and defer priority groups in O(1) CPU operations.",
+      "specReference": "React source: packages/react-reconciler/src/ReactFiberLane.js"
+    }
+  ]
 }

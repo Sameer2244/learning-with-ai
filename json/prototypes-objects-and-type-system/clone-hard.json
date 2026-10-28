@@ -96,5 +96,66 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do you detect and clone circular references in an object graph?",
+      "answer": "By maintaining a `WeakMap` (or `Map`) that tracks visited objects during recursion: `visited = new WeakMap()`. Before recursing into an object, check `visited.has(obj)`. If true, return `visited.get(obj)` (the previously cloned reference). If false, instantiate the new clone object, immediately store it `visited.set(obj, clone)`, and then recursively populate its properties.",
+      "difficulty": "advanced",
+      "whyAsked": "The gold standard interview question for graph traversal algorithms in JavaScript."
+    },
+    {
+      "question": "Why must you use a WeakMap instead of an Array or Set for visited tracking?",
+      "answer": "A `WeakMap` holds weak references to its object keys, preventing the cloner from leaking memory if the traversal is retained. More importantly, WeakMap provides O(1) key lookup by object reference, whereas an Array would require O(N) linear scans (`indexOf`) on every object visited.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests data structure selection and memory leak prevention."
+    },
+    {
+      "question": "Why must you store the cloned reference in the WeakMap BEFORE recursing into children?",
+      "answer": "If you recurse into children before saving the parent clone in the map (`visited.set(obj, clone)`), a circular child pointing back to the parent will find no visited entry for the parent, triggering infinite recursion and a Call Stack Overflow.",
+      "difficulty": "advanced",
+      "whyAsked": "Checks if candidate actually understands graph cycle breaking mechanics."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "DOM Node & Graph Structure Cloning",
+      "description": "Cloning complex interconnected data graphs (e.g. parent-child DOM trees where children have `.parentElement` pointers back to the parent).",
+      "companies": "Figma, Canvas Engines",
+      "codeSnippet": "const clone = universalClone(scenegraphNode);"
+    },
+    {
+      "scenario": "Web Worker Message Passing (Structured Clone Algorithm)",
+      "description": "Browsers serialize complex state trees passed between Web Workers and the main thread via postMessage using circular graph cloning.",
+      "companies": "Chrome Engine, WebKit",
+      "codeSnippet": "worker.postMessage(deepGraphData);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A universal deep clone solves the cyclic graph traversal problem using a WeakMap memoization table to map original objects to their cloned counterparts, breaking circular loops in O(N) time.",
+    "keyPoints": [
+      "Circular structures cause naive recursive cloners to crash with Maximum call stack size exceeded.",
+      "A WeakMap memoizes visited objects: visited.set(source, clone).",
+      "The clone must be registered in the map BEFORE traversing children to resolve cycles.",
+      "WeakMap guarantees O(1) reference lookup and zero memory leakage."
+    ],
+    "closingImpression": "This is the exact algorithm executed by the browser's native structuredClone and Lodash's cloneDeep.",
+    "analogies": [
+      "Leaving breadcrumbs in a maze: before you enter a room, you leave a sign with your forward address so if you loop back to the room, you take the exit instead of circling forever."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Placing `visited.set(obj, clone)` after the child property loop.",
+      "why": "This causes immediate infinite recursion on any cyclic reference.",
+      "correct": "Always register the cloned instance in the map immediately after instantiation, before recursing."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What types cannot be cloned by the HTML Structured Clone Algorithm?",
+      "answer": "Functions, DOM nodes, Error objects (in some older specs), WeakMaps, WeakSets, and Symbol properties cannot be cloned by `structuredClone()` and will throw `DataCloneError`.",
+      "specReference": "HTML Living Standard §2.7.1 StructuredSerializeInternal"
+    }
+  ]
 }

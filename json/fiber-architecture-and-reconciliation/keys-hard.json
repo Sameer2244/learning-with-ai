@@ -109,5 +109,54 @@
       "Stable unique IDs guarantee that Fiber node memoizedState stays bound to the correct entity."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does using array index as key cause state corruption when items are prepended or deleted?",
+      "answer": "When item 0 is deleted from a list of 3 items, the items that were previously at indices 1 and 2 now have indices 0 and 1. If `key={index}`, React compares old key 0 with new key 0. Because keys match, React reuses old Fiber 0 for new Item 0! The old Fiber's `memoizedState` (local hook state, uncontrolled `<input>` text, internal timers) is retained, displaying the PREVIOUS item's local state on the NEW item.",
+      "difficulty": "advanced",
+      "whyAsked": "The classic senior frontend bug diagnostic interview question."
+    },
+    {
+      "question": "Is there ever any scenario where using key={index} is acceptable?",
+      "answer": "Yes, only when all 3 conditions are met: 1) The list and items are completely static (never reordered, filtered, inserted, or deleted). 2) The items have no local state (purely presentational). 3) The items have no uncontrolled inputs or ref attachments.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests nuanced engineering pragmatism over blind dogma."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Dynamic To-Do Lists with Checkboxes",
+      "description": "Checking item 1 and deleting item 0: with index keys, checkbox 0 stays checked on the wrong task. Using item.id fixes state alignment.",
+      "companies": "Asana, Todoist",
+      "codeSnippet": "todos.map(todo => <TodoItem key={todo.id} todo={todo} />)"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Using array indices as keys ties component state to spatial array positions rather than logical entity identity, corrupting internal state whenever lists shift.",
+    "keyPoints": [
+      "React uses key to match fibers in the alternate tree.",
+      "Index keys match old fiber index 0 to new item index 0.",
+      "Preserves memoizedState (hooks, inputs) on the wrong data entity.",
+      "Fix: Always bind keys to immutable entity IDs from your data source."
+    ],
+    "closingImpression": "State corruption from index keys is one of the most insidious production React bugs because tests with static data never catch it.",
+    "analogies": [
+      "Labeling mailboxes by apartment number (index) instead of resident names (IDs): if Tenant 1 moves out and everyone shifts down, Tenant 2 starts receiving Tenant 1's mail."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Thinking index keys only impact performance.",
+      "why": "Index keys do not just impact performance; they cause active DATA CORRUPTION and UI bugs in stateful components.",
+      "correct": "Emphasize that index keys violate state correctness, not just speed."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React 19's Action and optimistic updates interact with key reconciliation?",
+      "answer": "In React 19 `useOptimistic`, temporary optimistic items must maintain stable synthetic IDs (`temp-id-xyz`) so that when the server responds with the permanent ID, React transitions the key smoothly without remounting the component tree.",
+      "specReference": "React 19 Documentation: useOptimistic & Key Stability"
+    }
+  ]
 }

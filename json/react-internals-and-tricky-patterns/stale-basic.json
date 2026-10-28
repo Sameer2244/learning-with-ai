@@ -86,5 +86,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does usePrevious capture the previous render value using a ref?",
+      "answer": "`useRef` returns a mutable object `{ current: val }` whose identity persists across renders. In `usePrevious(value)`, we create `const ref = useRef()`. Inside `useEffect(() => { ref.current = value; })`, we update the ref AFTER rendering completes. During the render phase, `ref.current` still holds the value from the PREVIOUS render pass, returning it safely.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of React lifecycle and effect execution timing."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Transition Animations & Value Comparison",
+      "description": "Comparing `prevProps` vs `currentProps` in functional components to trigger entrance/exit animations.",
+      "companies": "Framer Motion, React Spring",
+      "codeSnippet": "const prevCount = usePrevious(count); if (count > prevCount) triggerGlow();"
+    }
+  ],
+  "howToExplain": {
+    "opening": "usePrevious leverages the fact that useEffect executes after the render and commit phase, allowing a mutable ref to return the previous value during render before being updated.",
+    "keyPoints": [
+      "useRef holds a persistent value across renders without triggering re-renders.",
+      "Render phase returns the current ref value.",
+      "useEffect updates ref.current after the browser paints.",
+      "Enables clean previous-value tracking in functional components."
+    ],
+    "closingImpression": "Understanding the delay between render evaluation and effect execution is key to mastering React hooks.",
+    "analogies": [
+      "Taking a snapshot: you look at the photo you took yesterday during the day, and at night (effect) you replace it with today's photo."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Updating ref.current directly in the render body instead of in useEffect.",
+      "why": "Updating ref during render violates pure rendering rules and breaks in Concurrent Mode where renders can be aborted.",
+      "correct": "Always mutate refs inside useEffect or event handlers."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why does React documentation advise against reading/writing refs during render?",
+      "answer": "In Concurrent Mode, React may render a component multiple times before committing, or abandon an in-flight render. Mutating refs during render produces non-deterministic side effects.",
+      "specReference": "React Docs: Referencing Values with Refs"
+    }
+  ]
 }

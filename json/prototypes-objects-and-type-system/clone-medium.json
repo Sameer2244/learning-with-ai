@@ -88,5 +88,60 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does JSON.parse(JSON.stringify(obj)) fail as a general deep clone solution?",
+      "answer": "JSON serialization has severe limitations: 1) Dates become strings (losing Date prototype methods). 2) RegExps, Maps, Sets, and TypedArrays become empty objects `{}`. 3) Functions, `undefined`, and Symbols are omitted or converted to `null`. 4) Circular references throw `TypeError: Converting circular structure to JSON`.",
+      "difficulty": "basic",
+      "whyAsked": "The universal baseline check for deep cloning knowledge."
+    },
+    {
+      "question": "How do you deep clone Date and RegExp instances correctly?",
+      "answer": "By detecting instance types: for `Date`, return `new Date(obj.getTime())`. For `RegExp`, return `new RegExp(obj.source, obj.flags)`. Re-instantiating them preserves their internal slots and prototype behaviors.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of built-in exotic objects that cannot be cloned via simple property loops."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Redux State Snapshotting for Time-Travel Debugging",
+      "description": "Redux DevTools snapshots application state trees to enable stepping backwards and forwards through user actions without state contamination.",
+      "companies": "Redux, Vuex",
+      "codeSnippet": "const snapshot = deepClone(currentState);"
+    },
+    {
+      "scenario": "Configuration Merging in Build Tools",
+      "description": "Webpack and Vite deep merge user configuration overrides over default presets without mutating default objects.",
+      "companies": "Webpack, Vite, Rollup",
+      "codeSnippet": "const config = deepMerge(defaultConfig, userConfig);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A robust deep clone recursively traverses object graphs, constructing fresh copies while explicitly handling specialized built-ins like Dates, RegExps, and Arrays.",
+    "keyPoints": [
+      "JSON.stringify fails on Dates, RegExps, undefined, and functions.",
+      "Recursive traversal must branch based on object type (Array vs Date vs RegExp vs Plain Object).",
+      "Preserves correct prototypes and internal slot values.",
+      "Forms the foundation for immutable state management."
+    ],
+    "closingImpression": "Writing an explicit recursive cloner ensures domain objects retain their methods and prototype integrity across deep copies.",
+    "analogies": [
+      "Rebuilding a Lego castle brick by brick from fresh pieces rather than simply moving the castle to a new table."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Treating typeof obj === 'object' as sufficient check for plain objects.",
+      "why": "`typeof null === 'object'`, and Dates, RegExps, and Arrays are all 'object'.",
+      "correct": "Check `obj !== null`, and use `Array.isArray` or `instanceof Date` to branch specifically."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does structuredClone handle Dates and RegExps compared to custom cloners?",
+      "answer": "The native `structuredClone` algorithm natively replicates Date and RegExp instances, preserving internal timestamps and regex flags. However, attempting to pass a function to `structuredClone` throws a DOMException `DataCloneError`.",
+      "specReference": "HTML Living Standard §2.7 StructuredClone"
+    }
+  ]
 }

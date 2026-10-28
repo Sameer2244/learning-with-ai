@@ -104,5 +104,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between TypedArrays and DataView regarding Endianness?",
+      "answer": "TypedArrays (`Uint16Array`, `Int32Array`) always read and write data using the host CPU's native endianness (almost always Little-Endian on modern x86/ARM processors). `DataView` allows developers to explicitly specify endianness per operation via a boolean flag (`dataView.getUint16(byteOffset, isLittleEndian)`), which is mandatory when decoding network packets (which use Big-Endian / Network Byte Order).",
+      "difficulty": "intermediate",
+      "whyAsked": "Crucial binary protocols and networking question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "WebSocket Binary Packet Serialization",
+      "description": "Encoding custom game state packets or financial market feeds with explicit headers over WebSockets.",
+      "companies": "Multiplayer Web Games, Trading Platforms",
+      "codeSnippet": "view.setUint8(0, OP_CODE); view.setUint32(1, payloadSize, false); // Big-Endian"
+    }
+  ],
+  "howToExplain": {
+    "opening": "DataView provides low-level, heterogeneous binary read/write access to ArrayBuffers with explicit control over endianness and byte alignment.",
+    "keyPoints": [
+      "ArrayBuffer represents raw fixed-length binary memory.",
+      "TypedArrays are homogeneous and use host-native endianness.",
+      "DataView allows reading multiple types (uint8, uint16, float32) from the same buffer.",
+      "Explicit endianness flag is essential for network packet protocol decoding."
+    ],
+    "closingImpression": "DataView is the standard tool for parsing custom binary file formats and networking protocols in JavaScript.",
+    "analogies": [
+      "A microscope with different lenses: the raw buffer is the slide; DataView lets you inspect 1 byte as a char, 2 bytes as a short, or 4 bytes as an int."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Omitting the littleEndian flag on DataView methods.",
+      "why": "DataView defaults to Big-Endian when the parameter is omitted, which corrupts data when communicating with Little-Endian systems.",
+      "correct": "Explicitly specify true or false for the littleEndian argument."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is Network Byte Order?",
+      "answer": "Network Byte Order is standard Big-Endian (most significant byte at lowest memory address), standardized by IP/TCP protocols.",
+      "specReference": "IETF RFC 1700 Network Byte Order Standard"
+    }
+  ]
 }

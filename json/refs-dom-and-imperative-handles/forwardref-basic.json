@@ -88,5 +88,54 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does a custom component NOT accept a 'ref' prop by default in React 16-18?",
+      "answer": "In React 16-18, `ref` is treated as a reserved system attribute (like `key`) and is stripped from `props`. Passing `ref` to a standard function component logs a warning: `Function components cannot be given refs`. `React.forwardRef` was required to intercept the ref and forward it as a secondary parameter: `(props, ref) => {}`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Fundamental React component API question."
+    },
+    {
+      "question": "How did React 19 change forwardRef?",
+      "answer": "In React 19, `forwardRef` is DEPRECATED! Function components can now accept `ref` directly as a standard prop: `function MyInput({ ref, ...props })`. React 19 treats `ref` as a normal prop, simplifying component design.",
+      "difficulty": "advanced",
+      "whyAsked": "Checks if candidate is up to date with modern React 19 breaking changes."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Reusable Form Input Primitives",
+      "description": "Allowing parent forms to attach refs to inner `<input>` elements for auto-focus or library integration.",
+      "companies": "Radix UI, Material UI, Tailwind UI",
+      "codeSnippet": "const Input = forwardRef((props, ref) => <input ref={ref} {...props} />);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "forwardRef allows components to expose an internal DOM node or instance to parent components via a ref.",
+    "keyPoints": [
+      "In React 16-18, forwardRef forwards ref as second argument (props, ref).",
+      "React 19 deprecates forwardRef in favor of ref as a standard prop.",
+      "Enables parents to manage focus, scroll, and measurements.",
+      "Essential for building reusable design system component primitives."
+    ],
+    "closingImpression": "forwardRef bridges component boundaries to enable imperative DOM interactions when necessary.",
+    "analogies": [
+      "A mailbox slot: the mail carrier drops the letter through the front door slot (forwardRef) directly into the basket inside."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using forwardRef without setting displayName.",
+      "why": "In React DevTools, forwardRef components appear as 'Anonymous' unless a displayName is set.",
+      "correct": "Set MyComponent.displayName = 'MyComponent'."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is WorkTag 11 in React reconciler source?",
+      "answer": "WorkTag 11 is `ForwardRef`, which executes `renderWithHooks` with `ref` passed as the second argument.",
+      "specReference": "packages/react-reconciler/src/ReactFiberBeginWork.js: updateForwardRef"
+    }
+  ]
 }

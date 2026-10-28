@@ -92,5 +92,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What does useImperativeHandle do and why is it preferred over exposing raw DOM nodes?",
+      "answer": "`useImperativeHandle(ref, createHandle, [deps])` customizes the instance value exposed to parent components when using `ref`. Instead of exposing the raw DOM element (which allows parents to arbitrarily mutate styles, classes, and child nodes), `useImperativeHandle` exposes a restricted, curated object with only specific allowed methods (e.g. `{ focus(), reset() }`), enforcing encapsulation.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of component encapsulation and defensive API design."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Video Player & Canvas Controllers",
+      "description": "Exposing clean `.play()`, `.pause()`, `.seek()` methods to parent components without exposing raw `<video>` element internals.",
+      "companies": "Vimeo, Netflix, YouTube Web",
+      "codeSnippet": "useImperativeHandle(ref, () => ({ play: () => video.play(), pause: () => video.pause() }));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "useImperativeHandle customizes the ref value exposed to parent components, restricting external access to curated methods and preserving encapsulation.",
+    "keyPoints": [
+      "Must be paired with forwardRef (or React 19 ref prop).",
+      "Exposes a restricted API object rather than raw DOM nodes.",
+      "Prevents parent components from violating child DOM encapsulation.",
+      "Ideal for video players, text editors, and modal dialogs."
+    ],
+    "closingImpression": "useImperativeHandle provides the escape hatch of imperative methods while maintaining clean API boundaries.",
+    "analogies": [
+      "A television remote: it exposes buttons for volume and channel (imperative handle), but does not let you open the back panel and touch the circuitry."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Forgetting the dependency array in useImperativeHandle.",
+      "why": "Causes the handle object to be recreated on every render.",
+      "correct": "Supply a dependency array matching any closed-over state."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does useImperativeHandle integrate with useLayoutEffect internally?",
+      "answer": "In `ReactFiberHooks.js`, `useImperativeHandle` is implemented directly using `useLayoutEffect`, ensuring the imperative ref is attached synchronously before the browser paints.",
+      "specReference": "packages/react-reconciler/src/ReactFiberHooks.js: useImperativeHandle"
+    }
+  ]
 }

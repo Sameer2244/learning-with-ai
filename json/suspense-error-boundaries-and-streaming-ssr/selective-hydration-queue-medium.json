@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is Selective Hydration in React 18?",
+      "answer": "In traditional SSR, hydration was all-or-nothing: the browser had to download all JavaScript and hydrate the entire page before ANY component became interactive. In React 18, wrapping components in `<Suspense>` breaks the page into independent hydration chunks. React streams HTML first, and hydrates components as their JS scripts download. If a user clicks on an unhydrated component, React **prioritizes hydrating that specific component first**, making it interactive immediately!",
+      "difficulty": "advanced",
+      "whyAsked": "Core React 18 SSR streaming architecture question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "E-Commerce Product Page Streaming SSR",
+      "description": "Hydrating the 'Buy Now' button immediately when the user clicks it, even if the heavy 'Reviews' component further down the page is still downloading.",
+      "companies": "Shopify, Amazon",
+      "codeSnippet": "<Suspense fallback={<ReviewsSkeleton />}><Reviews /></Suspense>"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Selective Hydration allows React to stream HTML progressively and prioritize hydrating the specific components the user interacts with first.",
+    "keyPoints": [
+      "Replaces all-or-nothing legacy hydration.",
+      "Suspense boundaries define independent hydration islands.",
+      "User interactions (clicks) boost hydration priority for target subtrees.",
+      "Eliminates TTI (Time to Interactive) bottlenecks on heavy pages."
+    ],
+    "closingImpression": "Selective Hydration bridges the gap between fast server rendering and instant user interactivity.",
+    "analogies": [
+      "An amusement park: instead of waiting for all 50 rides to be inspected before opening the park gates, the most popular roller coaster opens first so guests can start riding immediately."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Believing hydration must wait for all Suspense boundaries to resolve.",
+      "why": "React hydrates each Suspense boundary independently as soon as its code and data arrive.",
+      "correct": "State that Suspense boundaries decouple hydration across the tree."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is Event Replaying in Selective Hydration?",
+      "answer": "If a user clicks a button before its hydration completes, React intercepts and queues the event, prioritizes hydrating that button, and then REPLAYS the click event on the newly hydrated component.",
+      "specReference": "React 18 Architecture: Selective Hydration & Event Replaying"
+    }
+  ]
 }

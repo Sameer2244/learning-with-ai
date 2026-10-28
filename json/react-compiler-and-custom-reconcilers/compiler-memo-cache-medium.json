@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does the React Compiler's internal memo cache array (c[0], c[1]) work?",
+      "answer": "The React Compiler injects a dedicated cache hook: `useMemoCache(size)`. It allocates a flat array `c` of slots. For each memoized block: it compares current inputs with cached inputs in `c[0]`. If changed, it recomputes the value and stores it in `c[1]`. A special sentinel symbol (`Symbol.for('react.memo_cache_sentinel')`) represents uninitialized empty slots (`$empty`).",
+      "difficulty": "advanced",
+      "whyAsked": "Tests deep knowledge of React Compiler bytecode/AST generation."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Automated Fine-Grained Component Memoization",
+      "description": "Compiled Instagram web components running with automated slot caching.",
+      "companies": "Meta",
+      "codeSnippet": "const $ = useMemoCache(4);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The React Compiler replaces manual useMemo hooks with an efficient flat cache slot array (useMemoCache), drastically reducing hook linked-list overhead.",
+    "keyPoints": [
+      "useMemoCache allocates a flat array of memory slots.",
+      "Slot comparisons check if inputs changed before recalculating.",
+      "Avoids allocating separate Hook linked-list nodes for every memoization.",
+      "Achieves finer granularity than human developers could manually write."
+    ],
+    "closingImpression": "Flat cache slot arrays provide compiler-level memoization with near-zero runtime allocation cost.",
+    "analogies": [
+      "A CPU L1 cache: small, indexed register slots that check if memory is fresh before executing a cycle."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Calling useMemoCache manually in application code.",
+      "why": "useMemoCache is a low-level compiler runtime internal, not a public userland hook.",
+      "correct": "Let the React Compiler inject useMemoCache during build."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the react.memo_cache_sentinel symbol?",
+      "answer": "It is the uninitialized slot marker in `ReactFiberHooks.js` used to distinguish an un-computed slot from an explicit `undefined` return value.",
+      "specReference": "packages/react-reconciler/src/ReactFiberHooks.js: useMemoCache"
+    }
+  ]
 }

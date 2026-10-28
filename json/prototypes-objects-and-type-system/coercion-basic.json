@@ -94,5 +94,66 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between explicit conversion and implicit coercion?",
+      "answer": "Explicit conversion occurs when a developer deliberately calls a constructor function without `new` to convert types (e.g. `Number('42')`, `Boolean(x)`, `String(123)`). Implicit coercion occurs automatically when operators (`+`, `-`, `==`, `if(x)`) force operands into different types according to ECMAScript coercion rules.",
+      "difficulty": "basic",
+      "whyAsked": "Baseline terminology check."
+    },
+    {
+      "question": "Why does [] + [] evaluate to '' while [] + {} evaluates to '[object Object]'?",
+      "answer": "The `+` operator triggers `ToPrimitive` on both operands. For arrays, `ToPrimitive` calls `toString()`, which produces an empty string `''`. Therefore `'' + '' === ''`. For `{}`, its `toString()` returns `'[object Object]'`, so `'' + '[object Object]' === '[object Object]'`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Classic JS trivia that tests ToPrimitive algorithm knowledge."
+    },
+    {
+      "question": "What are the exact falsy values in JavaScript?",
+      "answer": "There are exactly 8 falsy values in modern ECMAScript: `false`, `0`, `-0`, `0n` (BigInt zero), `''` (empty string), `null`, `undefined`, and `NaN`. All other values (including `[]`, `{}`, `'0'`, and `'false'`) are strictly truthy.",
+      "difficulty": "basic",
+      "whyAsked": "Every developer must know the complete falsy list."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Form Input Sanitization & Serialization",
+      "description": "HTML `<input>` values are always strings. Converting form state to typed payloads requires explicit numeric/boolean conversions.",
+      "companies": "Formik, React Hook Form",
+      "codeSnippet": "const age = Number(input.value);"
+    },
+    {
+      "scenario": "Boolean Flag Normalization in Environment Variables",
+      "description": "Reading `process.env.ENABLE_FEATURE`: strings like `'true'`, `'1'` must be normalized explicitly rather than relying on `Boolean(process.env.VAR)` (which evaluates `'false'` to `true`!).",
+      "companies": "Next.js, Express",
+      "codeSnippet": "const isEnabled = process.env.FEATURE === 'true' || process.env.FEATURE === '1';"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Type coercion in JavaScript is governed by formal abstract operations defined in ECMA-262: ToBoolean, ToNumber, ToString, and ToPrimitive.",
+    "keyPoints": [
+      "Explicit conversion (Number(), Boolean(), String()) is clear, predictable, and maintainable.",
+      "Implicit coercion occurs automatically during binary operations and loose equality.",
+      "There are exactly 8 falsy values in JavaScript; all objects and arrays are truthy.",
+      "Always prefer explicit conversions to prevent subtle production bugs."
+    ],
+    "closingImpression": "Coercion is not random magic; it follows strict mathematical rules laid out in the ECMAScript specification.",
+    "analogies": [
+      "Like currency exchange: explicit conversion is going to an exchange booth; implicit coercion is the store automatically converting your foreign cash at the register with hidden fees."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using Boolean('false') expecting it to be false.",
+      "why": "Any non-empty string in JavaScript is truthy. Boolean('false') evaluates to true!",
+      "correct": "Compare strings explicitly: `str === 'true'`."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why does document.all evaluate as falsy in browsers despite being an object?",
+      "answer": "For web compatibility (Annex B.3.7), `document.all` has an exotic internal `[[IsHTMLDDA]]` slot that forces `ToBoolean(document.all)` to evaluate to `false` and `typeof document.all === 'undefined'`, allowing legacy code detecting IE to branch correctly while still allowing property access.",
+      "specReference": "ECMA-262 Annex B.3.7 The [[IsHTMLDDA]] Internal Slot"
+    }
+  ]
 }

@@ -96,5 +96,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React Hook Form achieve zero-rerender form typing performance?",
+      "answer": "React Hook Form uses **Uncontrolled Components with Mutable Refs**! When a user types into an input registered via `register('email')`, React does NOT call `setState` and does NOT re-render the form. The DOM node updates natively at 60fps. React Hook Form listens to native DOM `input` events, updates an internal in-memory object ref, and only triggers targeted re-renders on components that explicitly subscribe via `useWatch` or when validation errors occur.",
+      "difficulty": "advanced",
+      "whyAsked": "High-performance React form architecture question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Massive 200-Field Enterprise Data Entry Forms",
+      "description": "Complex insurance or medical forms with hundreds of fields where controlled state causes typing lag.",
+      "companies": "Stripe, Intuit, Epic Systems",
+      "codeSnippet": "const { register, handleSubmit } = useForm(); <input {...register('firstName')} />"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React Hook Form achieves zero re-renders during typing by embracing uncontrolled DOM inputs and managing state in mutable refs with isolated subscriptions.",
+    "keyPoints": [
+      "Controlled forms re-render the entire component on every keystroke.",
+      "Uncontrolled inputs update natively in the browser DOM.",
+      "Refs capture values without triggering React render passes.",
+      "Subscriptions (useWatch) selectively re-render only dependent fields."
+    ],
+    "closingImpression": "Bypassing React re-renders for high-frequency typing is why React Hook Form outperformed Formik and Redux Form.",
+    "analogies": [
+      "Directly writing notes on a physical paper form instead of dictating every letter over the phone to someone typing in another room."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using watch() at the top-level form component in React Hook Form.",
+      "why": "Calling watch() without arguments forces the entire form to re-render on every keystroke, destroying the zero-rerender advantage.",
+      "correct": "Use useWatch() in isolated child components."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React Hook Form integrate with schema validators like Zod?",
+      "answer": "It uses a `resolver` wrapper (`@hookform/resolvers/zod`): on submit or blur, it passes the form ref data to `zodSchema.safeParseAsync()`, mapping validation issues to form error states.",
+      "specReference": "React Hook Form: Custom Resolver Architecture"
+    }
+  ]
 }

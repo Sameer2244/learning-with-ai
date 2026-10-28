@@ -107,5 +107,60 @@
       "Execution only advances when downstream invokes .next(), providing natural backpressure."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is Backpressure and how do Async Generators handle it natively?",
+      "answer": "Backpressure occurs when a data producer produces data faster than a downstream consumer can process it. Async generators (`async function*`) solve this natively through 'pull-based' iteration: the upstream generator pauses at `yield` and NEVER produces the next chunk until the consumer calls `await iterator.next()`, preventing memory buffer bloat.",
+      "difficulty": "advanced",
+      "whyAsked": "High-level systems question on stream flow control."
+    },
+    {
+      "question": "What does [Symbol.asyncIterator] return compared to [Symbol.iterator]?",
+      "answer": "`[Symbol.iterator]` returns an iterator whose `.next()` returns `{ value, done }`. `[Symbol.asyncIterator]` returns an async iterator whose `.next()` returns a `Promise<{ value, done }>`, consumed via `for await (const x of stream)`.",
+      "difficulty": "basic",
+      "whyAsked": "Verifies standard async iterator protocol knowledge."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Streaming Large CSV / JSON Lines Files",
+      "description": "Node.js pipelines parse 10GB log files line-by-line using async generators without loading the file into memory.",
+      "companies": "Snowflake, ElasticSearch",
+      "codeSnippet": "for await (const line of readLines(file)) { process(line); }"
+    },
+    {
+      "scenario": "AI LLM Token Streaming (OpenAI / Gemini)",
+      "description": "Modern chat applications use async generators to yield LLM response tokens to the UI as they arrive over HTTP SSE streams.",
+      "companies": "OpenAI, Google DeepMind, Vercel AI SDK",
+      "codeSnippet": "for await (const chunk of streamText()) { appendToUI(chunk); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Async Pipeline Generators combine async/await with generators to create pull-based streaming pipelines with built-in backpressure.",
+    "keyPoints": [
+      "Async iterables implement [Symbol.asyncIterator] and return promises for each iteration step.",
+      "Naturally throttles producers to match consumer processing speed (backpressure).",
+      "Consumed seamlessly with for await...of loops.",
+      "Ideal for streaming large datasets, file I/O, and LLM token responses."
+    ],
+    "closingImpression": "Pull-based async iteration eliminates out-of-memory crashes when processing data streams that exceed physical RAM.",
+    "analogies": [
+      "Drinking through a straw: you pull a sip when you're ready to swallow; the cup doesn't dump all the liquid down your throat at once."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using standard Array.prototype.forEach with async callbacks.",
+      "why": "forEach does not await async callbacks; it fires all iterations concurrently and ignores returned promises.",
+      "correct": "Use for await...of or sequential while loops with async generators."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does the WHATWG ReadableStream integrate with Async Iterators?",
+      "answer": "Modern browsers and Node 18+ implement `ReadableStream.prototype[Symbol.asyncIterator]`, allowing any fetch response body stream (`response.body`) to be directly consumed via `for await (const chunk of response.body)`.",
+      "specReference": "WHATWG Streams Standard §3.3.4 Async iteration"
+    }
+  ]
 }

@@ -92,5 +92,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React achieve O(N) tree diffing when the general tree edit distance problem is O(N^3)?",
+      "answer": "General tree diffing (Levenshtein edit distance for trees) is O(N^3). React and modern VDOM engines achieve O(N) linear time using two heuristic assumptions: 1) Two elements of different types will produce different trees (replaces old tree entirely). 2) The developer can hint which child elements remain stable across renders using the `key` prop.",
+      "difficulty": "advanced",
+      "whyAsked": "The classic algorithmic computer science question in frontend interviews."
+    },
+    {
+      "question": "Why should you NEVER use array index as a key in dynamic lists?",
+      "answer": "Using index keys (`key={index}`) breaks identity when items are prepended, deleted, or reordered. React matches the old index 0 fiber to the new index 0 item, preserving the old component's internal state (uncontrolled input text, animations) on the WRONG item.",
+      "difficulty": "intermediate",
+      "whyAsked": "High-frequency bug source in production React apps."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React Child Reconciliation (reconcileChildrenArray)",
+      "description": "Diffing lists using key-based Map lookups to emit minimal DOM insertion, deletion, and relocation operations.",
+      "companies": "Meta, Preact",
+      "codeSnippet": "const existing = new Map(oldChildren.map(c => [c.key, c]));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A VDOM diff engine solves the tree reconciliation problem in linear O(N) time using heuristic type-checking and key-based child mapping.",
+    "keyPoints": [
+      "O(N^3) general diff is reduced to O(N) via type comparison and keys.",
+      "Different element types unmount and recreate the subtree completely.",
+      "Same element types patch changed props and diff children.",
+      "Keys allow identifying reordered nodes without recreating DOM elements."
+    ],
+    "closingImpression": "Reconciliation minimizes physical DOM mutations, which are the slowest part of browser rendering.",
+    "analogies": [
+      "Moving house: if you label your moving boxes (keys), the movers put each box directly in the right room instead of unpacking everything into the living room and guessing."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming diffing modifies the real DOM immediately during tree traversal.",
+      "why": "Diffing accumulates a list of patches (Render Phase); mutations are applied in a single synchronous commit batch (Commit Phase).",
+      "correct": "Explain the separation between diffing (Render phase) and mutation (Commit phase)."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does Preact's diffing algorithm differ from React Fiber?",
+      "answer": "Preact diffs directly against the live real DOM tree without an intermediate Fiber linked list, making it ~3KB in size compared to React's ~40KB Fiber reconciler.",
+      "specReference": "Preact source: src/diff/index.js"
+    }
+  ]
 }

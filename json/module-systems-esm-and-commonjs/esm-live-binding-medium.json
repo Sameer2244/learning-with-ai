@@ -94,5 +94,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the critical difference between CommonJS exports and ESM live bindings?",
+      "answer": "CommonJS copies values: when a module exports a primitive (`let count = 0; module.exports = count`), the consumer receives a static COPY of `0`. Mutating `count` inside the module later does NOT update the consumer's variable. In ESM, `export let count = 0` creates a **Live Binding** (a reference into the module's lexical environment): when the exporter increments `count++`, consumers immediately see the updated value!",
+      "difficulty": "advanced",
+      "whyAsked": "The definitive technical difference between CJS and ESM."
+    },
+    {
+      "question": "Can an importer reassign an imported ESM variable?",
+      "answer": "NO! Imported identifiers are **read-only views**. Attempting to write `import { count } from './m'; count = 5;` throws a compile-time/runtime `TypeError: Assignment to constant variable`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Verifies knowledge of ESM import immutability."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Tree-Shaking in Bundlers (Vite / Rollup / Webpack)",
+      "description": "Because ESM imports are static and declarative, bundlers construct static dependency graphs and eliminate dead exported code (tree-shaking), which is impossible with dynamic CommonJS requires.",
+      "companies": "Vite, Rollup, Webpack",
+      "codeSnippet": "import { usedFn } from './utils'; // unusedFn is pruned from bundle"
+    }
+  ],
+  "howToExplain": {
+    "opening": "ECMAScript Modules (ESM) use static live bindings where imported variables are dynamic, read-only references to the exporter's lexical environment.",
+    "keyPoints": [
+      "CommonJS copies values; ESM creates live reference bindings.",
+      "Mutations inside the exporting module are reflected in real time across all importers.",
+      "Imports are strictly read-only for consumers.",
+      "Static structure enables dead-code elimination (tree-shaking) during bundling."
+    ],
+    "closingImpression": "Live bindings allow circular dependencies and real-time state synchronization to work seamlessly in modern JavaScript.",
+    "analogies": [
+      "CommonJS is printing a balance on a paper receipt (static snapshot); ESM is looking at your live banking app (live binding updates automatically)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming ESM imports can be conditionally declared inside if statements.",
+      "why": "Static import statements must be top-level. Dynamic imports must use `import()` returning a Promise.",
+      "correct": "Use static imports at file top, or `await import('./module')` for dynamic loading."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What are the three phases of ESM module loading in ECMA-262?",
+      "answer": "1) Construction: parse files, build Module Graph. 2) Instantiation: allocate memory slots for live bindings (linking exports to imports). 3) Evaluation: execute code to populate those slots.",
+      "specReference": "ECMA-262 §16.2.1.5 ModuleEvaluation"
+    }
+  ]
 }

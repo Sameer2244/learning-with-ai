@@ -97,5 +97,48 @@
       "Separating callback storage from timer lifecycle prevents timer reset thrashing."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does Dan Abramov's useInterval pattern eliminate interval reset thrashing?",
+      "answer": "A standard `useEffect` tied to `[delay, callback]` resets the browser timer every time `callback` changes (e.g. on every render). The `useInterval` pattern uses a mutable ref: `const savedCallback = useRef(callback)`. Inside `useEffect`, it updates `savedCallback.current = callback` on every render. A separate effect sets up the timer ONCE (`setInterval(() => savedCallback.current(), delay)`). The interval never resets, yet always executes the freshest callback.",
+      "difficulty": "intermediate",
+      "whyAsked": "The canonical custom hook design pattern question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Live Telemetry & Polling Tickers",
+      "description": "Polling server metrics every 1000ms while accessing live React state without resetting the clock on every state update.",
+      "companies": "Datadog, AWS Console",
+      "codeSnippet": "useInterval(() => pollMetrics(activeFilters), isPolling ? 1000 : null);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The useInterval pattern decouples timer lifecycle from callback state by routing execution through a mutable ref that updates on every render.",
+    "keyPoints": [
+      "Mutable ref holds the latest callback reference.",
+      "Updating ref.current does not trigger re-renders or reset effects.",
+      "Timer effect depends only on delay, keeping the timer stable.",
+      "Passing delay: null pauses the interval cleanly."
+    ],
+    "closingImpression": "This pattern is the foundational model for bridging imperative browser APIs with declarative React lifecycles.",
+    "analogies": [
+      "A secretary relaying instructions: the boss updates instructions on the memo board daily, but the delivery truck runs on a fixed weekly schedule without changing routes."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Adding callback to the interval effect dependency array.",
+      "why": "Causes the interval to clear and re-create on every render, ruining steady tick timing.",
+      "correct": "Store callback in a ref and keep the effect dependent only on delay."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why does Dan Abramov call refs a 'bail out' mechanism in declarative React?",
+      "answer": "Refs provide an escape hatch from pure functional declarative immutability, allowing mutable pointers to persist across renders without participating in the reactive dependency graph.",
+      "specReference": "Overreacted.io: Making setInterval Declarative with React Hooks"
+    }
+  ]
 }

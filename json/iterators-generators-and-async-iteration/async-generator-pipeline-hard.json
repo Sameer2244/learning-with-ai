@@ -130,5 +130,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does an Async Generator pipeline implement streaming backpressure?",
+      "answer": "An async generator does not pull or yield the next item until the consumer explicitly awaits `.next()`. If a consumer is slow (e.g. slow database writes), the upstream generator remains suspended at `yield`, pausing data reads from the source socket.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests deep systems understanding of stream flow control."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Streaming ETL & CSV Export",
+      "description": "Exporting 5 million database rows to S3: query generator pulls 1,000 rows, transforms them, and streams to S3 multipart upload with bounded memory.",
+      "companies": "Stripe, Snowflake",
+      "codeSnippet": "for await (const chunk of etlPipeline(dbStream)) { await s3.write(chunk); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Async generator pipelines combine streaming transformation stages with automatic backpressure, keeping memory bounded regardless of dataset scale.",
+    "keyPoints": [
+      "Combines async/await with generator suspension.",
+      "Naturally throttles upstream data generation to consumer speed.",
+      "Handles batching, filtering, and asynchronous mapping cleanly.",
+      "The standard pattern for modern stream processing in Node.js 18+."
+    ],
+    "closingImpression": "Async streaming pipelines prevent memory exhaustion when processing datasets larger than available RAM.",
+    "analogies": [
+      "A bucket brigade fighting a fire: nobody passes a bucket until the person in front is ready to catch it."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Loading entire dataset into memory before starting pipeline.",
+      "why": "Defeats the entire purpose of streaming, risking Out-Of-Memory crashes.",
+      "correct": "Stream item by item or in small fixed batches."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does Node.js stream.pipeline() integrate with Async Generators?",
+      "answer": "Node.js `stream.pipeline` natively accepts async generators as pipeline stages: `pipeline(sourceStream, async function* (source) { ... }, destStream)`.",
+      "specReference": "Node.js Streams Documentation: stream.pipeline with async iterators"
+    }
+  ]
 }

@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does a Canvas or Terminal Buffer Reconciler handle layout and character cell painting?",
+      "answer": "A terminal or 2D canvas reconciler maintains an in-memory 2D character buffer (e.g. `grid[y][x] = { char, style }`). In `commitUpdate` and `appendChild`, it calculates bounding box offsets (x, y) and writes character cells into the 2D grid array. At the end of the commit phase, it flushes the grid to the terminal using ANSI escape codes or paints to the `<canvas>` via 2D context fillText.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests custom host tree mutation and frame rendering."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Interactive Terminal CLI Dashboards (Ink)",
+      "description": "Building rich CLI setup wizards and server dashboards using React components.",
+      "companies": "Gatsby CLI, Claude Code CLI, Vercel",
+      "codeSnippet": "<Box borderStyle='round'><Text>Deploying...</Text></Box>"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A custom canvas/terminal reconciler translates React element trees into 2D grid matrix buffers, flushing assembled frames to terminal or canvas targets.",
+    "keyPoints": [
+      "Maintains in-memory 2D coordinate matrix buffer.",
+      "HostConfig methods map element props to grid cell coordinates.",
+      "Commit phase flushes updated cells to screen in one unified draw call.",
+      "Enables declarative React development in non-browser environments."
+    ],
+    "closingImpression": "Custom reconcilers prove that React's component model scales far beyond the web browser.",
+    "analogies": [
+      "An LED dot matrix display: components specify which coordinate lights up; the reconciler turns on the exact grid pixels at 60fps."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Directly writing to stdout or canvas on every appendChild.",
+      "why": "Flushing on every child causes severe screen flickering.",
+      "correct": "Buffer changes in memory and flush in resetAfterCommit."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is resetAfterCommit in React Reconciler?",
+      "answer": "HostConfig hook called once at the conclusion of the commit phase after all mutations are done, ideal for repainting canvas frames or writing terminal buffers.",
+      "specReference": "React Reconciler HostConfig: resetAfterCommit"
+    }
+  ]
 }

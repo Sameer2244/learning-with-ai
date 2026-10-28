@@ -110,5 +110,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does a generator implement the Iterable protocol via Symbol.iterator?",
+      "answer": "A generator object is both an Iterator AND an Iterable. It implements `[Symbol.iterator]() { return this; }`. This allows a generator instance to be passed directly to `for...of` loops, spread operators (`[...gen]`), and destructuring syntax (`const [a, b] = gen`).",
+      "difficulty": "basic",
+      "whyAsked": "Tests understanding of the dual Iterable/Iterator protocol."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Infinite Sequence Generation",
+      "description": "Generating mathematical sequences, mock IDs, or infinite series on demand with O(1) memory overhead.",
+      "companies": "Simulation engines, Testing libraries",
+      "codeSnippet": "for (const num of fibonacci()) { if (num > 1000) break; }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "An infinite generator produces mathematical sequences lazily, evaluating numbers on demand without allocating arrays in memory.",
+    "keyPoints": [
+      "while(true) with yield pauses execution without blocking the thread.",
+      "Implements [Symbol.iterator] returning this.",
+      "Consumes O(1) memory regardless of sequence length.",
+      "Consumed ergonomically via for...of loops with break conditions."
+    ],
+    "closingImpression": "Generators turn infinite mathematical concepts into practical, memory-safe JavaScript code.",
+    "analogies": [
+      "A water tap: you turn the valve to get a glass of water; the ocean doesn't flood your kitchen all at once."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using spread [...fibonacci()] on an infinite generator.",
+      "why": "The spread operator attempts to consume the entire sequence into an array, resulting in an infinite loop and OOM crash.",
+      "correct": "Always consume infinite generators with explicit bounds or break conditions."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do BigInt values prevent numeric overflow in Fibonacci generators?",
+      "answer": "JavaScript numbers are IEEE 754 double-precision floats that lose integer precision past `Number.MAX_SAFE_INTEGER` (2^53 - 1, around Fibonacci #78). Using `0n` and `1n` BigInts allows calculating arbitrary-precision numbers.",
+      "specReference": "ECMA-262 §21.2 BigInt Objects"
+    }
+  ]
 }

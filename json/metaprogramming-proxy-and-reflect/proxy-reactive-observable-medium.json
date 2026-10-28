@@ -96,5 +96,60 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does Vue 3 use Proxies to achieve fine-grained reactivity compared to Vue 2's Object.defineProperty?",
+      "answer": "Vue 2 used `Object.defineProperty`, which required recursively walking object properties at initialization time to define getters/setters, failing to detect dynamically added properties or array index mutations (`arr[0] = x`). Vue 3 wraps objects in a `Proxy`, which intercepts property reads (`get`) for automatic dependency tracking and property writes (`set`) for update triggers, supporting dynamic properties and arrays with zero pre-walk overhead.",
+      "difficulty": "advanced",
+      "whyAsked": "Universal frontend framework architecture question."
+    },
+    {
+      "question": "Why should you always use Reflect inside Proxy traps instead of target[prop] = value?",
+      "answer": "1) `Reflect.set()` returns a boolean indicating success/failure instead of throwing in strict mode. 2) Passing `receiver` (`Reflect.get(target, prop, receiver)`) ensures that getters on prototype chains have their `this` correctly bound to the proxy instance, preserving reactive tracking across inherited properties.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests deep mastery of Proxy invariants and the Reflect API."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Vue 3 Reactive System (reactive() & ref())",
+      "description": "The core reactive state engine powering Vue 3, VitePress, and Nuxt 3.",
+      "companies": "Vue.js Core, Nuxt",
+      "codeSnippet": "const state = reactive({ count: 0 });"
+    },
+    {
+      "scenario": "Immer.js Copy-on-Write State Immutability",
+      "description": "Immer records mutations made on a temporary Proxy draft and produces a frozen immutable next state tree.",
+      "companies": "Redux Toolkit, React Flow",
+      "codeSnippet": "const nextState = produce(baseState, draft => { draft.user.age++; });"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A reactive Proxy intercepts get and set operations to automatically track which UI components depend on specific properties and notify them upon mutation.",
+    "keyPoints": [
+      "get trap collects active effect dependencies (track).",
+      "set trap triggers registered listener callbacks (trigger).",
+      "Reflect ensures proper prototype receiver binding.",
+      "Replaces Object.defineProperty with superior performance and array support."
+    ],
+    "closingImpression": "Proxy-based reactivity is the foundation of modern declarative frameworks including Vue 3, MobX, and Solid.js.",
+    "analogies": [
+      "A smart doorbell: ringing it (get) writes your name on the visitor list; dropping off a package (set) sounds the chime to notify the homeowner."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Failing to return true from the set trap.",
+      "why": "In strict mode, a Proxy set trap returning false (or undefined) throws a TypeError: 'set' on proxy: trap returned falsish.",
+      "correct": "Always return `true` or `Reflect.set(...)` from set traps."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What are Proxy Invariants in ECMA-262?",
+      "answer": "Proxy traps cannot violate underlying target invariants: for example, if a target property is non-configurable and non-writable, the proxy `get` trap MUST return the exact same value as the target, or the engine throws a TypeError.",
+      "specReference": "ECMA-262 §10.5.8 [[Get]] Invariants"
+    }
+  ]
 }

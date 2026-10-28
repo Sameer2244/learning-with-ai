@@ -88,5 +88,60 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does Object.assign or spread {...obj} fail to preserve property descriptors?",
+      "answer": "`Object.assign` and spread use standard `[[Get]]` and `[[Set]]` operations. They read only enumerable own properties and assign them as simple values, completely stripping custom getters, setters, `writable: false`, `enumerable: false`, and `configurable: false` flags. True property preservation requires `Object.getOwnPropertyDescriptors(obj)` paired with `Object.defineProperties()`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of Property Descriptors vs simple property assignment."
+    },
+    {
+      "question": "How do you clone Symbol-keyed properties?",
+      "answer": "Standard `Object.keys()` only returns string keys. `Object.getOwnPropertyDescriptors()` and `Reflect.ownKeys()` capture both string keys AND symbol keys, ensuring complete own property preservation.",
+      "difficulty": "intermediate",
+      "whyAsked": "Checks awareness of ES6 Symbol property enumeration."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Cloning Objects with Getters and Setters",
+      "description": "Cloning reactive objects (e.g. Vue reactive proxies or MobX observables) without prematurely executing or flattening getter properties.",
+      "companies": "Vue.js, MobX",
+      "codeSnippet": "const clone = Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));"
+    },
+    {
+      "scenario": "Immutable Object Freezing",
+      "description": "Cloning and sealing security configurations where non-writable, non-configurable security flags must remain intact.",
+      "companies": "Node.js Crypto, AWS SDK",
+      "codeSnippet": "Object.defineProperties(newObj, Object.getOwnPropertyDescriptors(source));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A faithful shallow clone copies not just values, but the complete property descriptors (getters, setters, writability, configurability, and symbols) using Object.getOwnPropertyDescriptors.",
+    "keyPoints": [
+      "Spread {...obj} and Object.assign only copy values and strip descriptors.",
+      "Object.getOwnPropertyDescriptors captures value, writable, get, set, enumerable, and configurable.",
+      "Reflect.ownKeys captures both string and symbol property keys.",
+      "Object.defineProperties applies descriptors accurately without triggering getter invocations."
+    ],
+    "closingImpression": "Copying descriptors rather than invoking getters is essential when dealing with reactive state containers and classes.",
+    "analogies": [
+      "Photocopying a document (Object.assign) vs duplicating the digital template file with all security permissions and formulas intact (defineProperties)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming spread {...obj} clones getters as getters.",
+      "why": "Spread evaluates the getter immediately and assigns the returned value as a static, plain property.",
+      "correct": "Use Object.getOwnPropertyDescriptors to copy the getter function itself."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the difference between a Data Descriptor and an Accessor Descriptor?",
+      "answer": "A Data Descriptor contains `value` and `writable`. An Accessor Descriptor contains `get` and `set`. A property descriptor can NEVER contain both `value`/`writable` and `get`/`set` simultaneously; doing so throws TypeError.",
+      "specReference": "ECMA-262 §6.1.7.1 Property Attributes"
+    }
+  ]
 }

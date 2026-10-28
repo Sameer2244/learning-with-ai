@@ -93,5 +93,54 @@
       "Effect Events must only be invoked from within effects or event handlers, never during render."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is useEffectEvent (useEvent) and what architectural problem does it solve?",
+      "answer": "In React, effects often need to read current state/props to perform an action, but you do NOT want the effect to re-run whenever that state changes. `useEffectEvent` extracts non-reactive logic into an 'Effect Event' function. The returned function has a stable reference identity (can be omitted from effect dependencies), but always sees the freshest state when called inside an effect.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests knowledge of upcoming React 19 / official RFC hook architecture."
+    },
+    {
+      "question": "Why must Effect Events NEVER be called during the render phase?",
+      "answer": "Effect Events read from mutable refs that update outside the pure render phase. Calling them during render breaks pure rendering rules and creates non-deterministic output in Concurrent Mode.",
+      "difficulty": "advanced",
+      "whyAsked": "Checks understanding of React's strict purity boundaries."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Chat Room Analytics Logging on Connection",
+      "description": "Re-connecting to chat only when `roomId` changes, but logging the current `theme` without reconnecting when theme changes.",
+      "companies": "Discord, Slack",
+      "codeSnippet": "const onConnected = useEffectEvent(() => logConnection(theme)); useEffect(() => { connect(roomId); onConnected(); }, [roomId]);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "useEffectEvent separates reactive dependencies (which trigger effect re-runs) from non-reactive logic (which needs current values on demand).",
+    "keyPoints": [
+      "Returns a stable function reference that never triggers effects.",
+      "Always accesses the freshest props and state when invoked.",
+      "Must only be called from inside effects or event handlers, never during render.",
+      "Solves the eternal dilemma of unnecessary effect re-executions."
+    ],
+    "closingImpression": "Effect Events complete the hooks mental model by making non-reactive side effects first-class citizens in React.",
+    "analogies": [
+      "An emergency contact card: you only change your wallet when you move homes (roomId), but when called, the contact reads your latest phone number (theme) without forcing you to buy a new wallet."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Including useEffectEvent functions in useEffect dependency arrays.",
+      "why": "Effect Events are non-reactive by definition; React lint rules explicitly forbid listing them in dependencies.",
+      "correct": "Omit Effect Events from dependency arrays."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does useInsertionEffect help polyfill useEffectEvent?",
+      "answer": "`useInsertionEffect` runs synchronously before all layout effects and DOM mutations, updating the callback ref before any effect can possibly execute.",
+      "specReference": "React RFC: Separating Events from Effects with useEffectEvent"
+    }
+  ]
 }

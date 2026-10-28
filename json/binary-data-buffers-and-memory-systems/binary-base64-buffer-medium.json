@@ -112,5 +112,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does Base64 encoding map 3 binary bytes to 4 ASCII characters?",
+      "answer": "3 binary bytes contain 24 bits (3 * 8). Base64 partitions these 24 bits into 4 groups of 6 bits each (4 * 6 = 24). Each 6-bit value (0 to 63) maps to an ASCII character from the 64-character table (`A-Z`, `a-z`, `0-9`, `+`, `/`). Padding `=` is appended if input bytes are not a multiple of 3.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of binary arithmetic and bitwise shifting."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Data URL Image Decoding in Canvas",
+      "description": "Decoding Base64 data URLs (`data:image/png;base64,...`) into Uint8Array for WebGL texture uploads.",
+      "companies": "Three.js, Canvas Web Apps",
+      "codeSnippet": "const binary = base64ToUint8Array(dataUrl.split(',')[1]);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Base64 decodes 6-bit ASCII representations back into contiguous 8-bit binary bytes using bitwise shifting and masking.",
+    "keyPoints": [
+      "Encodes 3 bytes (24 bits) into 4 characters (6 bits each).",
+      "Bitwise shifting (<< 18, << 12, << 6) reconstructs 24-bit integers.",
+      "Bitwise masking (& 0xff) extracts individual 8-bit bytes.",
+      "Essential for embedding binary data in text-only JSON and HTTP payloads."
+    ],
+    "closingImpression": "Bitwise manipulation in JavaScript operates on 32-bit integers, providing efficient binary parsing.",
+    "analogies": [
+      "Re-packing 3 eight-slice pizzas into 4 six-slice boxes for easier delivery."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using atob() on Node.js without polyfill.",
+      "why": "Legacy Node.js lacked atob; Node 16+ added it, but Buffer.from(str, 'base64') is the native Node pattern.",
+      "correct": "Use Buffer.from in Node or typed bitwise decoders for portable code."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why does Base64 increase data size by 33%?",
+      "answer": "Because 3 bytes of raw data become 4 bytes of text characters: 4 / 3 = 1.333 (a 33.3% bandwidth overhead).",
+      "specReference": "IETF RFC 4648 The Base16, Base32, and Base64 Data Encodings"
+    }
+  ]
 }

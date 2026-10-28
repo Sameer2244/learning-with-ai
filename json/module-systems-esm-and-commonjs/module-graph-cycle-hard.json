@@ -96,5 +96,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do CommonJS and ESM handle circular dependencies differently?",
+      "answer": "In CommonJS, circular requires return an **incomplete, partial copy** of `module.exports` because execution is synchronous and pauses mid-file. If module A requires B before defining an export, B sees an empty `{}`. In ESM, the Module Graph is parsed and instantiated BEFORE evaluation; live bindings are linked in memory ahead of time, allowing circular references to resolve correctly as long as exported functions/variables are evaluated before access.",
+      "difficulty": "advanced",
+      "whyAsked": "Highest-level module architecture question."
+    },
+    {
+      "question": "What algorithm is used to evaluate cyclic module dependency graphs?",
+      "answer": "ECMA-262 uses a **Depth-First Search (DFS) Post-Order Traversal** with Tarjan's strongly connected components algorithm, assigning DFS index and lowlink numbers to evaluate circular modules safely without infinite loops.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests computer science graph algorithm knowledge in language runtimes."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Circular Dependency Detection in CI/CD (Madge)",
+      "description": "Linting build pipelines using Madge to detect circular module cycles that could cause TDZ errors during bundling.",
+      "companies": "Stripe, Airbnb",
+      "codeSnippet": "npx madge --circular src/"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Evaluating module dependency graphs requires cycle detection and topological sorting to guarantee modules evaluate in safe dependency order.",
+    "keyPoints": [
+      "ESM instantiates live binding pointers across the graph before executing code.",
+      "CommonJS returns partial exports when circular requires occur mid-file.",
+      "Graph traversal uses DFS post-order evaluation.",
+      "Architectures should avoid circular cycles by extracting shared dependencies."
+    ],
+    "closingImpression": "Understanding module graph cycles is critical for diagnosing 'cannot access property of undefined' crashes in complex production bundles.",
+    "analogies": [
+      "A chicken-and-egg problem: ESM builds the coop and registers both the chicken and egg before either starts moving."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming circular dependencies in ESM never throw errors.",
+      "why": "If a module accesses a circular imported let/const variable during module top-level evaluation before its declaration line runs, it throws a TDZ ReferenceError.",
+      "correct": "Clarify that top-level execution can still trigger TDZ errors in circular imports."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What does the 'type': 'module' field in package.json do?",
+      "answer": "It tells Node.js to treat all `.js` files within that package boundary as ECMAScript Modules (ESM) rather than legacy CommonJS.",
+      "specReference": "Node.js Package.json 'type' field documentation"
+    }
+  ]
 }

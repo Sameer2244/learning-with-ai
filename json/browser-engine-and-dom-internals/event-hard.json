@@ -106,5 +106,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What are the three distinct phases of DOM event propagation?",
+      "answer": "1) Capturing Phase: event trickles down from `Window` -> `Document` -> `<html>` -> `<body>` down to the target's parent. 2) Target Phase: event arrives at the target element. 3) Bubbling Phase: event bubbles back up from the target element back up to `Window`.",
+      "difficulty": "basic",
+      "whyAsked": "Fundamental browser DOM architecture question."
+    },
+    {
+      "question": "What is the difference between event.stopPropagation() and event.stopImmediatePropagation()?",
+      "answer": "`stopPropagation()` prevents the event from traveling further up (or down) the DOM tree, but allows any OTHER event listeners registered on the CURRENT element to still execute. `stopImmediatePropagation()` stops tree propagation AND immediately blocks any remaining listeners on the CURRENT element from firing.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests precise understanding of propagation halting."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Modal Backdrop Click Dismissal",
+      "description": "Stopping click propagation on modal content boxes so clicking inside doesn't trigger backdrop close listeners.",
+      "companies": "Tailwind UI, Bootstrap",
+      "codeSnippet": "modalContent.addEventListener('click', e => e.stopPropagation());"
+    }
+  ],
+  "howToExplain": {
+    "opening": "DOM event propagation follows a strict bidirectional pipeline: descending during the capture phase, reaching the target, and ascending during bubbling.",
+    "keyPoints": [
+      "Capturing descends; bubbling ascends.",
+      "addEventListener third parameter `{ capture: true }` listens during capture phase.",
+      "stopPropagation halts tree traversal; stopImmediatePropagation also halts sibling listeners.",
+      "preventDefault cancels default browser actions (link navigation, form submit) without stopping propagation."
+    ],
+    "closingImpression": "Mastering event phases allows surgical interception of user actions before child components receive them.",
+    "analogies": [
+      "A scuba diver descending to the ocean floor (capture), touching the sunken treasure (target), and floating back to the surface (bubble)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming stopPropagation() prevents the browser default action.",
+      "why": "stopPropagation only halts event traversal; it does NOT stop default actions like checkbox checking or link navigation.",
+      "correct": "Use e.preventDefault() to cancel default browser behaviors."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What are Passive Event Listeners ({ passive: true }) and why do they improve scroll performance?",
+      "answer": "By passing `{ passive: true }`, the developer guarantees the listener will never call `e.preventDefault()`. This allows browser compositors to scroll the page immediately on the GPU thread without blocking to wait for the JavaScript thread to evaluate.",
+      "specReference": "W3C DOM Level 3 Events & Chrome Scrolling Performance"
+    }
+  ]
 }

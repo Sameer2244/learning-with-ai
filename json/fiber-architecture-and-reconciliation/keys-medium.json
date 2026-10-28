@@ -154,5 +154,54 @@
       "lastPlacedIndex tracks relative ordering to minimize DOM node relocations."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React's list reconciliation algorithm work in O(N) time? Explain mapRemainingChildren.",
+      "answer": "React executes a two-pass algorithm in `ReactChildFiber.js`: 1) **First Pass**: it walks old and new children in parallel. As long as keys match, it updates fibers in-place. If keys mismatch, the loop breaks. 2) **Second Pass**: React puts all remaining old children into a `Map<key, Fiber>` (`mapRemainingChildren`). It then loops over remaining new children, querying the Map in O(1) time. Nodes found in the Map are reused; nodes not found are created as new; nodes left in the Map after the loop are marked for deletion.",
+      "difficulty": "advanced",
+      "whyAsked": "The definitive algorithmic question for React list reconciliation."
+    },
+    {
+      "question": "What is 'lastPlacedIndex' and how does React detect if a DOM node needs to be MOVED?",
+      "answer": "`lastPlacedIndex` tracks the highest index in the old list that has been placed in the new list. As React iterates through new children, if a matched old fiber has `oldIndex < lastPlacedIndex`, it means the node originally appeared BEFORE a node that now appears ahead of it, so it must physically MOVE in the DOM (`Placement` flag). If `oldIndex >= lastPlacedIndex`, the relative order is preserved, and `lastPlacedIndex = oldIndex`.",
+      "difficulty": "advanced",
+      "whyAsked": "Differentiates surface-level React users from engineers who have read React's reconciler source code."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Drag-and-Drop Kanban Board Reordering",
+      "description": "Reordering cards between columns with minimal DOM reflows by reusing existing fibers via stable item IDs.",
+      "companies": "Trello, Jira, Linear",
+      "codeSnippet": "cards.map(card => <Card key={card.id} data={card} />)"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React solves list diffing in O(N) linear time using a two-pass reconciliation algorithm with a Map for key lookups and lastPlacedIndex for movement tracking.",
+    "keyPoints": [
+      "Fast-path iterates matching keys sequentially.",
+      "Slow-path collects remaining old fibers into a Map keyed by key/index.",
+      "lastPlacedIndex detects whether matched nodes need physical DOM relocations.",
+      "Unvisited fibers in the Map are flagged for deletion in a single batch."
+    ],
+    "closingImpression": "React's list diffing is an elegant engineering compromise that solves a theoretically O(N^3) tree edit distance problem in linear time.",
+    "analogies": [
+      "Organizing a bookshelf: you slide books over that are already in order, and only physically pick up and relocate the books that were moved to the front."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming reversing an array of 10 items moves all 10 items in the DOM.",
+      "why": "Due to lastPlacedIndex mechanics, React leaves the last item in place and moves the other 9 around it, performing N-1 DOM operations.",
+      "correct": "Explain that lastPlacedIndex optimizes relative order to minimize physical DOM node re-insertions."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Where in React reconciler source is lastPlacedIndex calculated?",
+      "answer": "In `packages/react-reconciler/src/ReactChildFiber.js` inside the `placeChild(newFiber, lastPlacedIndex, newIndex)` helper function.",
+      "specReference": "packages/react-reconciler/src/ReactChildFiber.js: placeChild"
+    }
+  ]
 }

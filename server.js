@@ -188,6 +188,61 @@ ${rules || '- Fully verified against runtime specifications.'}
 \`\`\`javascript
 ${answer.solutionCode}
 \`\`\`
+${answer.interviewCrossQuestions && answer.interviewCrossQuestions.length > 0 ? `
+---
+
+### 7. 🎯 Interviewer Cross-Questions & Expert Answers
+${answer.interviewCrossQuestions.map((cq, idx) => `
+**Q${idx + 1}. ${cq.question}**
+> **Why they ask this**: ${cq.whyAsked || 'Testing depth of understanding'}
+> **Difficulty**: \`${cq.difficulty || 'intermediate'}\`
+
+${cq.answer}
+`).join('\n---\n')}` : ''}
+${answer.realWorldUseCases && answer.realWorldUseCases.length > 0 ? `
+---
+
+### 8. 🏢 Real-World Production Use Cases
+${answer.realWorldUseCases.map((uc, idx) => `
+#### ${idx + 1}. ${uc.scenario}
+${uc.description}
+${uc.companies ? `\n> **Used by**: ${uc.companies}` : ''}
+${uc.codeSnippet ? `\n\`\`\`javascript\n${uc.codeSnippet}\n\`\`\`` : ''}
+`).join('\n')}` : ''}
+${answer.howToExplain ? `
+---
+
+### 9. 🗣️ How to Explain This to the Interviewer
+
+**Opening Statement** (say this first):
+> ${answer.howToExplain.opening || ''}
+
+**Key Points to Hit**:
+${(answer.howToExplain.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+**Closing Impression** (end with this):
+> ${answer.howToExplain.closingImpression || ''}
+
+${answer.howToExplain.analogies && answer.howToExplain.analogies.length > 0 ? `**Simple Analogy**: ${answer.howToExplain.analogies[0]}` : ''}
+` : ''}
+${answer.commonMistakes && answer.commonMistakes.length > 0 ? `
+---
+
+### 10. ❌ Common Candidate Mistakes
+${answer.commonMistakes.map((m, idx) => `
+**Mistake ${idx + 1}**: ${m.mistake}
+- **Why it's wrong**: ${m.why}
+- ✅ **What to say instead**: ${m.correct}
+`).join('\n')}` : ''}
+${answer.followUpDeepDive && answer.followUpDeepDive.length > 0 ? `
+---
+
+### 11. 🔬 Follow-Up Deep-Dive Questions
+${answer.followUpDeepDive.map((fu, idx) => `
+**Deep-Dive Q${idx + 1}: ${fu.question}**
+${fu.expertAnswer}
+${fu.specReference ? `\n> 📖 **Spec Reference**: ${fu.specReference}` : ''}
+`).join('\n---\n')}` : ''}
 `;
   }
 
@@ -337,6 +392,47 @@ app.get('/api/knowledge-guide', (req, res) => {
     if (!topicTitle) {
       return res.status(400).json({ success: false, error: 'topicTitle parameter is required' });
     }
+
+    const searchKeys = [
+      (questionTitle || '').toLowerCase().trim(),
+      (topicTitle || '').toLowerCase().trim()
+    ].filter(Boolean);
+
+    let foundAnswer = null;
+    for (const key of searchKeys) {
+      if (answersMap.has(key)) {
+        foundAnswer = answersMap.get(key);
+        break;
+      }
+    }
+
+    if (foundAnswer) {
+      const explanation = buildKnowledgeGuideMarkdown({
+        track,
+        topicTitle,
+        questionTitle: questionTitle || topicTitle,
+        concept: foundAnswer.concept || topicTitle,
+        answer: foundAnswer,
+        topicMeta: null
+      });
+
+      return res.json({
+        success: true,
+        found: true,
+        guide: {
+          id: `guide-${foundAnswer.id}`,
+          track,
+          topic_title: topicTitle,
+          question_title: questionTitle || topicTitle,
+          concept: foundAnswer.concept,
+          problem_description: foundAnswer.problemStatement,
+          guide_content: explanation,
+          created_at: 'Verified Engine Masterclass'
+        },
+        storageMode: 'json'
+      });
+    }
+
     const guide = db.getLatestGuide({ track, topicTitle, questionTitle });
     res.json({ success: true, found: Boolean(guide), guide, storageMode: 'json' });
   } catch (err) {

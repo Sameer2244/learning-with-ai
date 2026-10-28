@@ -89,5 +89,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does generalized dynamic currying handle multiple arguments passed in a single step (e.g. curry(fn)(1, 2)(3))?",
+      "answer": "A generalized dynamic curry checks `accumulatedArgs.length >= fn.length`. On each invocation, it concatenates new arguments: `const nextArgs = [...accumulatedArgs, ...newArgs]`. If `nextArgs.length >= fn.length`, it immediately executes `fn.apply(this, nextArgs)`; otherwise, it returns a new closure holding `nextArgs`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests practical currying implementation flexibility."
+    },
+    {
+      "question": "How do you preserve the 'this' context across curried invocations?",
+      "answer": "In the final execution step, you must call `fn.apply(this, nextArgs)` and avoid arrow functions where the outer receiver could be lost, or explicitly capture and forward `this`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Checks method currying context retention."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Validation Rule Pipelines",
+      "description": "Composing reusable validators: `const isGreaterThan = curry((min, val) => val > min)`.",
+      "companies": "Zod, Yup, Joi",
+      "codeSnippet": "const minAge = isGreaterThan(18);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Dynamic generalized currying inspects the function's arity via fn.length and recursively accumulates arguments across arbitrary call boundaries until all parameters are supplied.",
+    "keyPoints": [
+      "Combines currying with partial application flexibility.",
+      "Preserves this binding across multi-step execution.",
+      "Supports passing 1, 2, or all arguments in any single step.",
+      "Essential for utility toolkits like Lodash and Ramda."
+    ],
+    "closingImpression": "Dynamic arity checking provides an ergonomic developer experience while retaining mathematical functional purity.",
+    "analogies": [
+      "A vending machine that takes coins one by one or in handfuls, only dispensing the snack once total price is reached."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Mutating an internal arguments array rather than creating fresh copies.",
+      "why": "Mutating shared arrays causes branches of curried functions to cross-contaminate each other's state.",
+      "correct": "Always use spread or slice to keep each curried closure branch immutable."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the ECMAScript specification rule for Function.prototype.length?",
+      "answer": "Per ECMA-262 §20.2.2.2, `length` is an accessor property configured as non-writable and configurable. It counts the number of formal parameters before the first default parameter.",
+      "specReference": "ECMA-262 §20.2.2.2 Function.prototype.length"
+    }
+  ]
 }

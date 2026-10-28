@@ -95,5 +95,48 @@
       "Violating call order corrupts internal linked list pointers and throws invariant errors."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What specific internal error does React throw when a hook is called conditionally?",
+      "answer": "If a component calls fewer hooks than previous render, React throws: `Error: Rendered fewer hooks than during the previous render`. If it calls more, it throws: `Error: Rendered more hooks than during the previous render`. This occurs because `workInProgressHook` cursor hits `null` prematurely or finds unvisited nodes left on the linked list.",
+      "difficulty": "intermediate",
+      "whyAsked": "Checks if candidate has encountered and understands real React runtime invariant violations."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "ESLint Rule of Hooks Enforcement (eslint-plugin-react-hooks)",
+      "description": "Static AST linters verifying that hooks are only called at the top level of component functions.",
+      "companies": "Every React team",
+      "codeSnippet": "// eslint: 'react-hooks/rules-of-hooks': 'error'"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The Rule of Hooks exists because React relies exclusively on call order to match hook state to the fiber's linked list across renders.",
+    "keyPoints": [
+      "Skipping a hook misaligns all subsequent hook nodes on the linked list.",
+      "Results in state swapping between completely unrelated hooks.",
+      "Throws invariant error: Rendered more/fewer hooks than previous render.",
+      "Hooks must only be called at the top level, never inside conditions or loops."
+    ],
+    "closingImpression": "The Rules of Hooks are not an arbitrary stylistic guideline; they are an architectural constraint imposed by singly-linked list state storage.",
+    "analogies": [
+      "A combination lock: you must enter the exact sequence of numbers in order; skipping a number jams the lock."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Calling hooks inside early return branches: `if (!user) return null; const [data] = useState();`",
+      "why": "If user is null on render 1 and present on render 2, the hook count changes, throwing an invariant error.",
+      "correct": "Move all hook calls above all conditional return statements."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React detect hook order swaps between different hook types (e.g. useState swapped for useEffect)?",
+      "answer": "In development mode, React attaches internal tags to hook nodes. If the hook type at index `i` does not match the tag stored during mount, React logs a descriptive warning detailing the exact hook type mismatch.",
+      "specReference": "packages/react-reconciler/src/ReactFiberHooks.js: renderWithHooks"
+    }
+  ]
 }

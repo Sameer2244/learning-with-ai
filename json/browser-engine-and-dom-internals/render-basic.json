@@ -100,5 +100,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is Layout Thrashing (Forced Synchronous Layout)?",
+      "answer": "Layout Thrashing occurs when JavaScript alternately reads and writes DOM geometric properties in a loop (e.g. `element.style.width = x; const h = element.offsetHeight;`). Writing invalidates the layout tree; reading forces the browser engine to stop and execute synchronous recalculation of layout before continuing, dropping FPS to single digits.",
+      "difficulty": "intermediate",
+      "whyAsked": "Crucial web performance and browser engine question."
+    },
+    {
+      "question": "Which DOM properties trigger forced layout recalculation when read?",
+      "answer": "Reading geometric or scroll properties forces layout: `offsetWidth`, `offsetHeight`, `offsetTop`, `offsetLeft`, `scrollTop`, `scrollWidth`, `getBoundingClientRect()`, and `getComputedStyle()`. Browsers must flush pending layout queues to return accurate pixel values.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests knowledge of browser layout triggers."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "FastDOM / Read-Write Batching Libraries",
+      "description": "Coordinating UI animations across large teams by batching all DOM reads into `requestAnimationFrame` before scheduling DOM writes.",
+      "companies": "Wilson Page FastDOM, Google Chrome team",
+      "codeSnippet": "fastdom.measure(() => { const h = el.offsetHeight; fastdom.mutate(() => { el.style.height = h*2; }); });"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Layout thrashing is eliminated by separating DOM reads from DOM writes into distinct batches, preventing repetitive forced synchronous reflows.",
+    "keyPoints": [
+      "Reading geometric properties flushes pending layout queues.",
+      "Alternating reads and writes causes multiple expensive layout passes per frame.",
+      "Batch all reads first (measure), then execute all writes (mutate).",
+      "Use requestAnimationFrame to synchronize mutations with display refresh."
+    ],
+    "closingImpression": "Eliminating forced synchronous layouts is the #1 way to restore smooth 60fps animations in complex web apps.",
+    "analogies": [
+      "A contractor measuring a house: measure all 10 rooms first with your tape measure, then cut all 10 boards at the saw, rather than measuring one room, cutting one board, and walking back 10 times."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Reading offsetHeight inside a for loop that sets style.top.",
+      "why": "Forces N synchronous layout passes, turning an O(N) loop into an O(N^2) CPU bottleneck.",
+      "correct": "Read all heights into an array first, then apply all top styles in a second pass."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do modern CSS containment properties (contain: layout paint) help layout performance?",
+      "answer": "`contain: layout` tells the browser layout engine that the element's internal layout has zero influence on the rest of the page, scoping reflow recalculations strictly to that subtree.",
+      "specReference": "W3C CSS Containment Module Level 2"
+    }
+  ]
 }

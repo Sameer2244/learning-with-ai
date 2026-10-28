@@ -96,5 +96,54 @@
       "Resetting the cursor before each render is mandatory for hook synchronization."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does useState know which component called it without passing a component reference?",
+      "answer": "React maintains a global internal variable `currentlyRenderingFiber`. When React renders a component (`renderWithHooks`), it sets `currentlyRenderingFiber = workInProgress`. Inside `useState`, React inspects this global pointer and attaches state to the active fiber's `memoizedState` linked list.",
+      "difficulty": "intermediate",
+      "whyAsked": "The universal 'magic' demystification question for React Hooks."
+    },
+    {
+      "question": "Why does calling setState with the exact same value (Object.is) skip rendering?",
+      "answer": "Inside `dispatchSetState`, React compares the new value with the current state using `Object.is(eagerState, currentState)`. If identical, React bailouts of scheduling a render (Eager Bailout), saving CPU cycles.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of React state bailout optimizations."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React useState Internal State Holder",
+      "description": "The universal state primitive in modern React applications.",
+      "companies": "All React applications",
+      "codeSnippet": "const [count, setCount] = useState(() => expensiveInit());"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React Hooks rely on a module-level currentlyRenderingFiber pointer to bind hook invocations to the currently active component fiber.",
+    "keyPoints": [
+      "currentlyRenderingFiber points to the active component during render.",
+      "State is stored in a linked list on fiber.memoizedState.",
+      "Eager bailout skips rendering if new state is identical via Object.is.",
+      "Lazy initializers useState(() => init) run only on first mount."
+    ],
+    "closingImpression": "Hooks are not magic; they are simple sequential index cursors tied to the active Fiber execution context.",
+    "analogies": [
+      "A doctor's clipboard: the doctor writes diagnoses on the patient's chart currently open on the desk (currentlyRenderingFiber)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Passing an immediate function call useState(computeExpensive()) instead of lazy callback useState(() => computeExpensive()).",
+      "why": "Calling the function directly executes the expensive calculation on EVERY render pass, discarding the result on subsequent renders.",
+      "correct": "Pass a function reference `useState(() => compute())` for lazy evaluation."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the Eager State optimization in React's dispatchSetState?",
+      "answer": "If the fiber's update queue is empty, React computes the next state eagerly in the dispatcher. If `Object.is(eagerState, currentState)` is true, React exits immediately without scheduling work on the scheduler.",
+      "specReference": "packages/react-reconciler/src/ReactFiberHooks.js: dispatchSetState"
+    }
+  ]
 }

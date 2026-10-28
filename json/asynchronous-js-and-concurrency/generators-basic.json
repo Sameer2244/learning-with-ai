@@ -103,5 +103,66 @@
       "Next invocation resumes from exact program counter and lexical scope position."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between a Generator Function and a Generator Object?",
+      "answer": "A Generator Function (`function*`) is the constructor definition. When invoked, it does NOT execute its body; instead, it returns a Generator Object. The Generator Object conforms to both the Iterable protocol (`[Symbol.iterator]()`) and the Iterator protocol (`.next()`, `.return()`, `.throw()`). Execution only begins when `.next()` is called.",
+      "difficulty": "basic",
+      "whyAsked": "Tests understanding of generator instantiation vs execution."
+    },
+    {
+      "question": "How does the 'yield*' operator differ from standard 'yield'?",
+      "answer": "`yield` emits a single value and pauses. `yield*` delegates iteration to another iterable or generator: it iterates through the target iterable, yielding each of its values sequentially, and evaluates to the return value of the delegated generator.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests knowledge of generator composition and recursion."
+    },
+    {
+      "question": "Can an infinite generator cause a memory leak?",
+      "answer": "No! Unlike an infinite array (which would exhaust memory), an infinite generator evaluates lazily on demand. It stores only its current execution context on the heap and consumes O(1) memory, advancing only when `.next()` is explicitly called by a consumer.",
+      "difficulty": "basic",
+      "whyAsked": "Checks understanding of lazy evaluation vs eager memory allocation."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "ID & UUID Generation",
+      "description": "Generating incremental or algorithmic sequence numbers lazily without holding pre-allocated IDs in memory.",
+      "companies": "MongoDB ObjectID, Snowflake ID generator",
+      "codeSnippet": "function* idGen() { let id = 1; while (true) yield id++; }"
+    },
+    {
+      "scenario": "Pagination Traversal",
+      "description": "Abstracting paginated API endpoints so consumers can loop using `for...of` without knowing about page boundaries.",
+      "companies": "AWS SDK, Stripe SDK",
+      "codeSnippet": "for (const item of listUsers()) { process(item); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Generators are functions that can be paused and resumed on demand, implementing the Iterable and Iterator protocols to enable memory-efficient lazy evaluation.",
+    "keyPoints": [
+      "Invoking a generator function returns an exotic GeneratorObject without executing code.",
+      "yield pauses execution and returns { value, done: false }.",
+      "Calling .next() resumes execution from the exact point of suspension.",
+      "Generators allow representing infinite data streams in O(1) memory."
+    ],
+    "closingImpression": "Generators bring coroutine semantics to JavaScript, laying the architectural foundation for async/await and streaming iterators.",
+    "analogies": [
+      "A DVD player: you press 'Play' (next), watch until a chapter marker, press 'Pause' (yield), and come back later to resume from the exact same frame."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using for...of on a generator without a termination condition, expecting it to stop.",
+      "why": "A for...of loop on an infinite generator will loop forever and freeze the thread.",
+      "correct": "Always break out of infinite generator loops using a break statement or limit condition."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does V8 implement generator suspension and resumption in bytecode?",
+      "answer": "V8's Ignition interpreter uses dedicated bytecodes: `SuspendGenerator` snapshots local registers into the heap-allocated GeneratorObject. When `.next()` is called, `ResumeGenerator` restores registers onto the Call Stack and jumps directly to the saved bytecode offset.",
+      "specReference": "V8 Ignition Bytecode: SuspendGenerator & ResumeGenerator"
+    }
+  ]
 }

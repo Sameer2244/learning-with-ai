@@ -92,5 +92,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What are the core Rules of React enforced by the React Compiler (React Forget)?",
+      "answer": "1) **Components and Hooks must be Pure**: rendering must not mutate external variables, global objects, or passed props. 2) **No mutation of values after passing to JSX**: mutating an object after passing it to children breaks compiler memoization. 3) **Hooks must follow the Rules of Hooks**: called unconditionally at the top level. 4) **Side effects belong in effects or event handlers**.",
+      "difficulty": "advanced",
+      "whyAsked": "Checks familiarity with React 19's compiler and strict purity constraints."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Automated Memoization in React 19",
+      "description": "The React Compiler automatically analyzing components and memoizing JSX and values, eliminating manual useMemo and useCallback.",
+      "companies": "Meta (Instagram Web), Vercel",
+      "codeSnippet": "// Compiler transforms: let x; if (c[0] !== a) { x = expensive(a); c[0] = a; c[1] = x; } else { x = c[1]; }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The React Compiler automatically optimizes memoization at build time, requiring components to strictly adhere to the Rules of React.",
+    "keyPoints": [
+      "Eliminates manual useMemo, useCallback, and React.memo.",
+      "Static analysis verifies pure rendering contracts.",
+      "Re-computes values only when source inputs change.",
+      "Impure side effects during render disable compiler optimization."
+    ],
+    "closingImpression": "The React Compiler proves that adhering to functional purity unlocks automated compiler-level performance.",
+    "analogies": [
+      "A smart compiler like gcc -O3: write clean, standard code, and the compiler handles register allocation and loop unrolling automatically."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Mutating props directly: props.items.push(newItem).",
+      "why": "Mutating props violates purity, causing the React Compiler to bail out and producing stale render bugs.",
+      "correct": "Treat props and state as strictly immutable."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is eslint-plugin-react-compiler?",
+      "answer": "The official ESLint plugin that surfaces static violations of the Rules of React, identifying code patterns that prevent the compiler from optimizing components.",
+      "specReference": "React Documentation: ESLint Plugin React Compiler"
+    }
+  ]
 }

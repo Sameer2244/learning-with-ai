@@ -88,5 +88,60 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Explain the two common throttling strategies: leading edge vs trailing edge.",
+      "answer": "Leading edge (leading: true) executes immediately on the first call, then locks execution for N ms. Trailing edge (trailing: true) queues the last call received during the quiet window and fires it once the window expires. Lodash throttle supports enabling both simultaneously.",
+      "difficulty": "intermediate",
+      "whyAsked": "Separates simple throttle implementations from production-grade requirements."
+    },
+    {
+      "question": "What is the difference between timestamp-based throttling and timer-based throttling?",
+      "answer": "Timestamp throttling (`Date.now() - lastRun >= limit`) gives instant leading execution with zero timer overhead, but drops trailing calls. Timer throttling (`setTimeout`) naturally supports trailing execution, but delays the initial call. Combining both achieves leading + trailing precision.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of timing algorithms."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Infinite Scroll & Viewport Visibility",
+      "description": "Checking scroll position at 60fps (throttled to ~16ms) to trigger fetching next pages.",
+      "companies": "Twitter, Instagram, Pinterest",
+      "codeSnippet": "window.addEventListener('scroll', throttle(checkScrollPosition, 100));"
+    },
+    {
+      "scenario": "Interactive Canvas Drag & Drop",
+      "description": "Throttling mousemove updates to keep canvas redraws aligned with display frame rates.",
+      "companies": "Figma, Canva",
+      "codeSnippet": "canvas.on('mousemove', throttle(updateCoordinates, 16));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Throttling enforces a maximum execution frequency, guaranteeing a function runs at most once in a specified time window regardless of invocation volume.",
+    "keyPoints": [
+      "Guarantees periodic progress during continuous high-frequency events.",
+      "Can execute on the leading edge (immediately) or trailing edge (at window end).",
+      "Essential for scroll, resize, and mousemove listeners.",
+      "Differs from debounce by guaranteeing regular updates during long continuous activity."
+    ],
+    "closingImpression": "Throttling prevents high-frequency DOM events from starving the main thread and dropping frame rates.",
+    "analogies": [
+      "A machine gun firing rate limiter: no matter how fast you pull the trigger, the gun only fires at a fixed cyclic rate."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Dropping trailing events on scroll listeners.",
+      "why": "If trailing edge is disabled, the final scroll position when the user stops scrolling is never reported, leaving UI in an incomplete state.",
+      "correct": "Always ensure the trailing edge executes with the freshest coordinates."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does throttling compare to requestAnimationFrame for animation loops?",
+      "answer": "Throttling operates on clock milliseconds (e.g. 100ms). For visual animations, `requestAnimationFrame` is superior because it synchronizes directly with the GPU display v-sync cycle, automatically pausing when the browser tab is hidden.",
+      "specReference": "W3C Timing control for script-based animations (rAF)"
+    }
+  ]
 }

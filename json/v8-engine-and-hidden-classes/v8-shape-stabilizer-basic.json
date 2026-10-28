@@ -102,5 +102,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is a Hidden Class (Shape/Map) in V8 and why does property initialization order matter?",
+      "answer": "In V8, JavaScript objects do not store property keys in individual hash tables. Instead, V8 assigns each object an internal hidden class (called a `Map` or `Shape`). When properties are added, the object transitions to a new Shape. If two objects are created with properties added in different orders (`{a:1, b:2}` vs `{b:2, a:1}`), V8 creates TWO DIFFERENT hidden classes, forcing inline caches into a slow polymorphic or megamorphic state.",
+      "difficulty": "advanced",
+      "whyAsked": "High-signal performance engineering question regarding V8 JIT internals."
+    },
+    {
+      "question": "Why does the 'delete' operator deoptimize objects in V8?",
+      "answer": "`delete obj.prop` mutates the shape transition tree, forcing V8 to abandon fast property access and demote the object to 'Dictionary Mode' (slow hash table lookup), slowing down property access by 10x-50x.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of V8 property representation modes."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "High-Frequency Trading & Physics Engines",
+      "description": "Initializing particle vectors with consistent constructors to ensure monomorphic inline cache optimization in TurboFan.",
+      "companies": "Figma Canvas, Three.js",
+      "codeSnippet": "class Point { constructor(x, y) { this.x = x; this.y = y; } } // stable shape"
+    }
+  ],
+  "howToExplain": {
+    "opening": "V8 optimizes object property access using Hidden Classes (Shapes). Objects initialized with identical property keys in identical order share the same shape, enabling blazing-fast Monomorphic Inline Caching.",
+    "keyPoints": [
+      "Objects share shapes when properties are initialized in the exact same order.",
+      "Always initialize all properties in constructors, even with null values.",
+      "Avoid using delete; assign null or undefined instead to preserve object shape.",
+      "Stable shapes enable TurboFan JIT compiler to emit direct memory offset reads."
+    ],
+    "closingImpression": "Writing shape-friendly code allows JavaScript to run at speeds approaching compiled C++.",
+    "analogies": [
+      "A standard car assembly line: every car receives doors, then wheels, then paint. Changing the order for one car disrupts the whole robotic factory line."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Adding properties to objects dynamically outside constructors based on conditional logic.",
+      "why": "Creates branching shape transition trees that turn monomorphic inline caches polymorphic.",
+      "correct": "Always initialize all properties in the constructor (e.g. this.prop = null)."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What are In-Object Properties vs Descriptor Arrays in V8?",
+      "answer": "V8 reserves space for initial properties directly inside the object's contiguous heap allocation ('In-Object Properties'). Properties added later overflow into an external property array, requiring an extra pointer dereference.",
+      "specReference": "V8 Dev Blog: Fast Properties in V8"
+    }
+  ]
 }

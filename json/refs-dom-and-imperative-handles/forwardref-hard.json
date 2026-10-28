@@ -94,5 +94,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do virtual scroll containers use imperative handles for smooth scrolling and bounds clamping?",
+      "answer": "A virtual scroll container exposes imperative methods: `scrollToIndex(index, align)` and `getScrollOffset()`. The imperative handle calculates target pixel offsets, clamps values within scroll boundaries, and executes `element.scrollTo({ top, behavior: 'smooth' })`, shielding consumer components from raw pixel calculations.",
+      "difficulty": "advanced",
+      "whyAsked": "High-level performance UI widget engineering question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Virtual List Library Controllers (TanStack Virtual, React Window)",
+      "description": "Allowing parent components to programmatically jump to list index 500 in a 100,000-row table.",
+      "companies": "TanStack, AG Grid",
+      "codeSnippet": "virtualizerRef.current.scrollToIndex(500, { align: 'center' });"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Imperative handles on virtual scroll containers provide programmatic scroll navigation while encapsulating pixel calculations and bounds clamping.",
+    "keyPoints": [
+      "Exposes scrollToIndex and scrollByOffset methods.",
+      "Clamps offsets to prevent scroll container underflow/overflow.",
+      "Shields parent components from virtual DOM geometry math.",
+      "The standard architecture for high-performance virtualized tables."
+    ],
+    "closingImpression": "Encapsulating virtual scroll math behind an imperative handle keeps parent view components clean and declarative.",
+    "analogies": [
+      "An elevator floor selector: you press 'Floor 50' (scrollToIndex); the elevator controller handles cable tension, acceleration, and alignment."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Allowing unbounded scroll calculations.",
+      "why": "Scrolling beyond max scroll height causes glitchy bounce artifacts in browsers.",
+      "correct": "Always clamp scroll targets between 0 and maxScrollOffset."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React Window manage dynamic row height measurements?",
+      "answer": "React Window caches measured row heights in an internal index map and uses binary search (`findNearestItem`) to compute scroll positions in O(log N) time.",
+      "specReference": "React Window: VariableSizeList Architecture"
+    }
+  ]
 }

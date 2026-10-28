@@ -94,5 +94,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is State Batching in React and how does it prevent render thrashing?",
+      "answer": "Batching is when React groups multiple state updates (`setCount(c => c + 1); setFlag(f => !f);`) into a single re-render pass instead of re-rendering twice. This prevents intermediate inconsistent UI states and eliminates redundant DOM diffing.",
+      "difficulty": "basic",
+      "whyAsked": "Foundational React state update question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Form Reset Action",
+      "description": "Resetting 10 form fields in a single event handler triggers exactly 1 re-render pass.",
+      "companies": "All React applications",
+      "codeSnippet": "function handleReset() { setName(''); setEmail(''); setAge(0); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Batching consolidates multiple state setter calls within an event turn into a single re-render pass, optimizing render performance.",
+    "keyPoints": [
+      "Groups multiple setState calls into one render cycle.",
+      "Prevents half-updated, inconsistent UI states.",
+      "Processes pending updates via an internal update queue.",
+      "A foundational optimization in all React versions."
+    ],
+    "closingImpression": "Batching ensures component re-renders scale with user actions rather than the number of state variables.",
+    "analogies": [
+      "Ordering at a restaurant: you tell the waiter your appetizer, entree, and drink together; the waiter makes one trip to the kitchen, not three."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming state updates immediately after calling setState: `setCount(1); console.log(count); // still 0`.",
+      "why": "State updates are asynchronous and batched; the variable in the current render closure remains unchanged until the next render pass.",
+      "correct": "State reflects new values only on the subsequent render pass."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How did React 17 batch updates inside event handlers?",
+      "answer": "React 17 wrapped synthetic event handlers in `discreteUpdates()` which flushed updates at the end of the event handler callback.",
+      "specReference": "React 17 Event System Architecture"
+    }
+  ]
 }

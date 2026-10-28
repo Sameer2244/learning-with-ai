@@ -112,5 +112,48 @@
       "Passive effects are deferred to allow paint and prevent frame drops."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React manage separate queues for layout effects and passive effects internally?",
+      "answer": "React stores effects as a circular linked list on `fiber.updateQueue`. Each effect node carries bitwise flags: `HookLayout` vs `HookPassive`. During the synchronous commit phase, React iterates and executes `HookLayout` effects. It then calls `scheduleCallback(NormalPriority, flushPassiveEffects)` on the Scheduler to schedule a separate pass for `HookPassive` effects after paint.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests low-level understanding of React effect queues."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React Fiber Commit Work Pipeline",
+      "description": "The core effect queue scheduler in React reconciler.",
+      "companies": "Meta",
+      "codeSnippet": "flushPassiveEffects(); // executes after paint"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React Fiber partitions effects into synchronous layout queues and deferred passive queues using bitwise flags on a circular update queue.",
+    "keyPoints": [
+      "HookLayout effects run synchronously during commitLayoutEffects.",
+      "HookPassive effects are scheduled via Scheduler.scheduleCallback.",
+      "Circular linked list stores cleanups and creation callbacks.",
+      "Guarantees optimal UI responsiveness by deferring non-visual side effects."
+    ],
+    "closingImpression": "Separating effect execution into distinct priority queues ensures browser paint is never delayed by non-visual tasks.",
+    "analogies": [
+      "Express checkout vs standard shipping: layout effects must be delivered immediately before the store closes; passive effects are shipped overnight."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming useEffect cleanup runs immediately when state changes.",
+      "why": "useEffect cleanup runs asynchronously before the next passive effect pass, after the next render has painted.",
+      "correct": "Clarify that cleanup execution is also deferred after paint."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What happens if a passive effect schedules a synchronous update (flushSync)?",
+      "answer": "Calling `flushSync` inside a passive effect forces React to flush pending updates synchronously, halting the scheduler and executing an immediate commit.",
+      "specReference": "packages/react-reconciler/src/ReactFiberWorkLoop.js: flushSync"
+    }
+  ]
 }

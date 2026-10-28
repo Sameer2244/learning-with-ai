@@ -100,5 +100,60 @@
       "The alternate pointer points bidirectionally between current and workInProgress."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Explain the Double Buffering pattern in React Fiber.",
+      "answer": "React maintains at most two Fiber trees at any given time: 1) `current`: the tree currently rendered and visible on screen. 2) `workInProgress` (WIP): the tree being constructed and diffed in memory during the render phase. When work completes and is committed to the DOM, React simply flips a single root pointer: `fiberRoot.current = workInProgress`. The previous `current` tree becomes the pool for the next render's `workInProgress`, completely recycling fiber objects via the `alternate` pointer.",
+      "difficulty": "advanced",
+      "whyAsked": "The foundational memory management concept in React Fiber architecture."
+    },
+    {
+      "question": "How does createWorkInProgress avoid object allocation churn?",
+      "answer": "In `ReactFiber.js`, `createWorkInProgress(current, pendingProps)` checks if `current.alternate` already exists from a prior render. If it exists, React recycles that exact object: it resets `flags = NoFlags`, copies `pendingProps`, and reuses its existing memory allocation instead of calling `new FiberNode()`. This reduces V8 heap garbage collection pressure during rapid typing or animations.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of JIT memory optimization in hot UI paths."
+    },
+    {
+      "question": "What happens to the workInProgress tree if an update is aborted or superseded by higher-priority work?",
+      "answer": "If higher-priority work (like user typing) interrupts low-priority work (like data fetching), React simply abandons the `workInProgress` pointer. Because no mutations have touched the host DOM (which only occurs during commit), discarding WIP leaves the visible `current` tree 100% intact with zero visual tearing.",
+      "difficulty": "intermediate",
+      "whyAsked": "Highlights the core superpower of Double Buffering in Concurrent Mode."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "High-Frequency Keystroke Input in React 18",
+      "description": "While a large table renders in a background transition, keystrokes discard incomplete WIP trees and render immediately without lag.",
+      "companies": "Notion Web, Linear, Google Sheets Web",
+      "codeSnippet": "startTransition(() => { setFilter(largeQuery); }); // abortable WIP work"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React uses graphics-style Double Buffering: it diffs changes on an in-memory workInProgress tree, and atomically flips the root pointer to commit changes to the screen.",
+    "keyPoints": [
+      "current tree represents what is on screen; workInProgress represents the next frame.",
+      "Alternate pointers link corresponding nodes bidirectionally.",
+      "Discarding WIP work produces zero screen artifacts (tear-free abortability).",
+      "Recycles existing fiber objects to prevent V8 garbage collection stutter."
+    ],
+    "closingImpression": "Double buffering gives React the transactional safety of a database: renders can abort cleanly, or commit atomically in a single pointer swap.",
+    "analogies": [
+      "A theater stage with two rotating platforms: the audience watches actors on Stage A (current) while crew members assemble the next set on Stage B (WIP) behind the curtain; when ready, the stage rotates instantly."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Thinking React allocates a brand new Fiber tree on every setState.",
+      "why": "React recycles the existing alternate fibers. At any time, there are at most 2 fiber instances per component.",
+      "correct": "State that React caps memory to two trees and reuses alternate fibers."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Where in React source does the atomic root pointer swap occur?",
+      "answer": "In `packages/react-reconciler/src/ReactFiberWorkLoop.js` inside `commitRootImpl()`, immediately after `commitMutationEffects` finishes and before `commitLayoutEffects`: `root.current = finishedWork;`.",
+      "specReference": "packages/react-reconciler/src/ReactFiberWorkLoop.js: commitRootImpl"
+    }
+  ]
 }

@@ -94,5 +94,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do Compound Components (Tabs, Select, Accordion) communicate state implicitly?",
+      "answer": "Compound components use a shared internal React Context. The parent container (`<Tabs>`) holds state (active tab index) and exposes it via Context. Child components (`<Tabs.List>`, `<Tabs.Tab>`, `<Tabs.Panel>`) consume this Context implicitly without requiring the developer to pass props manually down the tree, providing clean and declarative component APIs.",
+      "difficulty": "advanced",
+      "whyAsked": "The gold standard design system component architecture question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Enterprise Design System UI Primitives",
+      "description": "Building compound Tabs, Menus, Dialogs, and Accordions in design systems.",
+      "companies": "Radix UI, Headless UI, Material UI",
+      "codeSnippet": "<Tabs defaultValue='tab1'><Tabs.List><Tabs.Trigger value='tab1' /></Tabs.List><Tabs.Content value='tab1' /></Tabs>"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Compound Components work together as a synchronized unit, sharing implicit state via an internal Context to provide expressive, flexible component APIs.",
+    "keyPoints": [
+      "Parent container manages state and provides internal Context.",
+      "Children implicitly consume state without manual prop drilling.",
+      "Allows arbitrary JSX composition and flexible markup structure.",
+      "Standard design pattern for enterprise UI component libraries."
+    ],
+    "closingImpression": "Compound components offer the ultimate balance between flexible styling and encapsulated behavioral state.",
+    "analogies": [
+      "An HTML <select> and <option> tag: they work together naturally without needing you to write wiring code between them."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using React.Children.map and cloneElement for compound components.",
+      "why": "cloneElement only reaches direct children; wrapping a child in a div breaks the entire component.",
+      "correct": "Use React Context for robust compound component communication."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do Radix Primitives and Ariakit enforce accessibility in compound components?",
+      "answer": "They combine compound context with WAI-ARIA attributes (`aria-selected`, `aria-controls`, `role='tab'`) and roving tabindex keyboard focus handlers.",
+      "specReference": "W3C WAI-ARIA Tabs Pattern Specification"
+    }
+  ]
 }

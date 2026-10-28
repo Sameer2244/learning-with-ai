@@ -88,5 +88,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does pipeAsync handle error recovery in a point-free asynchronous pipeline?",
+      "answer": "In `pipeAsync(...fns)`, the pipeline folds functions via `fns.reduce((accPromise, fn) => accPromise.then(val => fn(val)).catch(errorHandler))`. An error recovery handler can intercept errors at specific pipeline stages, returning fallback data to allow subsequent stages to continue or re-throwing to abort.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of async Promise chaining and error propagation."
+    },
+    {
+      "question": "Why is compose right-to-left while pipe is left-to-right?",
+      "answer": "`compose(f, g)(x)` mirrors mathematical notation `f(g(x))` (right-to-left). `pipe(f, g)(x)` mirrors Unix pipeline streams `x | f | g` (left-to-right), which is significantly more intuitive for developers reading sequential data transformations.",
+      "difficulty": "basic",
+      "whyAsked": "Validates functional design conventions."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Express/Koa Middleware Onion Model",
+      "description": "Koa pipelines compose asynchronous middlewares into an onion-layered Promise execution chain.",
+      "companies": "Koa, Fastify",
+      "codeSnippet": "const pipeline = compose([auth, validate, handler]);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "An asynchronous pipeline sequentially chains synchronous and asynchronous functions together, passing the resolved output of each stage to the next.",
+    "keyPoints": [
+      "Uses Promise.resolve(x) to normalize synchronous and asynchronous return values.",
+      "pipe executes left-to-right; compose executes right-to-left.",
+      "Error handling can be unified or handled per-stage.",
+      "Standard architecture for data ETL pipelines and server middleware."
+    ],
+    "closingImpression": "Point-free asynchronous pipelines turn complex nested async logic into clean, readable linear flows.",
+    "analogies": [
+      "A factory conveyor belt: raw materials enter step 1, get painted at step 2, and packaged at step 3."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using forEach instead of reduce for async pipelines.",
+      "why": "forEach cannot wait for promises between steps.",
+      "correct": "Use reduce with Promise chaining or an async for...of loop."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the TC39 Pipeline Operator (|>) proposal?",
+      "answer": "The Stage 2 Pipeline Operator proposal introduces native syntax: `value |> fnA(%) |> await fnB(%)`, eliminating the need for userland pipe/compose functions.",
+      "specReference": "TC39 Proposal: The Pipeline Operator"
+    }
+  ]
 }

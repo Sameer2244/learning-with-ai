@@ -94,5 +94,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the Inversion of Control achieved by the Render Prop pattern?",
+      "answer": "In standard components, the parent controls rendering and internal state. The Render Prop pattern inverts control by allowing the consumer to decide HOW state is rendered while the provider encapsulates internal behavior (e.g. mouse tracking, scroll detection, data fetching).",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of architectural component patterns."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Headless UI Component State Exposing",
+      "description": "Downshift / Downshift autocomplete exposing keyboard selection state to custom UI renderers.",
+      "companies": "PayPal, Radix UI",
+      "codeSnippet": "<Downshift>{({ isOpen, getItemProps }) => (<div>...</div>)}</Downshift>"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Render props invert control by sharing internal component behavior and state while delegating visual presentation to a consumer-supplied function.",
+    "keyPoints": [
+      "Encapsulates complex logic and state machines.",
+      "Consumer provides custom JSX via a render callback.",
+      "Precursor to modern Custom Hooks.",
+      "Still widely used in slot patterns and virtualization libraries."
+    ],
+    "closingImpression": "Render props separate behavioral state management from visual rendering.",
+    "analogies": [
+      "A rental car: the rental company manages the engine and maintenance (logic), but you decide where to drive it (render)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Passing inline render props to components expecting memoization.",
+      "why": "Inline functions break memoization comparisons.",
+      "correct": "Use custom hooks or stabilized callbacks."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do Custom Hooks compare to Render Props?",
+      "answer": "Custom Hooks provide the exact same behavioral sharing as render props without adding extra nesting levels to the component tree, solving the 'wrapper hell' problem.",
+      "specReference": "React Documentation: Hooks vs Render Props"
+    }
+  ]
 }

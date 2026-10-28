@@ -93,5 +93,72 @@
       "Iterative traversal is the standard production design pattern for AST walkers in Babel and TypeScript compiler."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is a trampoline function and how does it prevent stack overflow?",
+      "answer": "A trampoline is a higher-order control flow utility that takes a function returning either a result or another function (a thunk). The trampoline executes in a synchronous `while` loop, repeatedly invoking the returned thunk until a non-function value is produced. Because each thunk invocation finishes and returns before the next is called, the Call Stack never grows beyond 1 or 2 frames.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of functional programming patterns used to achieve unbounded recursive algorithms in languages lacking TCO."
+    },
+    {
+      "question": "What is the memory trade-off between trampolining and iterative loops?",
+      "answer": "An iterative `while` loop with heap variables has zero function allocation overhead and O(1) space. A trampoline allocates a closure object (thunk) on the V8 heap for every single iteration step. While it avoids call stack overflow, it produces significant garbage collection churn in high-frequency loops. An explicit iterative loop is almost always faster in production V8.",
+      "difficulty": "advanced",
+      "whyAsked": "Separates textbook knowledge from real-world performance engineering."
+    },
+    {
+      "question": "Can generators or async/await be used as a trampoline?",
+      "answer": "Yes! A generator function yields values without growing the call stack because `yield` suspends the generator's execution context frame to the heap. A runner loop repeatedly calling `gen.next()` can iterate indefinitely with a constant call stack depth of 1.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests ability to connect execution contexts with generator coroutines."
+    },
+    {
+      "question": "How does tail-call elimination differ from trampolining?",
+      "answer": "Tail Call Elimination (TCO) is a compiler/engine optimization where the existing stack frame is overwritten and reused for the tail call, consuming zero additional memory. Trampolining is a userland software pattern where functions return thunks to an external driving loop, running on any engine without compiler support.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests precision in compiler theory vs userland patterns."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Redux-Saga Effect Runners",
+      "description": "Redux-Saga uses generator-based trampolining to step through complex nested asynchronous actions and yield effects without exhausting call stack frames.",
+      "companies": "Netflix, Airbnb",
+      "codeSnippet": "function* rootSaga() { while (true) { const action = yield take('ACTION'); yield fork(handleAction, action); } }"
+    },
+    {
+      "scenario": "Immutable.js Persistent Data Structures",
+      "description": "Navigating deeply nested 32-way trie nodes in Immutable.js relies on iterative traversals to guarantee stability regardless of depth.",
+      "companies": "Meta, Uber",
+      "codeSnippet": "while (node) { if (node.isLeaf) return node.val; node = node.children[hash & MASK]; }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "When an algorithm requires processing deeply nested structures where recursive depth exceeds ~10,000 frames, we must decouple algorithm execution from the physical call stack.",
+    "keyPoints": [
+      "Recursive calls place frames on the engine's fixed thread stack, risking RangeError.",
+      "Trampolining wraps steps in thunk closures evaluated inside a synchronous while loop.",
+      "Iterative traversal with an explicit heap-allocated array moves the stack state to the engine heap.",
+      "In production V8, explicit iterative loops are preferred over trampolines to avoid GC pressure from thunk allocations."
+    ],
+    "closingImpression": "By moving the call state from the fixed 1MB stack to the multi-gigabyte heap, we scale to millions of elements safely.",
+    "analogies": [
+      "Instead of holding 10,000 tasks in your hands (stack) until you collapse, you put them on a desk clipboard (heap) and process them one by one."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Believing that writing return recurse() in Node.js automatically performs TCO.",
+      "why": "V8 does not implement syntactic TCO; writing return recurse() still grows the call stack frame by frame.",
+      "correct": "Explicitly state that Node.js / V8 lacks TCO, so you must use iterative loops or trampolining."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why did the V8 team explicitly remove Tail Call Optimization after implementing it behind a flag in 2016?",
+      "answer": "The V8 and TC39 consensus cited two major blockers: 1) Loss of debugging fidelity: developers could no longer inspect full call stacks or `Error().stack` traces when frames were overwritten. 2) Interop with `Function.caller` and `Function.arguments` properties, which expect legacy frame pointers. A proposal for explicit syntactic tail calls (`return continue fn()`) was discussed but never achieved consensus.",
+      "specReference": "TC39 Proposal: Syntactic Tail Calls (STC) & V8 Issue #4698"
+    }
+  ]
 }

@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why is splitting Context into StateContext and DispatchContext a recommended performance pattern?",
+      "answer": "Because in React Context, ANY update to the context value forces ALL consuming components (`useContext`) to re-render. If state and dispatch are bundled in one object (`{ state, dispatch }`), every state update creates a new object reference, forcing components that only need `dispatch` (like action buttons) to re-render unnecessarily! Splitting into `StateContext` and `DispatchContext` ensures dispatch consumers never re-render because `dispatch` is referentially stable.",
+      "difficulty": "intermediate",
+      "whyAsked": "High-value context optimization question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Authentication & Theme Provider Splitting",
+      "description": "Splitting user authentication data from login/logout action dispatchers.",
+      "companies": "Stripe, Shopify",
+      "codeSnippet": "const UserStateCtx = createContext(); const UserDispatchCtx = createContext();"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Splitting Context into independent State and Dispatch contexts decouples state consumers from action triggers, eliminating unnecessary re-renders.",
+    "keyPoints": [
+      "Context re-renders all consumers when provider value reference changes.",
+      "Dispatch functions from useReducer are referentially stable.",
+      "Components needing only dispatch never re-render when state changes.",
+      "Simple, native pattern for scalable state management without third-party libraries."
+    ],
+    "closingImpression": "Splitting context provides Redux-like performance using 100% native React primitives.",
+    "analogies": [
+      "Separating a TV screen from the remote control: the TV screen updates continuously, but the remote control in your hand never needs to change."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Passing an inline object literal to Context.Provider value: `<Ctx.Provider value={{ state, dispatch }}>`.",
+      "why": "Creates a brand new object on every provider render, forcing all consumers to re-render even if state did not change.",
+      "correct": "Wrap the value object in useMemo."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React propagate Context updates down the Fiber tree?",
+      "answer": "When a context value changes, React runs `propagateContextChange` in `ReactFiberNewContext.js`, scanning down the fiber tree and setting lanes on all matching consumer fibers, bypassing `shouldComponentUpdate` and `React.memo` bailouts.",
+      "specReference": "packages/react-reconciler/src/ReactFiberNewContext.js: propagateContextChange"
+    }
+  ]
 }

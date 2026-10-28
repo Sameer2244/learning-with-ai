@@ -127,5 +127,60 @@
       "All synchronous script statements finish before the scheduled microtask executes."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why is microtask batching superior to macrotask (setTimeout) batching for UI frameworks?",
+      "answer": "Microtasks execute before the browser paints the next screen frame. If you batch DOM updates using `queueMicrotask`, the browser reconciles all updates in a single paint cycle without visual flashing (FOUC). If you used `setTimeout(0)`, the browser might paint intermediate states across multiple frames, causing noticeable UI flickering and layout thrashing.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of how event loop queues integrate with browser rendering engines."
+    },
+    {
+      "question": "How does a microtask batcher ensure thread safety in a single-threaded language?",
+      "answer": "Because JavaScript is single-threaded and non-preemptive (run-to-completion), synchronous calls to `.add()` populate an in-memory queue without interleaving. The boolean flag `isScheduled` is checked and set synchronously, guaranteeing that exactly one microtask flush is enqueued for that turn.",
+      "difficulty": "basic",
+      "whyAsked": "Validates grasp of single-threaded run-to-completion invariants."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Vue.js nextTick & Reactive Watcher Queue",
+      "description": "Vue batches component re-renders triggered by reactive property mutations into a microtask queue, flushing all watchers once per event loop turn.",
+      "companies": "Vue.js Core, Nuxt",
+      "codeSnippet": "function queueWatcher(watcher) { queue.push(watcher); if (!waiting) { waiting = true; nextTick(flushQueue); } }"
+    },
+    {
+      "scenario": "Database Transaction Batching (DataLoader)",
+      "description": "GraphQL DataLoader collects individual item IDs requested during the synchronous resolver tree execution and fires a single `SELECT * WHERE id IN (...)` SQL query on the microtask tick.",
+      "companies": "Meta, Apollo GraphQL",
+      "codeSnippet": "loader.load(1); loader.load(2); // coalesced into single SQL batch"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A microtask batcher aggregates multiple synchronous operations occurring within the same tick into a single coordinated execution, eliminating redundant recalculations.",
+    "keyPoints": [
+      "A synchronous boolean flag guarantees only one flush job is scheduled per tick.",
+      "Items accumulate in an array during synchronous code execution.",
+      "The microtask runs immediately after the synchronous turn before rendering occurs.",
+      "This pattern is the foundation of modern state batching in React, Vue, and GraphQL."
+    ],
+    "closingImpression": "Coalescing synchronous operations into microtasks is the primary design pattern for achieving high performance in UI frameworks and data loaders.",
+    "analogies": [
+      "Like an office mail room: instead of running to the post office for every single letter dropped in the outgoing tray, you collect letters all morning and make a single trip at noon."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Forgetting to reset the scheduled flag inside the flush handler.",
+      "why": "If the flag is not reset, future calls to add() in subsequent turns will never schedule a flush, dropping future batches.",
+      "correct": "Always reset `isScheduled = false` at the very beginning of the flush function."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How did React 18 change batching semantics compared to React 17?",
+      "answer": "In React 17, batching was limited to React event handlers. Updates inside `setTimeout`, `fetch`, or native events were not batched and triggered multiple renders. In React 18, 'Automatic Batching' uses internal microtask and lane scheduling to batch ALL updates, regardless of where they originate.",
+      "specReference": "React 18 Architecture: Automatic Batching RFC"
+    }
+  ]
 }

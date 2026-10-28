@@ -101,5 +101,48 @@
       "Synchronous DOM mutations in layout effects avoid visual glitches."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do you measure a DOM node's dimensions without causing visual flicker?",
+      "answer": "By using `useLayoutEffect`. In `useLayoutEffect`, the DOM node has been created and mutated, so `getBoundingClientRect()` returns accurate dimensions. If you set state here, React re-renders synchronously before the browser paints the frame, guaranteeing the user never sees intermediate un-positioned states.",
+      "difficulty": "intermediate",
+      "whyAsked": "Practical UI tooltip and popover engineering question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Floating Tooltips & Popover Positioning",
+      "description": "Measuring tooltip bounding boxes to align them above or below anchor buttons without flickering.",
+      "companies": "Floating UI, Radix Primitives",
+      "codeSnippet": "useLayoutEffect(() => { const rect = el.getBoundingClientRect(); setCoords(calculate(rect)); }, []);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "useLayoutEffect guarantees synchronous execution after DOM mutations but before paint, eliminating visual flicker during geometric measurements.",
+    "keyPoints": [
+      "Runs synchronously after DOM nodes are inserted.",
+      "Reading getBoundingClientRect() returns accurate layout dimensions.",
+      "Synchronous state updates here re-render before paint.",
+      "Eliminates visual popover jumping and layout stutter."
+    ],
+    "closingImpression": "useLayoutEffect is the only place in React where synchronous DOM reads and subsequent state updates can occur without visual tearing.",
+    "analogies": [
+      "Adjusting a picture frame with your eyes closed: you adjust the tilt while nobody can see, and open your eyes only when it is perfectly straight."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using useEffect for tooltip positioning.",
+      "why": "Causes the tooltip to render at 0,0 for 1 frame, then jump to the target position, creating a visible flash.",
+      "correct": "Use useLayoutEffect for positioning."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the performance consequence of cascading state updates inside useLayoutEffect?",
+      "answer": "Setting state inside `useLayoutEffect` blocks the browser thread and forces an immediate second synchronous render pass before paint, doubling render time for that frame.",
+      "specReference": "packages/react-reconciler/src/ReactFiberCommitWork.js: commitLayoutEffects"
+    }
+  ]
 }

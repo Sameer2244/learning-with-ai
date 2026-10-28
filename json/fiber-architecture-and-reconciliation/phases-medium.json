@@ -104,5 +104,54 @@
       "DOM mutations occur exclusively within commitMutationEffects."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What are the three sub-phases of the Commit Phase in React Fiber?",
+      "answer": "1) **Before Mutation Phase** (`commitBeforeMutationEffects`): runs `getSnapshotBeforeUpdate` and reads host DOM state before mutations occur. 2) **Mutation Phase** (`commitMutationEffects`): synchronously inserts, updates, and deletes real DOM nodes, and runs cleanups for previous layout effects. 3) **Layout Phase** (`commitLayoutEffects`): runs `componentDidMount`, `componentDidUpdate`, and executes `useLayoutEffect` synchronously before the browser paints.",
+      "difficulty": "advanced",
+      "whyAsked": "High-signal staff-level question testing precise knowledge of React commit pipeline."
+    },
+    {
+      "question": "When are passive effects (useEffect) flushed relative to the commit sub-phases?",
+      "answer": "`useEffect` cleanups and callbacks are NOT run during the synchronous commit phase. Instead, React schedules a macro/micro task (via `Scheduler.scheduleCallback`) to run passive effects asynchronously AFTER the browser has completed Layout and Paint.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of why useEffect does not block browser painting."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Scroll Position Preservation in Chat Applications",
+      "description": "Reading scroll position in `getSnapshotBeforeUpdate` before DOM insertion, and adjusting scroll offsets in `useLayoutEffect` before paint to eliminate visual jumping.",
+      "companies": "Slack, WhatsApp Web",
+      "codeSnippet": "useLayoutEffect(() => { container.scrollTop = container.scrollHeight - prevHeight; });"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The commit phase executes in three strict sub-phases: Before Mutation, Mutation, and Layout, followed by asynchronous Passive Effect scheduling.",
+    "keyPoints": [
+      "Before Mutation snapshots DOM before changes.",
+      "Mutation sub-phase executes host DOM insertions, deletions, and updates.",
+      "Layout sub-phase executes useLayoutEffect synchronously before browser paint.",
+      "Passive effects (useEffect) are deferred until after paint to prevent frame drops."
+    ],
+    "closingImpression": "This multi-stage commit pipeline guarantees the browser never renders half-updated UI states.",
+    "analogies": [
+      "A theatrical stage change: turn off lights (before mutation), move the furniture (mutation), actors take their marks (layout), turn on lights (paint), and applaud (passive effects)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming useLayoutEffect runs after paint.",
+      "why": "useLayoutEffect runs synchronously during the Layout sub-phase BEFORE the browser paints. Heavy work here directly blocks screen updates.",
+      "correct": "Use useEffect for non-visual tasks; use useLayoutEffect strictly for synchronous DOM measurements."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Where in React reconciler source are commit sub-phases defined?",
+      "answer": "In `packages/react-reconciler/src/ReactFiberCommitWork.js`, implemented across `commitBeforeMutationEffects`, `commitMutationEffects`, and `commitLayoutEffects`.",
+      "specReference": "packages/react-reconciler/src/ReactFiberCommitWork.js"
+    }
+  ]
 }

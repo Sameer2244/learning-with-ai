@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React.cache deduplicate requests within a single render cycle?",
+      "answer": "In React 18/19 Server Components, `React.cache(fn)` memoizes function calls based on argument identity for the duration of a single server request. If 5 different components call `getUser(id)` with the same `id` during the render pass, `getUser` executes exactly ONCE and the cached Promise is shared among all 5 components, eliminating duplicate network/database calls.",
+      "difficulty": "advanced",
+      "whyAsked": "Core data architecture question for modern Next.js / React Server Components."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Next.js App Router Request Memoization",
+      "description": "Sharing database and fetch queries between layout.js, page.js, and metadata generators without prop drilling.",
+      "companies": "Next.js, Vercel",
+      "codeSnippet": "export const getItem = cache(async (id) => db.item.findUnique({ where: { id } }));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Suspense cache deduplication pools concurrent resource requests by key, sharing in-flight promises and caching resolved results.",
+    "keyPoints": [
+      "Deduplicates in-flight requests made by multiple components.",
+      "Scoped to the lifetime of a single request in RSC.",
+      "Eliminates duplicate SQL/HTTP queries across component hierarchies.",
+      "Replaces manual prop drilling of fetched data."
+    ],
+    "closingImpression": "Request deduplication allows components to fetch their own data independently without worrying about duplicate network requests.",
+    "analogies": [
+      "A carpool: instead of 5 coworkers driving 5 cars to the same meeting, they all ride in the same car."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming React.cache persists across different user HTTP requests.",
+      "why": "React.cache is scoped strictly to a single request lifecycle; it is not a global Redis cache.",
+      "correct": "Clarify that cache is per-request to prevent cross-user data leaks."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React.cache compare to TanStack Query (React Query)?",
+      "answer": "React.cache is built for Server Components during request rendering. TanStack Query manages client-side caching, background polling, mutations, and cache invalidation in the browser.",
+      "specReference": "React Documentation: React.cache"
+    }
+  ]
 }

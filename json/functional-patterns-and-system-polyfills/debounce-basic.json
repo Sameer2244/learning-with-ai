@@ -88,5 +88,60 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the fundamental difference between Debounce and Throttle?",
+      "answer": "Debounce delays execution until a specified quiet period has elapsed with NO new calls (ideal for search input typing). Throttle guarantees execution at a steady, fixed rate (at most once every N milliseconds), regardless of how frequently events are fired (ideal for window resize or scroll).",
+      "difficulty": "basic",
+      "whyAsked": "The #1 classic frontend interview question."
+    },
+    {
+      "question": "Why must debounce preserve 'this' and argument forwarding?",
+      "answer": "Because debounced functions are frequently attached as DOM event handlers. If `this` is not forwarded via `fn.apply(this, args)`, the handler loses access to the DOM element (`event.currentTarget`) or class instance.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests attention to callback receiver context."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Search Autocomplete Input",
+      "description": "Waiting for user to stop typing for 300ms before firing expensive backend autocomplete queries.",
+      "companies": "Google, Amazon, Algolia",
+      "codeSnippet": "input.addEventListener('input', debounce(fetchSuggestions, 300));"
+    },
+    {
+      "scenario": "Auto-Saving Form State",
+      "description": "Saving document edits to cloud storage 1 second after user stops typing.",
+      "companies": "Google Docs, Notion",
+      "codeSnippet": "editor.on('change', debounce(saveDocument, 1000));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Debounce groups a burst of rapid events into a single invocation by resetting an internal timer on each trigger, executing only when a quiet window has elapsed.",
+    "keyPoints": [
+      "Clears existing timer on every incoming call using clearTimeout.",
+      "Sets a new timer for the specified delay.",
+      "Preserves this context and arguments via closure.",
+      "Prevents overwhelming servers and UI threads with high-frequency events."
+    ],
+    "closingImpression": "Debouncing is essential for reducing network load and preventing rate limiting on search endpoints.",
+    "analogies": [
+      "An elevator door: every time someone steps in, the door timer resets. The elevator only moves once people stop entering for 5 seconds."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Creating a new debounced function inside a React component render body.",
+      "why": "On every re-render, a fresh debounce instance is created with its own timer, breaking debouncing completely.",
+      "correct": "Wrap debounce in useMemo, useCallback, or useRef to keep a stable instance."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do you test a debounced function in Jest without waiting real time?",
+      "answer": "Use Jest's fake timers: `jest.useFakeTimers()`, invoke the debounced function, call `jest.advanceTimersByTime(delay)`, and assert the mock was invoked.",
+      "specReference": "Jest Documentation: Timer Mocks"
+    }
+  ]
 }

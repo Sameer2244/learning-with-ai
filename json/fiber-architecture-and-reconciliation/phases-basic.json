@@ -93,5 +93,54 @@
       "Side effects must be deferred strictly to the commit phase (useEffect / useLayoutEffect)."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between the Render Phase and Commit Phase in React?",
+      "answer": "1) **Render Phase**: Pure computation. React calls component functions, calculates Virtual DOM diffs, and computes effect flags. It is side-effect-free, asynchronous, and interruptible (can be paused, restarted, or aborted in Concurrent Mode). 2) **Commit Phase**: DOM mutation and side effects. React synchronously applies calculated mutations to the host DOM (`commitMutationEffects`), runs synchronous layout effects (`useLayoutEffect`), and schedules passive effects (`useEffect`). It is synchronous and un-interruptible.",
+      "difficulty": "intermediate",
+      "whyAsked": "Core architectural lifecycle distinction in modern React."
+    },
+    {
+      "question": "Why does React StrictMode invoke component render functions twice in development?",
+      "answer": "`<StrictMode>` intentionally double-invokes component bodies, `useState` initializers, and `useMemo` callbacks in development to detect unintended side-effects (e.g. mutating global variables, modifying props). Pure functions produce identical outputs on repeated calls; impure functions reveal bugs immediately under double rendering.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of React's purity requirements and developer tooling."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Eliminating Infinite Re-Render Loops",
+      "description": "Detecting developers accidentally calling `setState` directly inside the render body instead of inside `useEffect`.",
+      "companies": "All React applications",
+      "codeSnippet": "function Bad() { setCount(c => c + 1); return null; } // Error: Maximum update depth exceeded"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React separates rendering into an interruptible, side-effect-free Render Phase and a synchronous, atomic Commit Phase.",
+    "keyPoints": [
+      "Render phase calculates diffs and must be 100% pure (idempotent).",
+      "Commit phase applies mutations to the real DOM synchronously.",
+      "StrictMode double-renders in development to expose impure side-effects.",
+      "Side effects must strictly live in useEffect, useLayoutEffect, or event handlers."
+    ],
+    "closingImpression": "Keeping the render phase pure is the prerequisite for React Concurrent Mode and server-side rendering to function correctly.",
+    "analogies": [
+      "Drafting an email: typing and revising drafts (render) can happen multiple times without anyone seeing; clicking 'Send' (commit) is the irreversible real-world action."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Mutating window or global variables directly inside the component body.",
+      "why": "In Concurrent Mode, renders can be aborted and restarted; global mutations will execute unpredictably multiple times.",
+      "correct": "Move all observable side effects into useEffect or event handlers."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Which component lifecycles / hooks belong to the Render Phase?",
+      "answer": "Component body execution, `useState` initializers, `useReducer` reducer functions, `useMemo`, and class `render()` and `shouldComponentUpdate()` belong to the Render Phase.",
+      "specReference": "React Documentation: Render and Commit Phases"
+    }
+  ]
 }

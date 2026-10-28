@@ -88,5 +88,60 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does a production debounce function need .cancel() and .flush() methods?",
+      "answer": "`.cancel()` cleans up pending timers when components unmount (preventing memory leaks and state updates on unmounted components). `.flush()` forces immediate execution of any pending deferred call (essential on form submission or navigation before timers expire).",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests production-grade lifecycle integration (the Lodash pattern)."
+    },
+    {
+      "question": "What is maxWait in Lodash debounce?",
+      "answer": "`maxWait` guarantees that a continuously triggered debounced function will still be forced to execute at least once every `maxWait` milliseconds, preventing indefinite execution starvation during nonstop typing.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests deep familiarity with industry-standard utility libraries."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Component Unmount Cleanup in React",
+      "description": "Canceling pending debounced API calls inside useEffect cleanup to prevent memory leaks.",
+      "companies": "Every major React production codebase",
+      "codeSnippet": "useEffect(() => () => debouncedSearch.cancel(), []);"
+    },
+    {
+      "scenario": "Form Submission Flush",
+      "description": "Flushing pending debounced validation or draft save when user clicks Submit immediately.",
+      "companies": "Stripe Checkout, Shopify",
+      "codeSnippet": "function onSubmit() { debouncedSave.flush(); submitForm(); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A production-grade debounce combines leading/trailing triggers with explicit lifecycle controls (.cancel, .flush) and starvation limits (maxWait).",
+    "keyPoints": [
+      "Supports leading execution for immediate feedback and trailing for final state capture.",
+      ".cancel() prevents memory leaks on component unmount.",
+      ".flush() guarantees immediate settlement before navigation.",
+      "maxWait prevents continuous event streams from postponing execution indefinitely."
+    ],
+    "closingImpression": "Advanced debounce is not just a timer utility; it is a full lifecycle state machine.",
+    "analogies": [
+      "An emergency door release: it normally waits for authorization, but the fire alarm (.flush) opens it immediately, and the power switch (.cancel) disarms it."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Forgetting to clear timer references inside .cancel().",
+      "why": "Leaving the timer ID uncleared can cause stale checks or prevent garbage collection.",
+      "correct": "Call clearTimeout(timer) and reset timer = null."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does Lodash share code between debounce and throttle?",
+      "answer": "In Lodash source code, `throttle` is actually implemented directly on top of `debounce` by simply passing `{ leading: true, trailing: true, maxWait: wait }` to the debounce engine.",
+      "specReference": "Lodash source: lodash.js - throttle implementation"
+    }
+  ]
 }

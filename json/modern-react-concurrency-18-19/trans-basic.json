@@ -88,5 +88,54 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between an Urgent update and a Transition update in React 18?",
+      "answer": "1) **Urgent updates** reflect direct user interactions like typing, clicking, or hovering, where immediate feedback is mandatory to prevent UI lag. 2) **Transition updates** (`startTransition`) represent non-urgent view transitions (e.g. filtering a search list, switching tabs). Urgent updates can INTERRUPT and abort transition updates, ensuring typing stays at 60fps.",
+      "difficulty": "basic",
+      "whyAsked": "Core concept of React 18 Concurrency."
+    },
+    {
+      "question": "What does useTransition return?",
+      "answer": "`useTransition()` returns `[isPending, startTransition]`. `isPending` is a boolean indicating whether the transition update is currently executing in the background, allowing the UI to display a subtle spinner or dim the view.",
+      "difficulty": "basic",
+      "whyAsked": "Verifies basic API literacy."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Search Input with Heavy Results Filtering",
+      "description": "Updating the input text value urgently while wrapping the heavy results filter in `startTransition`.",
+      "companies": "GitHub, Vercel, Algolia",
+      "codeSnippet": "setInput(val); startTransition(() => setQuery(val));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "useTransition allows developers to mark state updates as non-urgent transitions that yield to urgent user interactions.",
+    "keyPoints": [
+      "Separates urgent UI updates (typing) from heavy transitions (filtering).",
+      "isPending flag provides instant visual loading feedback.",
+      "Urgent updates can interrupt and discard in-progress transitions.",
+      "Eliminates input lag without debounce delays."
+    ],
+    "closingImpression": "Transitions allow React applications to remain responsive even while rendering massive data sets.",
+    "analogies": [
+      "Priority lanes on a highway: emergency vehicles (urgent typing) pass through instantly, while cargo trucks (transitions) yield and cruise safely."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Wrapping the controlled input state update in startTransition.",
+      "why": "Causes typing lag and cursor jumping in the input field.",
+      "correct": "Keep input text updates urgent; wrap only the resulting filtered data in startTransition."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What lane priority does startTransition assign to updates?",
+      "answer": "In `ReactFiberLane.js`, transitions are assigned to `TransitionLanes` (Lanes 6 through 21), which have lower priority than `SyncLane` (urgent updates) and `InputContinuousLane`.",
+      "specReference": "packages/react-reconciler/src/ReactFiberLane.js: TransitionLanes"
+    }
+  ]
 }

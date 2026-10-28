@@ -111,5 +111,72 @@
       "Deleting and re-inserting provides an O(1) LRU cache implementation without secondary data structures."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why is a Map preferred over a plain object for implementing an LRU cache?",
+      "answer": "In JavaScript (ECMA-262 §24.1.3), `Map` is guaranteed to iterate its keys in deterministic insertion order. When a key is accessed in an LRU cache, deleting and re-inserting it (`map.delete(k); map.set(k, v)`) moves it to the most recently used (end) position in O(1) time. The least recently used key is always the first key in the map (`map.keys().next().value`), allowing O(1) eviction without maintaining a separate doubly-linked list.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of ES6 data structure specification guarantees and algorithmic efficiency."
+    },
+    {
+      "question": "What is the problem with JSON.stringify as a cache key serializer?",
+      "answer": "JSON.stringify has three flaws: 1) Key order non-determinism: `{a:1, b:2}` produces a different string than `{b:2, a:1}`, causing cache misses for identical inputs. 2) Unsupported types: `undefined`, functions, and symbols are converted to `null` or omitted. 3) Performance overhead: serializing large argument payloads on every call can take longer than the function execution itself.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests practical production awareness of serialization pitfalls in memoization libraries."
+    },
+    {
+      "question": "How would you handle cache expiration (TTL) without running active setInterval timers?",
+      "answer": "Active timers (`setInterval` or `setTimeout` per key) waste CPU cycles and keep the event loop alive. The optimal approach is 'Passive / Lazy Eviction': store a timestamp `{ value, expiry }` in the cache entry. When the key is queried, compare `Date.now() > expiry`. If expired, delete the key and treat it as a miss. An optional sweep can be triggered on new insertions to purge accumulated expired keys.",
+      "difficulty": "advanced",
+      "whyAsked": "Distinguishes junior developers who create thousands of timers from engineers who design passive memory eviction systems."
+    },
+    {
+      "question": "How can WeakMap be used in memoization, and what is its limitation?",
+      "answer": "A `WeakMap` uses objects as keys without preventing garbage collection of those objects. It provides perfect zero-leak memoization for object arguments. However, WeakMap keys MUST be objects (primitives like strings/numbers are forbidden), and WeakMap is non-iterable, meaning you cannot implement an LRU size limit or inspect cache keys.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests knowledge of WeakMap garbage collection semantics vs standard Map."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "GraphQL Query Result & DataLoader Caching",
+      "description": "Facebook's DataLoader memoizes database batch loads within the lexical scope of a single HTTP request tick to prevent duplicate SQL queries.",
+      "companies": "Meta, Shopify, GitHub",
+      "codeSnippet": "const userLoader = new DataLoader(keys => myBatchGetUsers(keys));"
+    },
+    {
+      "scenario": "React reselect Selector Memoization",
+      "description": "Redux applications use reselect to cache expensive state slice calculations, evicting previous results when input parameters change.",
+      "companies": "Airbnb, Discord",
+      "codeSnippet": "const selectFiltered = createSelector([getItems, getFilter], (items, f) => items.filter(f));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "An enterprise memoizer pairs closure state with an LRU (Least Recently Used) eviction policy and time-to-live expiration to strictly bound memory growth.",
+    "keyPoints": [
+      "Unbounded memoization caches are guaranteed memory leaks in production long-running services.",
+      "ES6 Map insertion order semantics enable O(1) LRU eviction by deleting and re-inserting accessed keys.",
+      "Lazy TTL expiration checks timestamps on access rather than creating thousands of background timer handles.",
+      "Key serialization must be deterministic to ensure equivalent argument sets produce identical cache keys."
+    ],
+    "closingImpression": "A memoizer without capacity eviction is a memory leak waiting to happen.",
+    "analogies": [
+      "Like an executive desk with space for only 5 folders: when a new folder arrives, you throw away the one you haven't touched for the longest time."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Creating a setTimeout for every cached entry to handle TTL.",
+      "why": "Creating 50,000 setTimeout handles overwhelms the Node.js / browser timer wheel and prevents process exit.",
+      "correct": "Use passive expiration by checking entry.expiry on read, and evict during lookup or insert."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does V8 implement Map internally to provide O(1) key access and insertion-order iteration?",
+      "answer": "V8 implements ES6 Map using a deterministic hash table based on the 'OrderedHashTable' C++ class. It stores entries in a flat contiguous array with bucket indices and next pointers. When keys are deleted, they are marked as deleted (tombstones) and cleaned up during periodic table compaction, preserving exact insertion order without linked list node allocations.",
+      "specReference": "V8 source: src/objects/ordered-hash-table.cc"
+    }
+  ]
 }

@@ -120,5 +120,60 @@
       "The traversal is strictly O(1) in call stack memory."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Explain the exact order of traversal in React's work loop: beginWork vs completeWork.",
+      "answer": "1) `beginWork`: React descends depth-first down `fiber.child` pointers, calling component render functions and reconciling children until it reaches a leaf node (a fiber with `child === null`). 2) `completeWork`: at the leaf, React creates/updates the real host DOM node and bubbles up effect flags. If `fiber.sibling` exists, React pivots to the sibling and restarts `beginWork`. If no sibling, it bubbles up to `fiber.return`, completes the parent, and checks the parent's sibling.",
+      "difficulty": "advanced",
+      "whyAsked": "The #1 core algorithm question asked in senior/staff React engine interviews."
+    },
+    {
+      "question": "Why does completeWork run bottom-up while beginWork runs top-down?",
+      "answer": "Because a parent DOM element cannot append its child DOM nodes until the children have been created! `beginWork` runs top-down to determine what needs to be rendered, but `completeWork` runs bottom-up so leaf DOM nodes are created and appended to parent DOM nodes, assembling the DOM subtree before the commit phase.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of host tree construction and mutation batching."
+    },
+    {
+      "question": "How does the iterative loop achieve O(1) auxiliary call stack space?",
+      "answer": "Standard tree recursion allocates a C++ stack frame for every depth level (O(D) call stack). Fiber's `workLoop` is a single `while (workInProgress !== null)` loop where navigation is executed via simple pointer assignments (`workInProgress = workInProgress.child` or `sibling` or `return`). The Call Stack depth remains constant at 1.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests computer science algorithmic efficiency principles."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React 18 Concurrent Rendering Work Loop",
+      "description": "The core `workLoopConcurrent` in React source code traversing components while honoring time-slicing frame deadlines.",
+      "companies": "Meta, Next.js",
+      "codeSnippet": "function workLoopConcurrent() { while (workInProgress !== null && !shouldYield()) { performUnitOfWork(workInProgress); } }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React reconciles components using an iterative Depth-First Search with beginWork on the descent and completeWork on the ascent.",
+    "keyPoints": [
+      "beginWork descends down child pointers, evaluating components.",
+      "completeWork ascends up return pointers, building DOM instances.",
+      "sibling pointers allow lateral tree traversal without recursion.",
+      "Operates in O(N) time with O(1) call stack memory."
+    ],
+    "closingImpression": "This two-pass descent-ascent traversal allows React to construct fully assembled DOM subtrees before committing to the screen in one unified batch.",
+    "analogies": [
+      "A zipper: beginWork unzips down to inspect the teeth (children); completeWork zips back up, locking the assembled pieces in place."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming DOM nodes are attached to the document body during completeWork.",
+      "why": "completeWork only creates DOM nodes and attaches them to parent DOM nodes in memory (in-memory subtree). The actual insertion into the live document happens during the synchronous Commit Phase.",
+      "correct": "Clarify that live DOM insertion is strictly deferred to commitMutationEffects."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is subtreeFlags and how does it optimize completeWork bubbling?",
+      "answer": "In React 18+, `subtreeFlags` is a 32-bit bitmask on each fiber that aggregates all pending mutations of its descendants. When bubbling up in `completeWork`, `parent.subtreeFlags |= (child.flags | child.subtreeFlags)`. If a parent's `subtreeFlags === 0`, React can skip scanning the entire subtree during the commit phase in O(1) time.",
+      "specReference": "packages/react-reconciler/src/ReactFiberCompleteWork.js"
+    }
+  ]
 }

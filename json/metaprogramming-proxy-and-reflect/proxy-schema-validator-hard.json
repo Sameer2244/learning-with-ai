@@ -88,5 +88,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is a Revocable Proxy and what is its security use case?",
+      "answer": "Created via `Proxy.revocable(target, handler)`, it returns `{ proxy, revoke }`. When `revoke()` is called, the proxy is permanently disconnected from the target. Any future operation on the proxy immediately throws a `TypeError`. It is used in sandboxes to grant temporary access to capabilities (like file handles or credentials) and revoke them once the operation completes.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests advanced security sandboxing knowledge."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Salesforce LWC Locker Service Sandboxing",
+      "description": "Sandboxing third-party JavaScript widgets to prevent unauthorized DOM and global access in enterprise CRM platforms.",
+      "companies": "Salesforce, Google Caja",
+      "codeSnippet": "const { proxy, revoke } = Proxy.revocable(api, handler); runUserCode(proxy); revoke();"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Enforced schema validators use Proxies to validate types at runtime on property assignment, while revocable proxies allow permanent permission revocation.",
+    "keyPoints": [
+      "set trap validates incoming values against schema contracts before assignment.",
+      "Throws descriptive errors immediately on invalid assignments.",
+      "Proxy.revocable provides a kill switch for sandboxed references.",
+      "Guarantees runtime data integrity in dynamic systems."
+    ],
+    "closingImpression": "Proxies provide defensive runtime barriers for enterprise applications handling untrusted third-party inputs.",
+    "analogies": [
+      "A temporary electronic keycard: it validates your badge access level at every door, and the security desk can deactivate the card instantly at 5 PM."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Allowing prototype pollution through unguarded set traps.",
+      "why": "Failing to check for __proto__ or constructor keys allows malicious assignments to corrupt global prototypes.",
+      "correct": "Block assignments to __proto__ and constructor in validator traps."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What happens when an operation is attempted on a revoked Proxy?",
+      "answer": "Per ECMA-262 §10.5, any internal method call on a revoked proxy immediately throws a `TypeError: Cannot perform operation on a revoked Proxy`.",
+      "specReference": "ECMA-262 §10.5.1 [[GetPrototypeOf]] on revoked proxies"
+    }
+  ]
 }

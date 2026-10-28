@@ -88,5 +88,54 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why must Error Boundaries still be Class Components in React 18/19?",
+      "answer": "Because React hooks do NOT have an equivalent for the `componentDidCatch` or `getDerivedStateFromError` lifecycle methods. `getDerivedStateFromError` updates state synchronously during the render phase to show fallback UI, while `componentDidCatch` runs during the commit phase to log errors to monitoring services (Sentry).",
+      "difficulty": "intermediate",
+      "whyAsked": "Universal React Error Boundary question."
+    },
+    {
+      "question": "What types of errors do Error Boundaries NOT catch?",
+      "answer": "Error Boundaries do NOT catch: 1) Event handler errors (`onClick`). 2) Asynchronous callbacks (`setTimeout`, `requestAnimationFrame`). 3) Server-Side Rendering errors. 4) Errors thrown within the Error Boundary component itself (rather than its children).",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of Error Boundary limitations."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Sentry / Datadog Exception Monitoring",
+      "description": "Capturing component stack traces and logging them to APM tools while rendering recovery UI.",
+      "companies": "Sentry, Datadog",
+      "codeSnippet": "componentDidCatch(error, info) { Sentry.captureException(error, { extra: info }); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Error Boundaries catch JavaScript exceptions anywhere in their child component tree during rendering, lifecycle methods, and constructors, rendering a fallback UI.",
+    "keyPoints": [
+      "getDerivedStateFromError updates state to render fallback.",
+      "componentDidCatch logs error info and component stack traces.",
+      "Does not catch event handler or async callback errors.",
+      "Reset keys (resetErrorBoundary) allow users to retry failed subtrees."
+    ],
+    "closingImpression": "Error boundaries prevent a single JavaScript error in a non-critical widget from crashing the entire web application.",
+    "analogies": [
+      "Firedoors in a submarine: if one compartment floods (crashes), the firedoors seal that room to keep the rest of the submarine afloat."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Expecting Error Boundaries to catch errors inside onClick handlers.",
+      "why": "Event handlers do not run during the render phase; errors there must be caught with standard try...catch.",
+      "correct": "Use try...catch in event handlers."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do you trigger an Error Boundary from an async callback?",
+      "answer": "By setting state with a throwing function: `const [_, setError] = useState(); setError(() => { throw error; });` — this throws during the subsequent render phase, allowing the Error Boundary to catch it.",
+      "specReference": "React FAQ: Error Boundaries & Async Errors"
+    }
+  ]
 }

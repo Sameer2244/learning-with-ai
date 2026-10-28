@@ -88,5 +88,54 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does passing an inline object or function prop break React.memo?",
+      "answer": "Every time a parent component re-renders, JavaScript evaluates inline object literals (`style={{ color: 'red' }}`) and inline arrow functions (`onClick={() => doSomething()}`) as BRAND NEW memory references. `React.memo` performs a shallow equality check (`prevProp === nextProp`); because the reference identities differ on every render, the shallow check always returns `false`, causing the memoized child to re-render 100% of the time.",
+      "difficulty": "basic",
+      "whyAsked": "The #1 classic junior-to-mid performance pitfall in React applications."
+    },
+    {
+      "question": "What is the computational cost of broken memoization?",
+      "answer": "Broken memoization is strictly WORSE than no memoization at all! When memoization breaks, React executes the full shallow equality comparison on every prop, fails the check, and then executes the component render anyway, wasting CPU cycles on a comparison that never succeeds.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding that memoization is not free and has overhead."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Stabilizing Event Handlers with useCallback",
+      "description": "Wrapping action dispatchers in `useCallback` to prevent child list item re-renders.",
+      "companies": "Airbnb, Uber Web",
+      "codeSnippet": "const handleDelete = useCallback((id) => dispatch(deleteItem(id)), [dispatch]);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Broken memoization occurs when inline object or function references change identity on every render, defeating shallow prop equality checks.",
+    "keyPoints": [
+      "React.memo relies on Object.is reference stability.",
+      "Inline {} and () => {} create fresh references every render.",
+      "Stabilize objects with useMemo and callbacks with useCallback.",
+      "Extract static objects outside component files."
+    ],
+    "closingImpression": "Memoization requires strict reference discipline across parent and child components.",
+    "analogies": [
+      "A security guard checking names on a VIP guest list: if your name badge changes spelling every time you walk by, the guard stops and checks your passport every single time."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Wrapping children in React.memo without stabilizing parent callback props.",
+      "why": "The child still re-renders on every parent render because the callback prop changes identity.",
+      "correct": "Wrap callbacks in useCallback in the parent."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does the React Compiler eliminate the need for manual useCallback?",
+      "answer": "The React Compiler (React Forget) statically analyzes AST bindings at build time and automatically memoizes function definitions and object literals, maintaining stable references across renders automatically.",
+      "specReference": "React Labs: The React Compiler Architecture"
+    }
+  ]
 }

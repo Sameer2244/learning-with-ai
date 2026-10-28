@@ -101,5 +101,78 @@
       "Every fiber maintains an alternate pointer pointing to its counterpart during work."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is a Fiber Node in React and how does it differ from a Virtual DOM Element?",
+      "answer": "A React Element is an ephemeral, immutable snapshot created by `React.createElement` on each render: `{ type, props, key }`. A Fiber Node is a persistent, mutable unit of work allocated in the reconciler (`ReactFiber.js`). Fibers carry state (`memoizedState`), props (`memoizedProps`), effect tags (`flags`), work lanes (`lanes`), and linked-list pointers (`child`, `sibling`, `return`). Elements are recreated on every render; Fibers persist across render cycles and maintain component identity.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests whether candidate understands the boundary between userland JSX elements and internal engine reconciler structures."
+    },
+    {
+      "question": "Why did React transition from recursive Stack Reconciler to linked-list Fiber Reconciler?",
+      "answer": "The legacy Stack Reconciler (pre-React 16) used recursive JavaScript function calls to traverse component trees. Once started, recursion could not be paused, yielded, or aborted until the entire tree evaluated. For large component trees, this blocked the browser's single main thread for 50-100ms, dropping frames and freezing user input. Fiber converts the call stack into a singly-linked list of heap-allocated records, allowing React's work loop to pause after any unit of work and yield the main thread back to the browser.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests foundational knowledge of React's architectural history and motivation for React 16+."
+    },
+    {
+      "question": "What are the core linked-list pointers on a Fiber node?",
+      "answer": "1) `child`: points to its first direct child fiber. 2) `sibling`: points to its next sibling fiber under the same parent. 3) `return`: points to its parent fiber (the fiber that work returns to upon completion). 4) `alternate`: points to its counterpart fiber in the dual-buffer tree (current <-> workInProgress).",
+      "difficulty": "basic",
+      "whyAsked": "Verifies basic literacy in React internal tree structures."
+    },
+    {
+      "question": "What is stored in fiber.stateNode?",
+      "answer": "`stateNode` holds the reference to the backing instance associated with the fiber: for host DOM components (`div`, `span`), it points to the real `HTMLDivElement` or `HTMLSpanElement`; for class components, it holds the class instance (`this`); for root fibers, it holds the `FiberRootNode`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Checks how virtual fibers bridge to real host environment instances."
+    },
+    {
+      "question": "How does React avoid memory leaks when Fiber nodes are unmounted?",
+      "answer": "When a fiber is unmounted, React severs its `child` and `sibling` pointers, detaches its `stateNode`, and cleans up effects. This disconnects the fiber subtree from the active `FiberRootNode` reachability tree, enabling V8's Garbage Collector to sweep the unmounted fibers during the next minor/major GC cycle.",
+      "difficulty": "advanced",
+      "whyAsked": "Connects React Fiber tree management with JavaScript engine garbage collection."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React DevTools Fiber Tree Inspection",
+      "description": "React DevTools inspects live components by reading `__REACT_DEVTOOLS_GLOBAL_HOOK__` which attaches to the root fiber node.",
+      "companies": "Meta, Next.js, Vercel",
+      "codeSnippet": "const rootFiber = domNode._reactRootContainer?._internalRoot?.current;"
+    },
+    {
+      "scenario": "Custom Cross-Platform Reconcilers (React Three Fiber, Ink)",
+      "description": "Libraries create custom Fiber trees targeting WebGL three.js scenes or terminal CLI interfaces instead of the browser DOM.",
+      "companies": "Poimandres (R3F), Ink CLI (Vercel)",
+      "codeSnippet": "import ReactReconciler from 'react-reconciler'; const MyRenderer = ReactReconciler(hostConfig);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A Fiber Node is React's internal representation of a unit of work. It replaces recursive call stack frames with a heap-allocated singly-linked list of pointers.",
+    "keyPoints": [
+      "React Elements are transient descriptors; Fibers are persistent units of work.",
+      "Linked-list pointers (child, sibling, return) allow pausing and resuming render passes.",
+      "Stores memoizedState (hooks linked list) and memoizedProps.",
+      "Alternate pointer enables double buffering without garbage collection churn."
+    ],
+    "closingImpression": "Fiber transformed React from a simple view diffing library into a prioritized, interruptible UI operating system.",
+    "analogies": [
+      "A book with bookmarks: with recursion, you must read all 500 pages in one sitting; with Fiber, you place a bookmark (pointer) after every page and can close the book to answer the phone."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming fiber.children is an array of child fibers.",
+      "why": "Fiber does not use children arrays; it uses a single `child` pointer to the first child, and subsequent children are connected via `sibling` pointers.",
+      "correct": "Clarify that Fiber trees use `child` and `sibling` pointers to form a singly-linked list."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is Fiber tag and what are some common WorkTag constants in React source?",
+      "answer": "In `ReactWorkTags.js`, `tag` is a small integer: `0 = FunctionComponent`, `1 = ClassComponent`, `3 = HostRoot`, `5 = HostComponent` (HTML elements like `div`), `6 = HostText`, `11 = ForwardRef`, `14 = MemoComponent`. Switching on integer tags avoids expensive string comparisons in hot reconciliation loops.",
+      "specReference": "packages/react-reconciler/src/ReactWorkTags.js"
+    }
+  ]
 }

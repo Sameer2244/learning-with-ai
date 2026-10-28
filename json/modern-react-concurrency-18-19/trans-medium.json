@@ -88,5 +88,54 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does useDeferredValue differ from useTransition?",
+      "answer": "`startTransition` wraps the state update function at the trigger site (`startTransition(() => setState())`). `useDeferredValue` wraps a value itself (`const deferredQuery = useDeferredValue(query)`). It is used when you do not own the `setState` dispatcher (e.g. receiving a value from props or third-party libraries).",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of when to use which concurrency hook."
+    },
+    {
+      "question": "How does useDeferredValue differ from debounce?",
+      "answer": "Debounce waits for a fixed time delay (e.g. 300ms) before doing any work, introducing an artificial lag even on fast computers. `useDeferredValue` has NO fixed delay: on fast machines, it updates almost instantly; on slow machines, it yields and catches up as soon as the main thread is idle.",
+      "difficulty": "intermediate",
+      "whyAsked": "The classic React 18 concurrency vs legacy debounce comparison."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Heavy Graph Chart Updates Driven by External Props",
+      "description": "Deferring chart redraws when receiving high-frequency telemetry updates from parent props.",
+      "companies": "Datadog, Grafana",
+      "codeSnippet": "const deferredData = useDeferredValue(props.data);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "useDeferredValue defers re-rendering non-critical parts of the UI, lagging behind urgent updates without introducing artificial debounce delays.",
+    "keyPoints": [
+      "Wraps values rather than state dispatchers.",
+      "Re-renders with previous value first, then schedules background render with new value.",
+      "Adapts dynamically to device CPU speed without fixed millisecond timers.",
+      "Can be checked via deferredValue !== value to show stale indicators."
+    ],
+    "closingImpression": "useDeferredValue replaces arbitrary debounce timers with intelligent, CPU-aware deferred rendering.",
+    "analogies": [
+      "A camera autofocus: the viewfinder shows the current view immediately, while the lens adjusts focus smoothly behind it."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using useDeferredValue on a component that is not memoized.",
+      "why": "If the child component is not wrapped in React.memo, it will re-render anyway when the parent renders, defeating the deferred value bailout.",
+      "correct": "Pass deferredValue to a component wrapped in React.memo."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the initialValue parameter in React 19 useDeferredValue?",
+      "answer": "React 19 added `useDeferredValue(value, initialValue)`: during initial render, it returns `initialValue` and schedules a deferred render with `value`, enabling clean progressive hydration.",
+      "specReference": "React 19 Release Notes: useDeferredValue initialValue"
+    }
+  ]
 }

@@ -112,5 +112,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Explain the V8 Array Elements Kinds lattice (PACKED_SMI -> HOLEY_DOUBLE).",
+      "answer": "V8 tracks array contents via 'Elements Kinds': 1) `PACKED_SMI_ELEMENTS`: dense array of Small Integers (-2^31 to 2^31-1). 2) `PACKED_DOUBLE_ELEMENTS`: dense array containing floating point numbers. 3) `PACKED_ELEMENTS`: dense array containing objects/strings. 4) `HOLEY_*`: contains unassigned holes (`[1, , 3]`). Transitions are strictly ONE-WAY: once an array is demoted to HOLEY or DOUBLE, it can NEVER be promoted back to PACKED_SMI!",
+      "difficulty": "advanced",
+      "whyAsked": "Top-tier V8 performance question."
+    },
+    {
+      "question": "Why are HOLEY arrays significantly slower than PACKED arrays?",
+      "answer": "When reading an index from a PACKED array, V8 does a simple bounds check and memory read. In a HOLEY array, if the slot is empty, V8 is forced to walk the prototype chain (`Array.prototype`, then `Object.prototype`) to verify whether a property with that numeric key was defined on the prototype!",
+      "difficulty": "advanced",
+      "whyAsked": "Connects array performance to prototype chain lookups."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Audio & Graphics Buffer Processing",
+      "description": "Keeping audio sample arrays in PACKED_SMI or using TypedArrays to prevent prototype chain walking during 44.1kHz audio synthesis.",
+      "companies": "Spotify, WebAudio engines",
+      "codeSnippet": "const samples = new Float32Array(1024); // natively packed"
+    }
+  ],
+  "howToExplain": {
+    "opening": "V8 classifies arrays into Elements Kinds based on element types and presence of holes, transitioning down a one-way lattice from fast PACKED_SMI to slow HOLEY_ELEMENTS.",
+    "keyPoints": [
+      "PACKED_SMI is the fastest array kind (contiguous small integers).",
+      "Introducing a decimal demotes to DOUBLE; an object demotes to PACKED.",
+      "Creating holes (sparse arrays) forces prototype chain lookups on reads.",
+      "Transitions are strictly one-way and cannot be reversed."
+    ],
+    "closingImpression": "Avoiding holes and type mixing in arrays ensures V8 compiles array loops into vectorizable C-like loops.",
+    "analogies": [
+      "A paved road: driving on a packed road is fast; driving on a road full of potholes (holes) requires stopping and checking every bump."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Creating an array with new Array(3) and populating it via index: arr[0]=1, arr[2]=3.",
+      "why": "new Array(3) creates a HOLEY array immediately.",
+      "correct": "Use Array.from(), array literals, or push() to keep arrays PACKED."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why are TypedArrays (Float64Array, Int32Array) immune to Elements Kind demotions?",
+      "answer": "TypedArrays are backed by fixed raw contiguous binary buffers (`ArrayBuffer`), having zero prototype lookup overhead and impossible hole representation.",
+      "specReference": "ECMA-262 §23.2 TypedArray Objects"
+    }
+  ]
 }

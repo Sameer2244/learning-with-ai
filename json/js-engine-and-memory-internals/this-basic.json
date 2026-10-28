@@ -93,5 +93,72 @@
       "Bound function exotic objects override call-site receiver resolution."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How is the value of 'this' determined in a standard JavaScript function?",
+      "answer": "'this' is NOT determined by where a function is declared, but by HOW it is called (the Call-Site). There are 4 fundamental rules evaluated in order: 1) `new` binding: points to newly created instance. 2) Explicit binding: `.call()`, `.apply()`, `.bind()`. 3) Implicit binding: called as method on an object `obj.method()`. 4) Default binding: `undefined` in strict mode, or `globalThis` (window/global) in non-strict mode.",
+      "difficulty": "basic",
+      "whyAsked": "The universal baseline check for JavaScript developer competency."
+    },
+    {
+      "question": "Why does extracting a method `const fn = obj.method; fn();` lose its 'this' binding?",
+      "answer": "In the specification (ECMA-262 §13.3.7), property access `obj.method` produces an intermediate Reference Record `{ base: obj, name: 'method' }`. When invoked directly as `obj.method()`, the call operator uses the `base` property as `this`. However, when assigned to a variable `fn = obj.method`, the `GetValue()` algorithm strips the Reference Record, leaving `fn` as a bare function reference. Calling `fn()` triggers Default Binding (`undefined` or global).",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of the underlying ECMAScript Reference Type mechanism."
+    },
+    {
+      "question": "How do arrow functions handle 'this' differently from standard functions?",
+      "answer": "Arrow functions do NOT have their own `this` binding at all (they lack an internal `[[ThisValue]]` slot). Instead, they treat `this` as a standard lexical variable, resolving it by walking up the lexical scope chain to the enclosing function or global scope. Consequently, `.call()`, `.apply()`, or `.bind()` have ZERO effect on an arrow function's `this`.",
+      "difficulty": "basic",
+      "whyAsked": "Verifies core ES6 arrow function design principles."
+    },
+    {
+      "question": "What happens when you pass an object method as a callback to an event listener or setTimeout?",
+      "answer": "The receiving API (e.g. `setTimeout(obj.method, 100)`) receives only a reference to the underlying function, detaching it from the object. When the timer fires, the function is invoked with default binding (`this = window` or `undefined`). You must preserve context using `obj.method.bind(obj)` or an arrow wrapper `() => obj.method()`.",
+      "difficulty": "basic",
+      "whyAsked": "Most common practical source of 'cannot read property of undefined' errors in web development."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React Class Component Event Handlers",
+      "description": "Before functional components and hooks, event handlers passed to JSX required explicit binding in the constructor (`this.handleClick = this.handleClick.bind(this)`) to preserve component state access.",
+      "companies": "Meta, Legacy React Codebases",
+      "codeSnippet": "constructor(props) { super(props); this.handleClick = this.handleClick.bind(this); }"
+    },
+    {
+      "scenario": "DOM Event Delegation Listeners",
+      "description": "Binding an event listener to a parent list element while retaining access to a Controller instance requires explicit context binding.",
+      "companies": "Vanilla JS, jQuery, Backbone",
+      "codeSnippet": "this.el.addEventListener('click', this.onClick.bind(this));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "'this' in JavaScript is an execution-time binding determined strictly by the call-site invocation pattern, not lexical declaration position (except for arrow functions).",
+    "keyPoints": [
+      "Four call-site rules govern this: new operator, explicit call/apply/bind, implicit receiver object, and default global/undefined.",
+      "Passing methods as callbacks strips the object Reference Record, causing this to revert to default binding.",
+      "Arrow functions have no this binding; they resolve this lexically from their enclosing scope.",
+      "Hard-binding via .bind() returns an exotic bound function object that permanently pins this."
+    ],
+    "closingImpression": "Remembering that 'this' is determined at invocation time while closures are determined at definition time is the key distinction in JavaScript scope mechanics.",
+    "analogies": [
+      "'this' is like a pronoun ('it' or 'he'): what 'it' refers to depends entirely on what subject preceded it in the sentence."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Thinking 'this' points to the function itself or its lexical scope.",
+      "why": "'this' never points to the function's own lexical scope. It is strictly a receiver binding provided by the caller.",
+      "correct": "Clarify that this is an execution context receiver determined by how the function was invoked."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is an Exotic Bound Function Object according to ECMA-262?",
+      "answer": "When `Function.prototype.bind()` is called, the engine creates an Exotic Bound Function Object (ECMA-262 §10.4.1). It stores internal slots: `[[BoundTargetFunction]]`, `[[BoundThis]]`, and `[[BoundArguments]]`. Its internal `[[Call]]` method unconditionally forwards calls using `[[BoundThis]]`, overriding any caller receiver.",
+      "specReference": "ECMA-262 §10.4.1 Bound Function Exotic Objects"
+    }
+  ]
 }

@@ -105,5 +105,72 @@
       "Prototype link must preserve instanceof operator validity."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "When a function returned by bind() is called with the 'new' operator, what happens to the bound this?",
+      "answer": "When a bound function is invoked with `new` (`new boundFn()`), the originally bound `this` argument is completely IGNORED! Instead, a new object is created and its prototype is linked to the target constructor's prototype (`targetFn.prototype`). Any curried arguments passed to `bind()` are still prepended to the constructor invocation.",
+      "difficulty": "advanced",
+      "whyAsked": "The gold standard question for Function.prototype.bind polyfills (ECMA-262 §10.4.1.1)."
+    },
+    {
+      "question": "How does a bind polyfill detect if it was invoked via 'new' vs standard invocation?",
+      "answer": "Inside the bound function wrapper, check `this instanceof boundFn` (or in modern JS, `new.target`). If `this instanceof boundFn` is true, the function was invoked as a constructor via `new`, so you use `this` (the newly allocated instance). Otherwise, you use the closed-over `boundThis`.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of constructor instantiation semantics and prototype chain checking."
+    },
+    {
+      "question": "How do you ensure 'instanceof targetFn' still returns true for instances created from the bound function?",
+      "answer": "You must establish a prototype chain between the bound function and the original target function. By setting `boundFn.prototype = Object.create(targetFn.prototype)`, any object constructed with `new boundFn()` inherits from `targetFn.prototype`, ensuring `instance instanceof targetFn` evaluates to true.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests precision in prototypal inheritance wiring."
+    },
+    {
+      "question": "Can you re-bind a function that has already been bound with .bind()?",
+      "answer": "No! Once a function is bound via `const b = fn.bind(objA)`, calling `b.bind(objB)` will NOT change `this`. The exotic bound function object wraps the original function and always forwards `objA` as `[[BoundThis]]`. However, secondary calls to `.bind()` can still curry additional arguments.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests awareness of the immutability of bound function context."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Functional Currying and Dependency Injection",
+      "description": "Services pre-bind configuration dependencies or database handles at application startup, distributing clean parameterless action triggers to handlers.",
+      "companies": "Koa, Express, Redux",
+      "codeSnippet": "const logInfo = logger.log.bind(logger, 'INFO');"
+    },
+    {
+      "scenario": "Class-like Constructor Hardening",
+      "description": "Library authors bind constructors to ensure instances created without `new` still instantiate the correct prototype without breaking.",
+      "companies": "Moment.js, Chart.js",
+      "codeSnippet": "function Chart(config) { if (!(this instanceof Chart)) return new Chart(config); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A specification-compliant `bind` polyfill must handle two major responsibilities: partial application (currying) and constructor override behavior when invoked with the `new` operator.",
+    "keyPoints": [
+      "bind returns an exotic function enclosing boundThis and prepended bound arguments.",
+      "When invoked normally, it dispatches targetFn.apply(boundThis, allArgs).",
+      "When invoked with new, boundThis is discarded in favor of the newly constructed this instance.",
+      "The prototype chain must link boundFn.prototype to Object.create(targetFn.prototype) to preserve instanceof checks."
+    ],
+    "closingImpression": "The fact that the `new` operator overrides a bound `this` proves that constructor instantiation is the highest priority rule in JavaScript's call-site hierarchy.",
+    "analogies": [
+      "Like a VIP pass: the bound this lets you into the club under your sponsor's name, but if you buy the club (new operator), your sponsor's name no longer matters — you own the room."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Simply returning (...args) => target.apply(boundThis, [...boundArgs, ...args]).",
+      "why": "Arrow functions cannot be constructed with new! Using an arrow function throws 'TypeError: bound is not a constructor' when someone executes new boundFn().",
+      "correct": "You must use a standard function declaration with prototype inheritance to support the new operator."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What does ECMA-262 specify regarding the .length and .name properties of a bound function?",
+      "answer": "Per ECMA-262 §20.2.3.2, a bound function has a `.length` equal to `Math.max(0, target.length - boundArgs.length)` (representing remaining expected parameters). Its `.name` property is prefixed with 'bound ' (e.g. `'bound ' + target.name`).",
+      "specReference": "ECMA-262 §20.2.3.2 Function.prototype.bind properties"
+    }
+  ]
 }

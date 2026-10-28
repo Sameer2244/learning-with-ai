@@ -92,5 +92,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does EventEmitter prevent memory leaks from forgotten subscriptions?",
+      "answer": "By enforcing an unsubscribe mechanism (returning an unsubscribe function or calling `.off()`). In Node.js, EventEmitter sets a default warning limit (`defaultMaxListeners = 10`): adding more than 10 listeners triggers a memory leak warning to alert developers to uncleaned handlers.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of memory leak prevention in Pub/Sub systems."
+    },
+    {
+      "question": "How does the 'once' modifier work in an EventEmitter?",
+      "answer": "It wraps the user callback in a proxy function: when invoked, the proxy first unsubscribes itself from the event emitter, and then executes the original user callback.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests wrapper closure design."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Node.js Stream & HTTP Socket Management",
+      "description": "Node.js core modules (HTTP, Net, Streams) inherit from EventEmitter to notify callers of data chunks and connection events.",
+      "companies": "Node.js Core, Express",
+      "codeSnippet": "server.on('request', (req, res) => {});"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A custom EventEmitter implements the Observer pattern, decoupling event producers from consumers with support for single-shot listeners and clean unsubscribe teardowns.",
+    "keyPoints": [
+      "Maintains an in-memory Map of event names to listener arrays.",
+      "once wraps callback in a self-removing closure.",
+      "Returning an unsubscribe function provides clean teardown for React useEffect hooks.",
+      "Prevents memory leaks by ensuring event handlers are discarded when no longer needed."
+    ],
+    "closingImpression": "EventEmitters are the core messaging spine of asynchronous Node.js backend systems.",
+    "analogies": [
+      "A magazine subscription service: you subscribe to issues, can cancel your subscription, or sign up for a single free trial issue."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Mutating the listener array while iterating during emit().",
+      "why": "If a listener unsubscribes itself during emit, mutating the array in-place causes the loop to skip the next listener.",
+      "correct": "Iterate over a shallow copy: `const listeners = [...(events[name] || [])]`."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is EventTarget in modern browsers and how does it compare to EventEmitter?",
+      "answer": "`EventTarget` is the standardized Web API (`addEventListener`, `removeEventListener`, `dispatchEvent`) implemented by DOM nodes and available in Node 16+ as `globalThis.EventTarget`.",
+      "specReference": "WHATWG DOM Standard §2.7 Interface EventTarget"
+    }
+  ]
 }

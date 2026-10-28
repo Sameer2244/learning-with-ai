@@ -96,5 +96,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does Proxy [[Get]] intercept numeric array indexing?",
+      "answer": "When `array[-1]` is evaluated, the runtime passes property key `'-1'` (as a string) to the Proxy's `get(target, prop, receiver)` trap. The trap converts `prop` to a number: if negative, it computes `target.length + Number(prop)` and retrieves the corresponding element from `target`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of Proxy property trap mechanics and Python-style indexing."
+    },
+    {
+      "question": "Why was Array.prototype.at() introduced in ES2022 instead of changing array[-1] natively?",
+      "answer": "In JavaScript, arrays are objects where `arr['-1']` has always meant accessing an object property with string key `'-1'`. Changing `arr[-1]` natively would break backward compatibility with legacy web code that stored negative or custom properties on arrays. `arr.at(-1)` provides clean negative indexing without breaking property access semantics.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests web compatibility and language evolution history."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Python-Style Array Slicing & Access in Data Libraries",
+      "description": "Math and matrix libraries providing intuitive negative array index lookups.",
+      "companies": "Danfo.js, TensorFlow.js",
+      "codeSnippet": "const arr = createNegativeArray([10, 20, 30]); arr[-1]; // 30"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A Proxy intercepts fundamental language operations on an object via traps, allowing custom behaviors like negative index normalization.",
+    "keyPoints": [
+      "Proxy get trap intercepts property reads.",
+      "Converts negative numeric strings to length-offset indices.",
+      "Uses Reflect.get to forward valid property access cleanly.",
+      "Demonstrates metaprogramming capabilities in modern ECMAScript."
+    ],
+    "closingImpression": "Proxies allow reshaping standard language behavior to create domain-specific ergonomics.",
+    "analogies": [
+      "A security guard at a building: instead of walking directly into an office, every visitor must state their business to the guard, who decides how to route them."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Forgetting that property names in get traps are always strings or symbols.",
+      "why": "`arr[-1]` passes prop as string `'-1'`, not number `-1`.",
+      "correct": "Always parse or convert prop to a number before checking `< 0`."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the performance overhead of wrapping arrays in Proxies?",
+      "answer": "Proxy property accesses cannot be inlined by V8's TurboFan compiler, bypassing Monomorphic Inline Caches and running ~10x-50x slower in tight numeric loops than raw array indexing.",
+      "specReference": "V8 Optimization Guide: Proxy trap performance costs"
+    }
+  ]
 }

@@ -88,5 +88,66 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does the 'instanceof' operator actually work according to the specification?",
+      "answer": "Per ECMA-262 §13.10.2, `a instanceof B` evaluates `B[Symbol.hasInstance](a)`. The default `Symbol.hasInstance` implementation extracts `B.prototype` and walks the prototype chain of `a`: `let proto = Object.getPrototypeOf(a)`. It loops: if `proto === B.prototype`, return `true`; if `proto === null`, return `false`; else `proto = Object.getPrototypeOf(proto)`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of the underlying Symbol.hasInstance algorithm."
+    },
+    {
+      "question": "Why does 'instanceof' fail across iframe or worker boundaries?",
+      "answer": "Each iframe or window context has its own distinct execution realm with its own distinct built-in constructors (`windowA.Array !== windowB.Array`). An array created in iframe B has `Object.getPrototypeOf(arr) === windowB.Array.prototype`. Checking `arr instanceof windowA.Array` returns `false`! This is why `Array.isArray()` was introduced to check identity across realms.",
+      "difficulty": "advanced",
+      "whyAsked": "The classic multi-realm / iframe trap question."
+    },
+    {
+      "question": "Can an object customize its own instanceof behavior?",
+      "answer": "Yes! Any class or constructor can define a static `[Symbol.hasInstance](instance)` method to override the default prototype walking behavior and implement custom type checking logic.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests ES6 metaprogramming awareness."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Cross-Realm Safe Type Checking (Array.isArray)",
+      "description": "Checking whether an object received from an iframe, foreign realm, or worker is an Array using internal slot checks rather than instanceof.",
+      "companies": "Lodash, React Core",
+      "codeSnippet": "Array.isArray(foreignArray); // true across all realms"
+    },
+    {
+      "scenario": "Custom Structural Type Checking",
+      "description": "Creating duck-typing classes where `instanceof` checks for specific interface methods rather than prototype links.",
+      "companies": "TypeScript runtime validators, Zod",
+      "codeSnippet": "class IterableType { static [Symbol.hasInstance](x) { return x != null && typeof x[Symbol.iterator] === 'function'; } }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The instanceof operator is not a class check; it is a prototype chain equality walk that tests whether a constructor's .prototype exists anywhere in an instance's prototype chain.",
+    "keyPoints": [
+      "instanceof executes Symbol.hasInstance on the right-hand constructor.",
+      "Walks the prototype chain of the left operand using Object.getPrototypeOf.",
+      "Fails across different iframes/realms because each realm has independent constructor identities.",
+      "Symbol.hasInstance allows custom runtime type checks."
+    ],
+    "closingImpression": "Knowing that instanceof is just prototype walking explains why it fails across iframes and why Array.isArray is necessary.",
+    "analogies": [
+      "Checking someone's lineage: you walk up their family tree parent by parent to see if a specific ancestor's name appears."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using instanceof to check primitive strings or numbers.",
+      "why": "'hello' instanceof String returns false because primitives are not objects and do not have prototype chain wrappers until boxed.",
+      "correct": "Use typeof for primitives or Object(val) instanceof String."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does Array.isArray verify an array across realms without prototype walking?",
+      "answer": "Per ECMA-262 §23.1.2.1, `Array.isArray` inspects the internal `[[Class]]` / `[[ArrayData]]` slot of the object. If the object is an exotic Array object, it returns true regardless of which realm or prototype it belongs to.",
+      "specReference": "ECMA-262 §23.1.2.1 Array.isArray"
+    }
+  ]
 }

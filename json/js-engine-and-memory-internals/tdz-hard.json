@@ -92,5 +92,66 @@
       "TDZ exceptions are distinct runtime ReferenceErrors originating from uninitialized environment slots."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do class declarations behave regarding hoisting and the Temporal Dead Zone?",
+      "answer": "Class declarations in JavaScript behave exactly like `let` declarations: they ARE hoisted to the top of their block, but remain in the TDZ until the class declaration statement evaluates. Attempting to instantiate a class (`new MyClass()`) before its declaration line throws `ReferenceError: Cannot access 'MyClass' before initialization`, even though class methods are defined.",
+      "difficulty": "intermediate",
+      "whyAsked": "Many candidates falsely assume classes hoist like function declarations."
+    },
+    {
+      "question": "What are the Annex B.3.3 web legacy semantics for block-level function declarations?",
+      "answer": "In ES5 and sloppy (non-strict) mode, function declarations inside blocks (`if (cond) { function foo() {} }`) had browser-dependent undefined behavior. ES6 standardized Annex B.3.3: the function declaration creates a block-scoped binding hoisted to the block, BUT ALSO hoists a `var` binding to the enclosing function/global scope which receives the function value only when the block executes. In strict mode, function declarations are strictly block-scoped without outer pollution.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests knowledge of the darkest compatibility corners of the ECMAScript specification."
+    },
+    {
+      "question": "Why does class Sub extends Super {} place Super in the TDZ?",
+      "answer": "In a class `extends` clause, the superclass expression evaluates in the outer scope during class definition. If `Super` is declared with `let`/`class` below `Sub`, the extends expression evaluates `Super` while it is in the TDZ, resulting in a ReferenceError before the class body is even interpreted.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of class inheritance evaluation order."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Module Bundler AST Transformations (Webpack / Rollup)",
+      "description": "Bundlers hoisting imported class and function declarations rewrite scopes to prevent cyclic dependency evaluation from hitting TDZ ReferenceErrors.",
+      "companies": "Webpack, Vite, Rollup",
+      "codeSnippet": "// Transpiled code places variable declarations at top with safe initializers"
+    },
+    {
+      "scenario": "Safe Sandboxed Code Evaluators",
+      "description": "Web IDEs (CodeSandbox, StackBlitz) run user-submitted code in sandboxed scopes that trap TDZ reference errors to display clean inline editor diagnostic markers.",
+      "companies": "CodeSandbox, Replit",
+      "codeSnippet": "try { evaluate(userCode); } catch (e) { if (e instanceof ReferenceError) markLine(e); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Class declarations and complex block-scoped constructs obey strict TDZ semantics, differentiating them from legacy function declarations.",
+    "keyPoints": [
+      "Classes are never hoisted like function declarations; they behave like let bindings in the TDZ.",
+      "Function declarations in strict mode are block-scoped; in sloppy mode they follow Annex B legacy dual-hoisting.",
+      "Class extends clauses evaluate the superclass expression in the TDZ of the super identifier.",
+      "Sandboxed evaluation engines isolate these errors to prevent parent process crashes."
+    ],
+    "closingImpression": "Mastering TDZ boundaries across classes, modules, and legacy block semantics is vital when debugging bundler output and circular dependency crashes.",
+    "analogies": [
+      "A blueprint vs a building: a function declaration is a prefabricated building dropped in instantly; a class is a blueprint that must be formally registered before you can enter."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming class Foo {} hoists like function Foo() {}.",
+      "why": "Classes were deliberately specified in ES6 to follow let/const TDZ semantics to prevent calling constructors before prototype definitions are finalized.",
+      "correct": "State clearly that class declarations are hoisted into the TDZ and throw ReferenceError if accessed early."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does new.target behave in static class initialization blocks (ES2022)?",
+      "answer": "In ES2022 static initialization blocks (`static { ... }`), `new.target` is `undefined` because the block evaluates during class definition, not during instantiation. Variables declared with `let`/`const` inside static blocks are block-scoped to that initialization block, with their own TDZ.",
+      "specReference": "ECMA-262 §15.7 Class Definitions Static Initializer Blocks"
+    }
+  ]
 }

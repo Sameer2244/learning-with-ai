@@ -106,5 +106,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do values passed into .next(val) get received inside a generator?",
+      "answer": "The argument passed to `.next(val)` becomes the return value of the `yield` expression that paused the generator: `const response = yield 'ping';`. When resumed via `.next('pong')`, `response` is assigned `'pong'`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests bidirectional coroutine communication."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Cooperative State Machines & Game AI",
+      "description": "AI bot decision trees: yielding action queries to the game engine and receiving environment states back.",
+      "companies": "Game AI, Chatbot conversational flows",
+      "codeSnippet": "const decision = yield queryEnvironment();"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Bidirectional generators establish a two-way communication channel between caller and generator, exchanging values at each yield boundary.",
+    "keyPoints": [
+      "yield emits data outward to caller.",
+      ".next(val) feeds data inward to generator.",
+      ".throw(err) injects exceptions into generator try/catch.",
+      "Provides true cooperative coroutine multitasking."
+    ],
+    "closingImpression": "Bidirectional generators allow writing complex state machines as simple sequential code.",
+    "analogies": [
+      "A walkie-talkie conversation: you talk and say 'over' (yield), wait for the other person to reply, and use their response to decide what to say next."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Passing an argument to the very first .next() call.",
+      "why": "The first .next() starts the generator; there is no yield awaiting an input, so the argument is discarded.",
+      "correct": "Pass arguments starting on the second .next() invocation."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What does the generator .return(val) method do?",
+      "answer": "Calling `gen.return(val)` immediately terminates the generator as if a `return val` statement was evaluated at the yield point, executing any enclosing `finally` blocks before returning `{ value: val, done: true }`.",
+      "specReference": "ECMA-262 §27.5.3.3 Generator.prototype.return"
+    }
+  ]
 }

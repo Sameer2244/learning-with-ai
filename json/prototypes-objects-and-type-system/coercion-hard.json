@@ -88,5 +88,66 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Walk through the exact 12-step algorithm for Abstract Equality Comparison (==).",
+      "answer": "ECMA-262 §7.2.14 specifies: 1) Same type -> Strict Equality (===). 2) null == undefined -> true. 3) Number == String -> ToNumber(String). 4) Boolean == any -> ToNumber(Boolean) == any. 5) BigInt == String -> StringToBigInt. 6) Object == String/Number/BigInt -> ToPrimitive(Object) == primitive. 7) Any other combination -> false.",
+      "difficulty": "advanced",
+      "whyAsked": "The definitive test of JavaScript specification mastery."
+    },
+    {
+      "question": "Why does [] == ![] evaluate to true?",
+      "answer": "Step 1: `![]` evaluates unary NOT first; since arrays are truthy, `![]` becomes `false`. Expression is now `[] == false`. Step 2: Boolean on right triggers Rule 4: `ToNumber(false) === 0`. Expression is now `[] == 0`. Step 3: Object on left triggers Rule 6: `ToPrimitive([])` calls `[].toString()` which is `''`. Expression is now `'' == 0`. Step 4: String on left triggers Rule 3: `ToNumber('') === 0`. Expression is now `0 == 0`, which is `true`!",
+      "difficulty": "advanced",
+      "whyAsked": "The most famous JavaScript interview puzzle; testing whether candidate guesses or walks the formal spec."
+    },
+    {
+      "question": "Why is === preferred in 100% of modern enterprise codebases?",
+      "answer": "`===` (Strict Equality) performs NO coercion: if types differ, it immediately returns `false`. This eliminates the O(N) multi-step coercion cascades, improves JIT compiler inline caching, and prevents catastrophic bugs.",
+      "difficulty": "basic",
+      "whyAsked": "Ensures practical engineering judgment accompanies theoretical spec knowledge."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "TypeScript & ESLint Rule (eqeqeq)",
+      "description": "Linters enforce strict equality across codebases to eliminate coercion vulnerabilities during code reviews.",
+      "companies": "Every major tech company",
+      "codeSnippet": "// eslint: 'eqeqeq': ['error', 'always']"
+    },
+    {
+      "scenario": "Checking Nullish Values (x == null)",
+      "description": "The one accepted idiomatic exception in some codebases: `x == null` checks if `x` is either `null` OR `undefined` in a single check.",
+      "companies": "React Core, Node.js Core",
+      "codeSnippet": "if (val == null) return; // handles both null and undefined"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The Abstract Equality Comparison algorithm (==) performs recursive type conversions until types match, following strict priority rules defined in ECMA-262 §7.2.14.",
+    "keyPoints": [
+      "Booleans are always coerced to numbers first (true -> 1, false -> 0).",
+      "Objects are coerced to primitives using ToPrimitive (valueOf then toString).",
+      "null and undefined equal each other and nothing else under ==.",
+      "Always use === to avoid the multi-step coercion pipeline and ensure type safety."
+    ],
+    "closingImpression": "Understanding the exact steps of the equality algorithm turns apparent JavaScript quirks into predictable mechanical evaluations.",
+    "analogies": [
+      "A multi-stage translation pipeline: English and French speakers translating through Latin until both speak the same dialect."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming [] == true evaluates to true because [] is truthy.",
+      "why": "In `[] == true`, `true` is coerced to `1`, and `[]` is coerced to `0`. `0 == 1` evaluates to `false`!",
+      "correct": "Remember that the == algorithm coerces booleans to numbers first, it does NOT evaluate truthiness."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does SameValueZero differ from Strict Equality (===)?",
+      "answer": "Strict equality (`===`) treats `NaN === NaN` as `false`, and `+0 === -0` as `true`. `SameValueZero` (used by `Map`, `Set`, and `Array.prototype.includes`) treats `NaN` as equal to `NaN`, allowing Maps to look up `NaN` keys accurately.",
+      "specReference": "ECMA-262 §7.2.11 SameValueZero"
+    }
+  ]
 }

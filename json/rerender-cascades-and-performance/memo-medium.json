@@ -88,5 +88,54 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do useMemo and useCallback differ internally in React reconciler source?",
+      "answer": "In `ReactFiberHooks.js`, `useCallback(fn, deps)` is literally implemented as `useMemo(() => fn, deps)`. `useMemo` caches the evaluated return value of the function, while `useCallback` caches the function reference itself. Both store `[cachedValue, deps]` in the hook's `memoizedState`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests whether candidate understands that useCallback is just syntactic sugar over useMemo."
+    },
+    {
+      "question": "When should you NOT use useMemo?",
+      "answer": "1) Cheap operations (e.g. `a + b` or basic string concatenation) where the cost of storing dependencies and comparing arrays exceeds calculation cost. 2) When values change on almost every render (memoization runs and misses every time). 3) Primitive values which are already compared by value.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests practical performance profiling discernment vs cargo-cult programming."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Filtering and Sorting Large In-Memory Tables",
+      "description": "Memoizing the sorted output of 5,000 items so typing in an unrelated search input doesn't re-sort the table.",
+      "companies": "AG Grid, Notion",
+      "codeSnippet": "const sortedList = useMemo(() => heavySort(items, sortKey), [items, sortKey]);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "useMemo caches computed values across renders by comparing dependency arrays, while useCallback caches function references.",
+    "keyPoints": [
+      "Compares dependency array elements using Object.is.",
+      "Returns cached value if dependencies are unchanged.",
+      "useCallback(fn, deps) is sugar for useMemo(() => fn, deps).",
+      "Only wrap expensive computations or references passed to memoized children."
+    ],
+    "closingImpression": "Use memoization to preserve reference identity for child bails and cache genuinely expensive calculations.",
+    "analogies": [
+      "A calculator history button: instead of re-entering a 20-digit formula every minute, you store the result in memory (M+) and recall it until the inputs change."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Wrapping every single function in useCallback by default.",
+      "why": "Adds hook linked list allocation overhead and dependency array checks with zero performance benefit if passed to native HTML elements (<button>).",
+      "correct": "Only use useCallback when passing callbacks to memoized components (React.memo) or hook dependencies."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Where in React source are useMemo and useCallback dependencies compared?",
+      "answer": "In `packages/react-reconciler/src/ReactFiberHooks.js` inside `areHookInputsEqual()`, which executes a linear `Object.is` check across dependency array indices.",
+      "specReference": "packages/react-reconciler/src/ReactFiberHooks.js: areHookInputsEqual"
+    }
+  ]
 }

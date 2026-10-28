@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between useRef and useState?",
+      "answer": "`useState` stores state that participates in the render cycle: updating state schedules a re-render. `useRef` returns a plain mutable object `{ current: value }` whose reference identity is preserved across renders: mutating `.current` does NOT trigger a re-render. Refs are used for accessing DOM elements or storing mutable values that do not affect UI rendering.",
+      "difficulty": "basic",
+      "whyAsked": "Fundamental React hooks check."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Storing Previous Values & Timers",
+      "description": "Storing timer IDs (`setInterval`) or previous prop snapshots without causing re-renders.",
+      "companies": "All React applications",
+      "codeSnippet": "const timerRef = useRef(null); timerRef.current = setInterval(...);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "useRef provides a persistent mutable container whose mutation does not trigger re-renders, ideal for DOM nodes and instance variables.",
+    "keyPoints": [
+      "Returns { current: initialValue } with stable reference identity.",
+      "Mutating .current does not trigger component re-renders.",
+      "Binds to real DOM elements via ref={myRef}.",
+      "Acts like an instance variable in functional components."
+    ],
+    "closingImpression": "useRef is the bridge between React's declarative world and imperative browser APIs.",
+    "analogies": [
+      "A sticky note on your monitor: you can erase and rewrite notes on it all day without turning off and rebooting your computer."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Reading or writing ref.current during the component render phase.",
+      "why": "Breaks pure rendering rules and produces unpredictable results in Concurrent Mode.",
+      "correct": "Mutate refs in useEffect, useLayoutEffect, or event handlers."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React attach host DOM elements to refs during the commit phase?",
+      "answer": "In `ReactFiberCommitWork.js`, React sets `ref.current = hostDOMNode` during `commitMutationEffects` when mounting, and sets `ref.current = null` when unmounting.",
+      "specReference": "packages/react-reconciler/src/ReactFiberCommitWork.js: commitAttachRef"
+    }
+  ]
 }

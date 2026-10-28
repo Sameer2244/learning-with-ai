@@ -88,5 +88,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does shallowEqual differ from Object.is?",
+      "answer": "`Object.is(a, b)` checks if two references are identical. `shallowEqual(objA, objB)` first checks `Object.is(objA, objB)`. If false, it verifies that both are non-null objects with the same number of keys, and checks that every key in `objA` passes `Object.is(objA[k], objB[k])` against `objB`. It does NOT recurse into nested objects.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of React.memo and PureComponent comparison mechanics."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React.memo & PureComponent Prop Comparison",
+      "description": "Skipping component re-renders when passed props are shallowly equal to previous props.",
+      "companies": "Meta, Airbnb",
+      "codeSnippet": "export default React.memo(MyComponent);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "shallowEqual compares objects at depth 1, checking reference identity for each top-level key without recursing into nested structures.",
+    "keyPoints": [
+      "Checks Object.is on the root objects first.",
+      "Compares key count and checks Object.is on every top-level property.",
+      "O(K) comparison where K is top-level property count.",
+      "The default comparison function in React.memo and PureComponent."
+    ],
+    "closingImpression": "Shallow equality provides fast O(1) bailouts for component memoization.",
+    "analogies": [
+      "Checking passport covers: you check if two people hold matching blue US passports, without opening the pages to inspect travel stamps."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Passing inline object literals <Component style={{ color: 'red' }} /> to a memoized component.",
+      "why": "A new object reference is created on every render, causing shallowEqual to fail every time.",
+      "correct": "Memoize objects with useMemo or extract them outside the component."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why does Object.is differ from === regarding NaN and -0?",
+      "answer": "`Object.is(NaN, NaN)` is `true` (whereas `NaN === NaN` is false). `Object.is(+0, -0)` is `false` (whereas `+0 === -0` is true). React uses `Object.is` for state change detection.",
+      "specReference": "ECMA-262 §7.2.12 SameValue"
+    }
+  ]
 }

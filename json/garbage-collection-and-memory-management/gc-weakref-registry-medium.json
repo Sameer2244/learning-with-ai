@@ -88,5 +88,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between WeakRef and FinalizationRegistry?",
+      "answer": "`WeakRef` allows holding a weak reference to an object while still allowing dereferencing it via `.deref()` (which returns the object if still alive, or `undefined` if collected). `FinalizationRegistry` allows registering a cleanup callback that executes AFTER an object has been reclaimed by the garbage collector.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of ES2021 advanced memory management APIs."
+    },
+    {
+      "question": "Why should FinalizationRegistry callbacks NEVER be relied upon for critical business logic?",
+      "answer": "The ECMAScript specification explicitly gives zero timing guarantees for finalizers. A finalizer might run after seconds, hours, or NEVER (e.g. if the process exits before a GC pass). It should only be used for secondary resource cleanup (like closing background buffer handles), never for transactional logic.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests safety and reliability discernment."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Image and Texture Memory Caching",
+      "description": "Caching large image bitmaps via WeakRef: the cache returns the image if in memory, but allows V8 to reclaim the memory under heavy heap pressure.",
+      "companies": "Figma, Canvas Engines",
+      "codeSnippet": "const ref = cache.get(id); if (ref && ref.deref()) return ref.deref();"
+    }
+  ],
+  "howToExplain": {
+    "opening": "WeakRef and FinalizationRegistry (ES2021) provide low-level memory inspection, allowing caches to retain references without preventing GC and trigger cleanup hooks.",
+    "keyPoints": [
+      "WeakRef.deref() returns the object if alive, or undefined if collected.",
+      "FinalizationRegistry runs callbacks after objects are garbage collected.",
+      "Provides memory-sensitive cache eviction under high heap pressure.",
+      "Must be used conservatively due to GC non-determinism."
+    ],
+    "closingImpression": "WeakRef allows building memory-sensitive caches that naturally yield RAM during high memory pressure.",
+    "analogies": [
+      "A library book on reserve: you can check if it's still on the shelf (deref); if someone took it, you order a new copy."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Relying on FinalizationRegistry to close database transactions.",
+      "why": "GC timing is completely non-deterministic; the transaction might remain open indefinitely.",
+      "correct": "Use explicit try...finally cleanup blocks for critical resources."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the 'Held Value' in FinalizationRegistry and why must it NOT reference the target object?",
+      "answer": "The held value is passed to the finalizer callback. If the held value itself holds a strong reference to the target object, the object will NEVER be garbage collected (a circular uncollectable leak).",
+      "specReference": "ECMA-262 §26.2 FinalizationRegistry Objects"
+    }
+  ]
 }

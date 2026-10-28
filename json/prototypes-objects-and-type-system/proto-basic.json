@@ -88,5 +88,66 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between __proto__ and prototype?",
+      "answer": "`prototype` is a property found exclusively on constructor functions (and classes); it defines the object that will become the `[[Prototype]]` of all instances created with `new`. `__proto__` is an accessor property (getter/setter on `Object.prototype`) exposing an instance's internal `[[Prototype]]` link. Modern code should always use `Object.getPrototypeOf(obj)` and `Object.setPrototypeOf(obj)` instead of `__proto__`.",
+      "difficulty": "basic",
+      "whyAsked": "The universal test for prototypal inheritance clarity."
+    },
+    {
+      "question": "What is at the very end of the JavaScript prototype chain?",
+      "answer": "At the end of every standard prototype chain is `Object.prototype`. The `[[Prototype]]` of `Object.prototype` is strictly `null`. Attempting to look up a property on `null` terminates the prototype walk and returns `undefined`.",
+      "difficulty": "basic",
+      "whyAsked": "Verifies knowledge of the terminal prototype boundary."
+    },
+    {
+      "question": "Why is Object.create(null) useful?",
+      "answer": "`Object.create(null)` creates a dictionary object with NO prototype (`[[Prototype]] === null`). It has zero inherited properties: no `toString`, no `hasOwnProperty`, no `constructor`. It is safe from prototype pollution attacks and makes a pure key-value hash map.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests security awareness and dictionary object design."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Prototype Pollution Defense",
+      "description": "Config parsers create `Object.create(null)` containers to ensure malicious payloads containing `__proto__` cannot inject properties into global prototypes.",
+      "companies": "Fastify, Lodash, Snyk",
+      "codeSnippet": "const safeDict = Object.create(null);"
+    },
+    {
+      "scenario": "Inheritance Traversal in ORMs",
+      "description": "ORMs walk prototype chains to inspect entity class decorators and metadata across base models.",
+      "companies": "TypeORM, Prisma",
+      "codeSnippet": "let curr = entity.constructor; while (curr && curr !== Object) { inspect(curr); curr = Object.getPrototypeOf(curr); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "JavaScript uses prototypal inheritance where objects have an internal [[Prototype]] link to another object. Property lookups walk this chain upwards until found or until reaching null.",
+    "keyPoints": [
+      "Every object links to a prototype object via its internal [[Prototype]] slot.",
+      "Standard objects inherit from Object.prototype, whose prototype is null.",
+      "constructor.prototype defines what instances will link to.",
+      "Object.getPrototypeOf is the standard accessor; Object.create(null) creates pure dictionary maps."
+    ],
+    "closingImpression": "Unlike classical class-based languages with rigid vtables, JavaScript inheritance is a dynamic linked-list traversal.",
+    "analogies": [
+      "Like asking for help: if you don't know the answer, you ask your manager; if they don't know, they ask their director, until you reach the CEO (Object.prototype), after which there is no one left (null)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using __proto__ in production code.",
+      "why": "__proto__ is a legacy Annex B feature with performance deoptimizations in modern JIT engines.",
+      "correct": "Use Object.getPrototypeOf(obj) and Object.setPrototypeOf(obj)."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What performance penalty does Object.setPrototypeOf incur in V8?",
+      "answer": "In V8, mutating an object's prototype via `Object.setPrototypeOf` alters the object's hidden class (Map/Shape) transition tree, immediately invalidating all inline caches (ICs) across the entire codebase that touch that object shape.",
+      "specReference": "V8 Dev Blog: Fast Properties in V8"
+    }
+  ]
 }

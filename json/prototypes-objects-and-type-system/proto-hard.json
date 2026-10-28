@@ -88,5 +88,60 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between classical mixins and the Class Factory Mixin pattern?",
+      "answer": "Legacy classical mixins (`Object.assign(Target.prototype, Mixin)`) copy method references onto an existing prototype, flattening hierarchy and breaking `super` calls. The modern Class Factory Mixin pattern uses higher-order functions returning subclass extensions (`const Mixin = Base => class extends Base { ... }`), creating a clean, parameterized prototype chain where `super` and `instanceof` work seamlessly.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests modern ES6 architectural patterns for method composition."
+    },
+    {
+      "question": "How does the 'super' keyword resolve methods in ES6 classes?",
+      "answer": "`super.method()` uses an internal slot `[[HomeObject]]` bound statically to the class prototype when the method is defined. At runtime, `super` looks up the prototype of `[[HomeObject]]` (`Object.getPrototypeOf(HomeObject)`), completely bypassing the dynamic `this` receiver to prevent circular call loops.",
+      "difficulty": "advanced",
+      "whyAsked": "One of the most technical questions regarding ES6 class semantics."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Composable Game Engine Components",
+      "description": "Game engines use mixin factories to compose behaviors onto entity base classes: `class Player extends Movable(Damageable(Entity))`.",
+      "companies": "Phaser, Unity WebGL, Babylon.js",
+      "codeSnippet": "const Flying = Base => class extends Base { fly() {} };"
+    },
+    {
+      "scenario": "Custom HTML Web Components",
+      "description": "Mixing accessibility, theming, and reactive state capabilities onto `HTMLElement`.",
+      "companies": "Lit, Stencil, Shoelace",
+      "codeSnippet": "class MyButton extends Focusable(Themeable(HTMLElement)) {}"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Class factory mixins provide clean multiple-inheritance semantics in JavaScript by chaining dynamic subclass extensions, preserving prototype hierarchy and super dispatch.",
+    "keyPoints": [
+      "Object.assign mixins mutate prototypes and break super calls.",
+      "Class factory mixins (Base => class extends Base) preserve strict linear prototype chains.",
+      "super dispatch relies on static [[HomeObject]] binding to avoid recursion bugs.",
+      "instanceof works transparently for every mixin in the chain."
+    ],
+    "closingImpression": "Composition over inheritance is best expressed in JavaScript via functional class factory mixins.",
+    "analogies": [
+      "Like stacking Russian nesting dolls: each mixin wraps the base class in a new layer, creating a clear chain of command."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using Object.assign to mix methods that use super.",
+      "why": "Copying a method with Object.assign strips its [[HomeObject]], causing super calls inside that method to throw a runtime TypeError.",
+      "correct": "Use class factory functions to preserve [[HomeObject]] bindings."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is [[HomeObject]] in ECMA-262 and why can it not be reassigned?",
+      "answer": "Per ECMA-262 §15.7.14, methods defined using concise syntax (`method() {}`) inside class bodies or object literals have an immutable internal slot `[[HomeObject]]` pointing to the enclosing class prototype. It is set at parse time and cannot be reassigned.",
+      "specReference": "ECMA-262 §15.7.14 Runtime Semantics: MethodDefinitionEvaluation"
+    }
+  ]
 }

@@ -114,5 +114,66 @@
       "Tasks execute continuously without idle gaps between resolutions."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why is running Promise.all on a large array (e.g. 5,000 requests) dangerous?",
+      "answer": "Firing 5,000 requests concurrently exhausts operating system file descriptors / socket handles (`EMFILE` error), overwhelms DNS resolution, saturates network bandwidth, and triggers HTTP 429 (Too Many Requests) or server crashes. A concurrency pool bounds active parallel work to a safe limit (e.g. 5 concurrent workers).",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of system-level resource constraints (sockets, memory, rate limits)."
+    },
+    {
+      "question": "How does a Worker Pool architecture maintain constant concurrency without idle gaps?",
+      "answer": "Instead of chunking work into distinct batches of 5 (where worker 1 might finish in 10ms and sit idle waiting for worker 5 to finish in 1000ms), a true pool uses a shared task iterator cursor. The moment ANY worker finishes its current task, it immediately pulls the next available task from the queue, maintaining 100% worker saturation.",
+      "difficulty": "advanced",
+      "whyAsked": "Distinguishes naive chunking (`Promise.all(batch)`) from true dynamic worker queues (`p-limit`)."
+    },
+    {
+      "question": "How should errors be handled in a concurrency pool?",
+      "answer": "Two options depending on requirement: 1) Fast-fail: any error immediately rejects the outer promise and stops pulling new tasks from the queue. 2) Resilient: errors are caught, recorded as rejected outcomes, and remaining queued tasks continue executing.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests architectural flexibility in fault tolerance."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Web Scraper & Crawler Concurrency Limiting",
+      "description": "Crawlers traverse sitemaps with strict limits (e.g. 4 concurrent requests per domain) to respect robots.txt and avoid IP banning.",
+      "companies": "Googlebot, Crawlee",
+      "codeSnippet": "const limit = pLimit(4); urls.map(url => limit(() => fetch(url)));"
+    },
+    {
+      "scenario": "Bulk Image Processing & Cloud Storage Uploads",
+      "description": "Processing 500 images via Sharp and uploading to S3: bounding concurrency to CPU core count prevents out-of-memory (OOM) crashes.",
+      "companies": "Cloudinary, Unsplash",
+      "codeSnippet": "const pool = new ConcurrencyPool(os.cpus().length);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A concurrency pool throttles asynchronous task execution to a fixed maximum window, maintaining constant throughput while protecting system memory and network sockets.",
+    "keyPoints": [
+      "Unbounded concurrency triggers OS socket exhaustion and HTTP 429 rate limits.",
+      "Dynamic worker queues eliminate idle gaps by having workers pull the next item immediately upon completion.",
+      "Output array preserves original input index mapping regardless of task completion timing.",
+      "This is the production architecture implemented by libraries like p-limit and async.queue."
+    ],
+    "closingImpression": "Concurrency limiting is the first line of defense against self-inflicted Denial of Service (DoS) in Node.js microservices.",
+    "analogies": [
+      "A bank with 3 teller windows: customers wait in a single line, and the moment any teller is free, the next customer steps up."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Chunking using `for (let i=0; i<arr.length; i+=limit)` with `Promise.all`.",
+      "why": "Chunking forces the entire batch to wait for the slowest task in that chunk before starting the next batch, wasting CPU time.",
+      "correct": "Use a shared index cursor where individual workers pull the next task immediately upon completion."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does Node.js libuv threadpool size affect asynchronous concurrency?",
+      "answer": "In Node.js, network I/O is handled non-blockingly by OS epoll/kqueue. However, file system operations (`fs`), DNS lookups, and crypto hashing are executed on libuv's internal C++ worker threadpool, which defaults to ONLY 4 threads (`UV_THREADPOOL_SIZE=4`). Launching 100 concurrent `fs.readFile` calls will queue up on those 4 threads.",
+      "specReference": "Node.js Documentation: libuv Threadpool Architecture"
+    }
+  ]
 }

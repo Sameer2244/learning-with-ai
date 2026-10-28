@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why is implementing an Undo/Redo stack with mutable refs faster than using component state?",
+      "answer": "Storing 100 history snapshots in `useState` forces the entire component tree to re-evaluate on every undo/redo snapshot push. Storing the history stack in a mutable ref (`historyRef.current`) allows recording actions in memory instantly with O(1) latency without triggering re-renders, re-rendering only when the user explicitly clicks Undo or Redo.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests performance optimization using refs as in-memory data buffers."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Canvas & Drawing App Undo/Redo Engine",
+      "description": "Figma and Excalidraw maintaining stroke histories in memory buffers without re-rendering the whole UI on every mousemove.",
+      "companies": "Figma, Excalidraw, Canva",
+      "codeSnippet": "historyRef.current.push(canvasSnapshot);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Using mutable refs for history buffers decouples rapid data accumulation from component re-renders, providing high-performance undo/redo stacks.",
+    "keyPoints": [
+      "Refs store snapshots in memory without triggering re-renders.",
+      "Supports rapid keystroke or mousemove recording.",
+      "Component re-renders only on explicit undo/redo actions.",
+      "Prevents sluggishness in data-heavy interactive applications."
+    ],
+    "closingImpression": "Refs allow keeping high-frequency transient data in memory without paying the React rendering tax.",
+    "analogies": [
+      "A flight data recorder: it continuously records thousands of sensor readings to a black box without blinking the cockpit cabin lights."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Storing mutable object references directly in the history stack.",
+      "why": "Mutating the active object will mutate all past snapshots in the stack.",
+      "correct": "Deep clone or freeze snapshots before pushing to history."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is Immer's patch history mechanism?",
+      "answer": "Immer produces inverse patches (`applyPatches`), allowing undo/redo to store lightweight JSON patch deltas rather than full state tree snapshots.",
+      "specReference": "Immer.js Documentation: Patches & History"
+    }
+  ]
 }

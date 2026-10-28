@@ -102,5 +102,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do Array.prototype.myMap and myFilter handle sparse arrays (holes)?",
+      "answer": "Per ECMA-262 §23.1.3.14, `map` and `filter` must inspect whether the index is an 'own property' using `k in array` (or `Object.prototype.hasOwnProperty.call(array, k)`). If an array is sparse (e.g. `[1, , 3]`), index 1 is a hole; the callback MUST NOT be invoked for index 1, and the resulting array must preserve the hole for `map`.",
+      "difficulty": "advanced",
+      "whyAsked": "The #1 trap question when implementing array polyfills."
+    },
+    {
+      "question": "What should map and filter do if thisArg is provided?",
+      "answer": "The callback must be invoked using `callback.call(thisArg, array[k], k, array)` so that any `this` references inside the callback point to the passed `thisArg`.",
+      "difficulty": "basic",
+      "whyAsked": "Checks complete adherence to the standard API signature."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Data Normalization in Redux Reducers",
+      "description": "Transforming backend API arrays into normalized entity maps or filtered UI view collections.",
+      "companies": "All web applications",
+      "codeSnippet": "const activeUsers = users.filter(u => u.active).map(u => u.id);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Specification-compliant map and filter polyfills iterate over elements while strictly respecting sparse array holes and thisArg binding.",
+    "keyPoints": [
+      "Checks 'k in array' before invoking the callback to skip holes in sparse arrays.",
+      "Passes element, index, and original array to callback.",
+      "Supports optional thisArg binding.",
+      "Creates a fresh array without mutating the source."
+    ],
+    "closingImpression": "Respecting sparse array holes is what distinguishes an amateur polyfill from a specification-grade implementation.",
+    "analogies": [
+      "Walking down a street: if a house number is an empty lot (hole), the mail carrier skips it without trying to deliver a letter."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Checking array[k] !== undefined instead of k in array.",
+      "why": "An array can contain an explicit `undefined` element `[undefined]`, which is NOT a hole and MUST be processed.",
+      "correct": "Use `k in array` to test for slot existence."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is an exotic Array object in ECMA-262?",
+      "answer": "An exotic Array object has a customized internal `[[DefineOwnProperty]]` method that automatically updates the `.length` property when numeric indices are added, and truncates elements when `.length` is decreased.",
+      "specReference": "ECMA-262 §10.4.2 Array Exotic Objects"
+    }
+  ]
 }

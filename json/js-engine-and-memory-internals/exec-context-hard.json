@@ -93,5 +93,66 @@
       "`try...finally` guarantees stack state integrity under ECMA-262 §14.15."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does the Call Stack guarantee LIFO unwinding when an unhandled error is thrown?",
+      "answer": "When an exception occurs, the runtime evaluates the Completion Record of the active execution context. Because it is an 'abrupt completion' of type 'throw', the engine checks for an active exception handler in the current frame. If none exists, the frame is popped, its lexical resources are scheduled for GC, and the unwinding continues down the Call Stack until a matching try/catch handler is reached or the top-level script terminates.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of ECMA-262 completion records and stack unwinding mechanics."
+    },
+    {
+      "question": "How do tools like AsyncLocalStorage or Chrome DevTools maintain context across asynchronous boundaries?",
+      "answer": "The synchronous call stack is completely lost once an asynchronous boundary is crossed. Tools like Node.js `async_hooks` and `AsyncLocalStorage` hook into resource lifecycle events (init, before, after, destroy). When an async operation is scheduled, the engine snapshots the current context ID in an internal C++ table and restores it when the callback executes.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests ability to bridge synchronous call stack knowledge with modern asynchronous runtime architecture."
+    },
+    {
+      "question": "What is the performance overhead of wrapping functions with execution context profilers?",
+      "answer": "Calling `performance.now()` incurs high-resolution timer access overhead (~15-30ns per call). Furthermore, wrapping calls in higher-order functions prevents JIT compilers (like V8 TurboFan) from inlining the target function, disrupting monomorphic inline caches and leading to deoptimizations.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests awareness of how instrumentation perturbs JIT optimizations (the Observer Effect in profiling)."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "OpenTelemetry Distributed Tracing",
+      "description": "Tracing libraries instrument incoming HTTP requests and internal function invocations using call stack context trackers to emit spans with exact durations and parent-child hierarchy.",
+      "companies": "Datadog, Dynatrace, New Relic",
+      "codeSnippet": "tracer.startActiveSpan('processOrder', (span) => { try { doWork(); } finally { span.end(); } });"
+    },
+    {
+      "scenario": "React Error Boundaries (getDerivedStateFromError)",
+      "description": "React captures abrupt component render crashes and unwinds the Fiber tree to the nearest ErrorBoundary boundary without crashing the whole host DOM tree.",
+      "companies": "Meta, Vercel",
+      "codeSnippet": "static getDerivedStateFromError(error) { return { hasError: true }; }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A synchronous execution context profiler replicates the engine's internal call stack tracking by maintaining a strict LIFO stack of execution records.",
+    "keyPoints": [
+      "Context tracking requires pushing on function entry and popping on exit to ensure parent-child nesting fidelity.",
+      "Guaranteed unwinding must use try...finally to ensure stack consistency even when exceptions are thrown.",
+      "DevTools profilers hook into the engine's activation records and sampling timers to construct flame charts.",
+      "Context instrumentation must be aware of JIT inlining penalties in performance-critical hot paths."
+    ],
+    "closingImpression": "This architecture is the foundational mental model behind APM monitoring, distributed tracing, and execution flamegraphs.",
+    "analogies": [
+      "Like checking into a hotel floor: you register your entry at the front desk, swipe into your room, and must checkout in reverse order to balance the logbook."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Failing to use try...finally when unwinding context on exit.",
+      "why": "If the profiled function throws, an unhandled exit call will leave the tracker's call stack permanently corrupted.",
+      "correct": "Always place context exit / pop logic in a finally block."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does V8 implement Error.captureStackTrace and what is the cost of generating stack traces?",
+      "answer": "When an Error is constructed, V8 does not immediately format the stack string. Instead, it captures a snapshot of current C++ and bytecode frame pointers. The expensive serialization (source map resolution, function names, line numbers) is deferred until the `.stack` property is accessed via a getter. Accessing `.stack` forces V8 to traverse the frame table and inspect AST script lines, which is CPU intensive.",
+      "specReference": "V8 internal implementation: src/execution/isolate.cc & Error.stack API"
+    }
+  ]
 }

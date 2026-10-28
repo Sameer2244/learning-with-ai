@@ -90,5 +90,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does a useClickOutside hook determine if a click occurred outside an element?",
+      "answer": "By attaching a document-level event listener (`mousedown` or `click`) and checking `nodeRef.current && !nodeRef.current.contains(event.target)`. If the clicked DOM node (`event.target`) is NOT contained within the ref's DOM hierarchy, it is an outside click and triggers the callback.",
+      "difficulty": "intermediate",
+      "whyAsked": "Universal modal/dropdown UI hook question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Dropdown Menus & Modal Dismissal",
+      "description": "Closing dropdown menus when user clicks anywhere outside the menu container.",
+      "companies": "Tailwind UI, Radix UI",
+      "codeSnippet": "useClickOutside(menuRef, () => setIsOpen(false));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "useClickOutside combines DOM containment checks via Node.contains() with global event listeners to detect clicks outside a referenced element.",
+    "keyPoints": [
+      "Attaches listener to document or window.",
+      "node.contains(e.target) checks DOM containment tree.",
+      "Cleans up listeners in useEffect return function.",
+      "Standard mechanism for closing popovers and dropdowns."
+    ],
+    "closingImpression": "Cleaning up document-level listeners is essential to prevent memory leaks in custom DOM hooks.",
+    "analogies": [
+      "A security perimeter: sensors alert security if movement is detected anywhere outside the boundary fence."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Listening to 'click' instead of 'mousedown' for outside clicks.",
+      "why": "If a user clicks inside a dropdown and drags outside before mouseup, a 'click' event fires outside, prematurely closing the dropdown.",
+      "correct": "Listen on mousedown or pointerdown."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do React Portals affect useClickOutside checks?",
+      "answer": "Portals render DOM nodes outside the parent DOM container. A click inside a portal will fail `nodeRef.current.contains(e.target)` unless the portal node is also tracked.",
+      "specReference": "React Documentation: Portals & Event Bubbling"
+    }
+  ]
 }

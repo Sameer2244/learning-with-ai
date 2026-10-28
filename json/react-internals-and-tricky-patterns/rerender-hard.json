@@ -92,5 +92,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How do selector stores (Zustand / Redux) prevent unnecessary re-renders compared to React Context?",
+      "answer": "React Context triggers re-renders on ALL consuming components whenever the context value reference changes, even if a component only consumes a small property. Selector stores use external subscriptions outside of React (`useSyncExternalStore`): components pass a selector `state => state.user.name`. The store checks if the selector output changed via `Object.is`; if not, the component skips re-rendering entirely.",
+      "difficulty": "advanced",
+      "whyAsked": "High-level state management architecture question."
+    },
+    {
+      "question": "How does useSyncExternalStore prevent 'Tearing' in Concurrent React?",
+      "answer": "'Tearing' occurs in Concurrent Mode when a component starts rendering with state version 1, yields to the browser, an external store mutates to version 2, and a sibling component renders version 2, resulting in an inconsistent UI. `useSyncExternalStore` detects external store mutations during render and forces a synchronous fallback to guarantee consistent UI snapshots.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests React 18 concurrency safety knowledge."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Zustand & Redux Toolkit State Selectors",
+      "description": "Subscribing to fine-grained state slices in enterprise apps without context re-render cascades.",
+      "companies": "Discord, Uber, Shopify",
+      "codeSnippet": "const username = useStore(state => state.user.name);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Fine-grained selector stores bypass React Context re-render cascades by maintaining external subscriptions and notifying only components whose selected slice has changed.",
+    "keyPoints": [
+      "Context re-renders all consumers on any value change.",
+      "Selector stores evaluate slice equality (Object.is) before scheduling component renders.",
+      "useSyncExternalStore integrates external stores safely with Concurrent React.",
+      "Achieves O(1) targeted renders in massive state trees."
+    ],
+    "closingImpression": "Fine-grained subscriptions scale state management to hundreds of thousands of updates without performance degradation.",
+    "analogies": [
+      "A news subscription: instead of receiving the entire 500-page Sunday paper when you only care about sports, you receive a text message alert only when your favorite team scores."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Returning a new object literal in a selector without equality comparison: state => ({ a: state.a, b: state.b }).",
+      "why": "Returning a new object reference on every state change causes the selector to fail equality checks, forcing re-renders on every action.",
+      "correct": "Use shallow equality or split into multiple separate selector hooks."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the three-argument signature of useSyncExternalStore?",
+      "answer": "`useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)`. `subscribe` registers listeners, `getSnapshot` returns the current client state, and `getServerSnapshot` returns initial SSR state for hydration consistency.",
+      "specReference": "React Documentation: useSyncExternalStore"
+    }
+  ]
 }

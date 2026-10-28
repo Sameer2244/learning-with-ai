@@ -92,5 +92,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does React.memo NOT prevent re-renders when a component consumes Context via useContext?",
+      "answer": "`React.memo` ONLY checks props passed from the parent component! If a component calls `useContext(MyContext)`, React's context dependency propagation directly marks the component's Fiber as dirty when the context value changes, completely bypassing the `React.memo` bailout.",
+      "difficulty": "intermediate",
+      "whyAsked": "Exposes common misconception about React.memo boundaries."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Component Decomposition for Context Isolation",
+      "description": "Extracting the useContext call into a small wrapper component so heavy sibling UI components don't re-render.",
+      "companies": "Meta, Next.js",
+      "codeSnippet": "function ConsumerWrapper() { const data = useContext(Ctx); return <HeavyChild data={data.specific} />; }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Context updates directly dirty consumer fibers, ignoring React.memo bailouts; selective subscriptions require component extraction or external selector stores.",
+    "keyPoints": [
+      "useContext bypasses React.memo bailouts.",
+      "Decomposing components isolates context consumption to small leaf nodes.",
+      "Heavy children receive extracted slices as props and use React.memo.",
+      "Prevents monolithic context re-render cascades."
+    ],
+    "closingImpression": "Decomposing context consumers into small wrapper components is the cleanest native way to tame context re-renders.",
+    "analogies": [
+      "An antenna on a roof: the small antenna receives the radio broadcast and sends a clean wire to the speakers, rather than the entire house vibrating."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Wrapping a component that calls useContext in React.memo expecting it to skip context updates.",
+      "why": "React.memo only checks props; context subscriptions trigger independent fiber updates.",
+      "correct": "Move useContext to a parent and pass the value as a prop to the memoized child."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What was the proposed useContextSelector RFC?",
+      "answer": "A long-standing RFC by Daishi Kato proposed `useContextSelector(Context, state => state.prop)`, which only re-renders when the selected slice changes. This inspired the architecture of Zustand and Jotai.",
+      "specReference": "React RFC: Context Selectors (#119)"
+    }
+  ]
 }

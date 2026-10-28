@@ -93,5 +93,66 @@
       "Promise.race settles with the result of the first settled promise."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does Promise.race not cancel the slower promise after timeout occurs?",
+      "answer": "JavaScript promises are eager and non-cancellable once instantiated. `Promise.race` simply settles its returned promise with the first settlement; the losing promise continues running in the background until completion. In production, you must use an `AbortController` signal to actively abort underlying network requests or timers.",
+      "difficulty": "intermediate",
+      "whyAsked": "Crucial question separating candidates who understand Promise immutability from those who assume race halts execution."
+    },
+    {
+      "question": "What happens if you forget to clearTimeout in a Promise timeout wrapper?",
+      "answer": "If the primary promise resolves quickly, the un-cleared `setTimeout` timer continues running in the background. In Node.js, active timers keep the event loop alive, preventing server processes or serverless functions from exiting. In browsers, it wastes memory and timer wheel slots.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests resource leak awareness in backend and serverless environments."
+    },
+    {
+      "question": "What are the three internal states of a Promise according to ECMA-262?",
+      "answer": "1) `pending`: initial state, neither fulfilled nor rejected. 2) `fulfilled`: operation completed successfully with a value. 3) `rejected`: operation failed with a reason. State transitions are strictly one-way and irreversible: once settled, a promise can never transition again.",
+      "difficulty": "basic",
+      "whyAsked": "Validates core Promise specification definitions."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Resilient Microservice HTTP Requests",
+      "description": "API gateways wrap downstream RPC and REST calls with a strict timeout wrapper (e.g. 2000ms) to prevent cascading failures when third-party services hang.",
+      "companies": "Netflix, Uber, Amazon",
+      "codeSnippet": "const res = await withTimeout(fetch(url), 2000, 'Gateway Timeout');"
+    },
+    {
+      "scenario": "Database Query Circuit Breakers",
+      "description": "Database clients timeout slow queries to prevent connection pools from becoming exhausted by hanging locks.",
+      "companies": "Prisma, MongoDB Driver",
+      "codeSnippet": "const user = await withTimeout(db.query(), 5000);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A safe Promise timeout wrapper races an asynchronous operation against an explicit timer, rejecting if the operation fails to settle within the allotted duration while ensuring timer cleanup.",
+    "keyPoints": [
+      "Promise.race settles with whichever promise completes first.",
+      "Timers must be cleared via clearTimeout upon resolution or rejection to prevent resource leaks.",
+      "Promises are immutable once settled; subsequent resolutions from the losing promise are ignored.",
+      "For true network cancellation, pair Promise timeout with AbortController."
+    ],
+    "closingImpression": "Defensive timeout wrapping is essential for building fault-tolerant distributed systems that never hang indefinitely.",
+    "analogies": [
+      "A countdown timer on a quiz show: if you answer before the buzzer, you get the points; if the buzzer sounds first, your turn is over."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming Promise.race stops the slower async operation.",
+      "why": "Promise.race only ignores the result; the background operation continues executing.",
+      "correct": "Clarify that promises cannot be canceled externally without AbortController signals."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does Promise.resolve(x) handle an argument that is already a Promise vs a thenable?",
+      "answer": "Per ECMA-262 §27.2.4.5, if `x` is already an authentic Promise, `Promise.resolve(x)` returns `x` directly without creating a new object. However, if `x` is a 'thenable' (an object with a `.then` method), it wraps it in a new promise and calls `.then` asynchronously inside a microtask.",
+      "specReference": "ECMA-262 §27.2.4.5 Promise.resolve"
+    }
+  ]
 }

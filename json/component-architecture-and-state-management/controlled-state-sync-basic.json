@@ -88,5 +88,54 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the difference between a Controlled component and an Uncontrolled component in React?",
+      "answer": "In a Controlled component, the form element's value is driven by React state (`value={state}`, `onChange={e => setState(e.target.value)}`), making React the single source of truth. In an Uncontrolled component, the value is managed internally by the browser DOM itself, and React accesses values on demand via a `ref` (`ref.current.value`). Controlled components allow instant validation and formatting; uncontrolled components offer superior performance for high-frequency input.",
+      "difficulty": "basic",
+      "whyAsked": "Universal React forms fundamentals question."
+    },
+    {
+      "question": "Why does React warn 'A component is changing an uncontrolled input to be controlled'?",
+      "answer": "This warning occurs when an input's initial value is `undefined` (making it uncontrolled by default) and later updates to a defined string value. React warns because switching modes mid-lifecycle causes state synchronization bugs. Fix it by always initializing state with an empty string `''` rather than `undefined` or `null`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of controlled component lifecycle invariants."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Universal Input Fields in UI Libraries",
+      "description": "Building text inputs that support being used as either controlled (`value` + `onChange`) or uncontrolled (`defaultValue`).",
+      "companies": "MUI, Ant Design, Chakra UI",
+      "codeSnippet": "const isControlled = props.value !== undefined; const value = isControlled ? props.value : internalState;"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Controlled components treat React state as the single source of truth, while uncontrolled components delegate state to the browser DOM.",
+    "keyPoints": [
+      "Controlled: value prop + onChange handler.",
+      "Uncontrolled: defaultValue prop + ref access.",
+      "Never switch between controlled and uncontrolled mid-lifecycle.",
+      "Always default controlled input states to '' instead of undefined."
+    ],
+    "closingImpression": "Understanding the controlled/uncontrolled boundary is critical for designing robust form architectures and design system inputs.",
+    "analogies": [
+      "A puppet on strings (controlled) vs a wind-up toy (uncontrolled): the puppet moves only when you pull the strings; the wind-up toy moves on its own and you just check where it stopped."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Passing value={data.name} where data.name is initially undefined.",
+      "why": "Causes React to mount the input as uncontrolled, and warn when data loads.",
+      "correct": "Use value={data.name ?? ''}."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React synchronize the real DOM input selection/cursor position in controlled inputs?",
+      "answer": "In `ReactDOMInput.js`, React records `selectionStart` and `selectionEnd` before updating the DOM node value and restores the cursor position immediately after to prevent the cursor jumping to the end on every keystroke.",
+      "specReference": "packages/react-dom-bindings/src/client/ReactDOMInput.js: updateWrapper"
+    }
+  ]
 }

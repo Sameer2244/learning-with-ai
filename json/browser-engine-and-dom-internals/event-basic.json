@@ -91,5 +91,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is Event Delegation and why is it memory efficient?",
+      "answer": "Event Delegation attaches a single event listener to a common parent element rather than attaching separate listeners to hundreds of child elements. It leverages the Event Bubbling phase: events originating on children bubble up to the parent, where `event.target` identifies the originating element. It drastically reduces memory footprint and automatically handles dynamically added children without re-binding.",
+      "difficulty": "basic",
+      "whyAsked": "Universal frontend interview question."
+    },
+    {
+      "question": "What is the difference between event.target and event.currentTarget?",
+      "answer": "`event.target` is the actual innermost DOM element where the event originated (the clicked button). `event.currentTarget` is the element to which the event handler is currently attached (the parent listener). In event delegation, `target` is the child, `currentTarget` is the parent.",
+      "difficulty": "basic",
+      "whyAsked": "Essential distinction for DOM event programming."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Virtual Lists & Dynamic Table Rows",
+      "description": "Attaching a single click handler to a 10,000-row table instead of attaching 10,000 individual event listeners.",
+      "companies": "AG Grid, Slack",
+      "codeSnippet": "table.addEventListener('click', e => { const row = e.target.closest('tr'); if (row) handleRow(row); });"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Event delegation harnesses the DOM event bubbling mechanism to handle events at a parent container level, optimizing memory and simplifying dynamic element handling.",
+    "keyPoints": [
+      "Attaches one listener to parent instead of N listeners to children.",
+      "event.target points to clicked element; event.currentTarget points to listener element.",
+      "Uses Element.closest() to resolve target matching nested child spans or icons.",
+      "Automatically handles dynamically inserted or deleted child nodes."
+    ],
+    "closingImpression": "Event delegation is the primary technique for maintaining lightweight DOM memory profiles in high-density web apps.",
+    "analogies": [
+      "A company reception desk: one receptionist signs for all incoming packages rather than delivery drivers wandering to every employee desk."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using e.target.matches('button') when buttons contain inner <span> or <svg> elements.",
+      "why": "Clicking the icon makes e.target the svg, causing matches('button') to return false.",
+      "correct": "Use `e.target.closest('button')` to walk up to the button container."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Which DOM events do NOT bubble?",
+      "answer": "`focus`, `blur`, `load`, `unload`, `mouseenter`, and `mouseleave` do NOT bubble. However, `focusin` and `focusout` do bubble and can be delegated.",
+      "specReference": "W3C UI Events Specification §3.1 Event dispatch and DOM tree"
+    }
+  ]
 }

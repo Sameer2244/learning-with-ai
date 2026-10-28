@@ -109,5 +109,54 @@
       "Frame deadline defaults to 5ms to maintain 60-120fps responsiveness."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React Concurrent Mode's time-slicing work under the hood?",
+      "answer": "React's Scheduler assigns a 5ms frame deadline for work. Inside `workLoopConcurrent`, after each unit of work (Fiber), React checks `shouldYieldToHost()`. If `performance.now() >= deadline`, React yields the main thread back to the browser via `MessageChannel.port1.postMessage`, allowing the browser to process clicks, scrolling, and rendering. The remaining fiber work resumes in the next idle slice.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of how React time-slices work on a single thread."
+    },
+    {
+      "question": "What is shouldYieldToHost and why does it use MessageChannel instead of setTimeout?",
+      "answer": "`shouldYieldToHost()` checks if the 5ms budget expired or if a browser input is pending (`navigator.scheduling.isInputPending()`). `MessageChannel` is used because it triggers an immediate macrotask without the 4ms clamping penalty of `setTimeout(0)`, providing near-zero latency resumption.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests knowledge of browser scheduling primitives."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Interactive Data Visualizations & Dashboards",
+      "description": "Filtering a 20,000-node graph in React 18: time-slicing renders the graph in chunks without dropping typing framerates in the search bar.",
+      "companies": "Datadog, Tableau Web",
+      "codeSnippet": "startTransition(() => { setGraphData(filteredData); });"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React Concurrent Mode time-slices the render phase by breaking large component trees into 5ms slices, yielding control to the browser when the deadline expires.",
+    "keyPoints": [
+      "Checks shouldYield() between fiber units of work.",
+      "Yields to the browser event loop using MessageChannel macrotasks.",
+      "Allows user inputs (clicks, keystrokes) to interleave during heavy renders.",
+      "Only commits to the screen when all units of work are fully evaluated."
+    ],
+    "closingImpression": "Time-slicing transforms React from a blocking renderer into a cooperative multitasking operating system.",
+    "analogies": [
+      "A chef preparing a 7-course banquet: between chopping vegetables, the chef checks the front desk to see if an urgent customer order arrived, handling urgent requests before continuing the banquet prep."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Believing Concurrent Mode uses Web Workers for multi-threading.",
+      "why": "React rendering still runs on the single main browser thread. Concurrency is cooperative time-slicing on the main thread, not multi-threaded worker offloading.",
+      "correct": "Clarify that React concurrency is cooperative multitasking on the main thread."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is navigator.scheduling.isInputPending() and how does React Scheduler use it?",
+      "answer": "It is a Chromium API that allows JavaScript on the main thread to query whether user inputs (clicks, keypresses) are waiting in the OS queue, allowing React to keep working past 5ms if no user input is waiting.",
+      "specReference": "W3C Early Input Dispatch / isInputPending Specification"
+    }
+  ]
 }

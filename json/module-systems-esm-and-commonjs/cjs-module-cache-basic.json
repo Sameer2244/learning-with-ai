@@ -88,5 +88,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does require() caching work in CommonJS?",
+      "answer": "When `require(path)` is called: 1) Resolves absolute file path. 2) Checks `require.cache[resolvedPath]`. If present, returns `require.cache[resolvedPath].exports` immediately. 3) If not present, creates a fresh module object `{ id: resolvedPath, exports: {}, loaded: false }`, executes the module code inside a wrapper function, marks `loaded = true`, and returns `module.exports`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Core Node.js runtime mechanics question."
+    },
+    {
+      "question": "What is the CommonJS module wrapper function?",
+      "answer": "Node.js wraps every CJS file in an invisible IIFE before execution: `(function(exports, require, module, __filename, __dirname) { ... });`. This is why variables declared at the top of a file are NOT global, and why `__dirname` is available.",
+      "difficulty": "basic",
+      "whyAsked": "Universal Node.js developer knowledge check."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Singleton Pattern in Backend Services",
+      "description": "Database connection clients export a single instantiated client: `require('./db')` returns the exact same cached instance across all controllers.",
+      "companies": "Node.js, Express backend services",
+      "codeSnippet": "module.exports = new DatabasePool();"
+    }
+  ],
+  "howToExplain": {
+    "opening": "CommonJS uses a synchronous module loader with an in-memory require.cache map, ensuring each module executes only once and shares its exports as singletons.",
+    "keyPoints": [
+      "require.cache stores evaluated modules by resolved absolute path.",
+      "Subsequent requires return the cached exports object in O(1) time.",
+      "Modules are wrapped in an invisible function providing exports, require, module.",
+      "Deleting require.cache[path] forces re-execution on next require."
+    ],
+    "closingImpression": "CommonJS module caching provides effortless singleton patterns across large Node.js architectures.",
+    "analogies": [
+      "A library lending desk: the first person to ask for a book triggers the librarian buying it; everyone else borrows the same book from the shelf."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Reassigning exports = {} instead of module.exports = {}.",
+      "why": "exports is just a variable pointing to module.exports. Reassigning exports breaks the reference, leaving module.exports empty.",
+      "correct": "Always assign to `module.exports = ...` or mutate `exports.prop = ...`."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do you hot-reload a CommonJS module in development?",
+      "answer": "By deleting its entry from the cache: `delete require.cache[require.resolve('./module')]` and calling `require('./module')` again.",
+      "specReference": "Node.js Modules Documentation: Caching"
+    }
+  ]
 }

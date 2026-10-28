@@ -94,5 +94,66 @@
       "gen.throw() faithfully injects exceptions into generator try/catch blocks."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does async/await relate to generators and promises under the hood?",
+      "answer": "`async/await` is syntactic sugar over generator coroutines driven by a promise runner (like TJ Holowaychuk's `co` library). When Babel transpiles `async function`, it transforms it into `function*` wrapped by `_asyncToGenerator()`. Every `await` becomes a `yield`, and the runner attaches `.then()` to resume the generator via `gen.next(value)` or throw errors via `gen.throw(error)`.",
+      "difficulty": "advanced",
+      "whyAsked": "The classic compiler-internals question testing deep comprehension of async/await."
+    },
+    {
+      "question": "How does passing a value to gen.next(val) work?",
+      "answer": "When `.next(val)` is called with an argument, that argument becomes the evaluation result of the `yield` expression where the generator was currently paused: `const x = yield 10;` -> `x` receives `val`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of bidirectional generator communication."
+    },
+    {
+      "question": "What does gen.throw(err) do inside a suspended generator?",
+      "answer": "`gen.throw(err)` raises an exception at the exact `yield` expression where the generator is currently suspended. If the generator has wrapped that `yield` in a `try...catch` block, the catch handler catches `err`! If not caught, the error bubbles out of `.throw()`.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of exception injection into suspended coroutines."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Babel & SWC Async Transpilation",
+      "description": "Compiling modern async/await code for legacy ES5/ES6 environments uses generator coroutine runners.",
+      "companies": "Babel, SWC, TypeScript",
+      "codeSnippet": "const _asyncToGenerator = fn => function() { return co(fn.apply(this, arguments)); };"
+    },
+    {
+      "scenario": "Redux-Saga Middleware",
+      "description": "Sagas use generator coroutine runners to intercept yielded effect objects (`call`, `put`, `select`), executing them and feeding results back via `gen.next()`.",
+      "companies": "Netflix, Target",
+      "codeSnippet": "function* fetchUser() { try { const user = yield call(api); yield put(success(user)); } catch (e) { yield put(fail(e)); } }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Before async/await was standardized, generator coroutine runners paired generators with promises to achieve synchronous-looking asynchronous code.",
+    "keyPoints": [
+      "async/await is equivalent to a generator whose yielded promises drive a recursive step runner.",
+      "gen.next(val) injects resolved promise values into the LHS of yield expressions.",
+      "gen.throw(err) injects promise rejections into generator try/catch blocks.",
+      "This bidirectional communication protocol enables complete cooperative multitasking."
+    ],
+    "closingImpression": "Understanding generator coroutine runners demystifies async/await, proving that JavaScript's concurrency model is built on simple composable primitives.",
+    "analogies": [
+      "A worker and a manager: the worker pauses and hands an order slip to the manager (yield); the manager gets the supplies from the warehouse and hands them back to the worker (next), who resumes work."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming the first call to gen.next(val) can pass a value to the generator.",
+      "why": "The first call to .next() starts the generator and runs up to the first yield. There is no yield expression awaiting an input value yet, so arguments to the initial .next() are completely ignored.",
+      "correct": "Clarify that arguments to .next() only take effect starting on the SECOND invocation."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the ECMAScript formal specification relation between AsyncFunction and Generators?",
+      "answer": "ECMA-262 §27.7 formally defines AsyncFunction evaluation using the 'AsyncFunctionStart' abstract operation, which uses the exact same internal Execution Context suspension and resumption steps as GeneratorStart.",
+      "specReference": "ECMA-262 §27.7.5.1 AsyncFunctionStart"
+    }
+  ]
 }

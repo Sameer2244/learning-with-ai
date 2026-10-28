@@ -106,5 +106,54 @@
       "Missing keys disable optimal child matching and force linear fallback diffing."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does React require keys for sibling elements in an array, but NOT for adjacent elements in JSX?",
+      "answer": "Adjacent static JSX elements (`<div><Header /><Main /></div>`) have stable, deterministic positions in the component's AST; React identifies them by their hardcoded tree index. In contrast, array children (`items.map(...)`) can dynamically change order, be inserted, or be deleted at runtime. Without keys, React has no way to distinguish whether item 0 was modified or whether a new item was prepended to the list.",
+      "difficulty": "intermediate",
+      "whyAsked": "Clarifies why JSX elements don't always need keys, but mapped arrays do."
+    },
+    {
+      "question": "What happens under the hood if keys are duplicated among siblings?",
+      "answer": "React logs a development warning. During reconciliation, React's child mapping table uses keys as hash keys: a duplicate key overwrites previous sibling entries in `existingChildren` Map, causing React to treat the first duplicate as deleted and the second as an update, resulting in lost component state and erratic DOM rendering.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of key collision consequences."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Resetting Component State via Key Change",
+      "description": "Passing a different `key` to a form or modal (`<UserForm key={userId} />`) to tell React to discard previous component state and remount cleanly.",
+      "companies": "Airbnb, Shopify",
+      "codeSnippet": "<ChatBox key={recipientId} /> // Cleanly unmounts previous conversation state"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Keys provide persistent identity to elements within dynamic lists, enabling React's reconciler to track items across insertions, deletions, and reorders.",
+    "keyPoints": [
+      "Keys must be unique among siblings, but do not need to be globally unique.",
+      "Missing keys disable O(1) matching and fall back to fragile index matching.",
+      "Changing a key forces React to unmount the old fiber and mount a fresh one.",
+      "Keys must be stable: never generate keys with Math.random() in render."
+    ],
+    "closingImpression": "A key is not just an optimization; it is the identity contract that binds React state to a specific logical entity.",
+    "analogies": [
+      "Social Security Numbers or Passport IDs: even if people change their seats in a theater, their passport ID proves who they are."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using key={Math.random()} to silence React key warnings.",
+      "why": "Math.random() generates a new key on every render, causing React to completely unmount and recreate the DOM node on every keystroke, destroying focus and state.",
+      "correct": "Use stable database IDs (item.id)."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React extract the key prop and why is key omitted from component props?",
+      "answer": "When `React.createElement(type, config)` evaluates, it explicitly extracts `config.key` and `config.ref`, storing them in internal element slots (`element.key`, `element.ref`) and stripping them from `element.props`. Accessing `props.key` inside a component returns `undefined` and logs a warning.",
+      "specReference": "packages/react/src/jsx/ReactJSXElement.js"
+    }
+  ]
 }

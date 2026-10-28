@@ -88,5 +88,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does setInterval inside useEffect capture stale state?",
+      "answer": "If `useEffect` has an empty dependency array `[]`, the effect callback runs only once on mount. The interval callback closes over state variables from that initial render pass (e.g. `count = 0`). Every time the interval fires, it reads that stale captured variable. Using functional updates (`setCount(prev => prev + 1)`) or Dan Abramov's `useInterval` with a mutable callback ref solves this.",
+      "difficulty": "intermediate",
+      "whyAsked": "The single most famous React Hooks interview trap."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Live Stock Tickers & Countdown Timers",
+      "description": "Running persistent intervals that access latest state and props without resetting the timer on every keystroke.",
+      "companies": "Robinhood, Bloomberg",
+      "codeSnippet": "useInterval(() => fetchLatestQuote(symbol), 1000);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Stale closures in timers occur when an asynchronous callback captures a snapshot of state from an older render pass. Functional state updates bypass closure capture by reading from React's pending update queue.",
+    "keyPoints": [
+      "setInterval setup once on mount captures initial render closure.",
+      "Adding state to effect dependency array resets the timer on every tick.",
+      "Functional updaters (prev => prev + 1) read fresh state without dependencies.",
+      "useInterval uses a mutable callback ref to read fresh functions dynamically."
+    ],
+    "closingImpression": "Separating timer duration lifecycle from callback execution prevents timer resetting bugs in React.",
+    "analogies": [
+      "A wall clock with a speaker: instead of recording a message on day 1 that plays forever, the clock calls a live hotline (ref) to ask what to say every minute."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Writing setCount(count + 1) inside an interval with [] dependencies.",
+      "why": "count is captured as 0; 0 + 1 is always 1, so count never increments past 1.",
+      "correct": "Use setCount(prev => prev + 1)."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How will React 19's useEffectEvent solve this natively?",
+      "answer": "`useEffectEvent` creates a non-reactive event function that always sees fresh props and state but is omitted from effect dependency arrays, preventing unwanted timer resets.",
+      "specReference": "React RFC: useEffectEvent"
+    }
+  ]
 }

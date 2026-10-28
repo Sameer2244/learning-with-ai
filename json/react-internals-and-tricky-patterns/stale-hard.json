@@ -88,5 +88,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React store hook state on a Fiber node?",
+      "answer": "Hooks are stored as a singly-linked list of Hook nodes on `fiber.memoizedState`. Each Hook node has `{ memoizedState, next, queue }`. On every render, React resets a pointer (`workInProgressHook = fiber.memoizedState`) and advances step-by-step through the list as hooks are called.",
+      "difficulty": "advanced",
+      "whyAsked": "Reveals whether candidate knows the underlying hook implementation."
+    },
+    {
+      "question": "Why does the 'Rule of Hooks' forbid calling hooks inside if statements or loops?",
+      "answer": "Because React identifies hooks strictly by their sequential call order! If an `if` statement skips a hook on render 2, the linked list pointer gets out of alignment: hook 3 reads state belonging to hook 2, corrupting component state and throwing invariant errors.",
+      "difficulty": "intermediate",
+      "whyAsked": "The foundational reasoning behind React's Rules of Hooks."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React Fiber Hooks Dispatcher (ReactFiberHooks.js)",
+      "description": "The internal state machine powering useState, useEffect, and useMemo in React.",
+      "companies": "Meta",
+      "codeSnippet": "workInProgressHook = workInProgressHook.next;"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React hooks are implemented as a singly-linked list attached to fiber.memoizedState, relying strictly on invocation order to synchronize state across renders.",
+    "keyPoints": [
+      "Each hook is a node in a singly-linked list on the fiber.",
+      "Mount phase allocates nodes; update phase traverses existing nodes.",
+      "Conditional hooks alter linked list order and corrupt state.",
+      "Object.is compares dependency arrays to determine if effects/memos re-run."
+    ],
+    "closingImpression": "Hooks are not magic; they are simple linked-list cursors tied to component render passes.",
+    "analogies": [
+      "A pill organizer with compartments labeled Monday through Sunday: you must take them in exact order; skipping a day mixes up all your medications."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming hooks are stored in a key-value Map by hook name.",
+      "why": "Hooks have no names; React has no idea what variable name you assign to useState.",
+      "correct": "State clearly that hooks are stored in a sequential linked list on the fiber."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do HooksDispatcherOnMount and HooksDispatcherOnUpdate differ?",
+      "answer": "React switches global dispatchers: during initial mount, `ReactCurrentDispatcher.current = HooksDispatcherOnMount` (which creates nodes). During re-renders, it switches to `HooksDispatcherOnUpdate` (which reads and updates existing nodes).",
+      "specReference": "React source: packages/react-reconciler/src/ReactFiberHooks.js"
+    }
+  ]
 }

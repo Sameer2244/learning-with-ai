@@ -105,5 +105,54 @@
       "useEffect runs asynchronously after browser paint."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is the exact execution order of useInsertionEffect, useLayoutEffect, and useEffect?",
+      "answer": "1) Component renders. 2) `useInsertionEffect` cleanups and callbacks run synchronously before DOM mutations (for CSS-in-JS). 3) Host DOM mutations occur. 4) `useLayoutEffect` cleanups and callbacks run synchronously after DOM mutations, before browser paint. 5) Browser paints the screen. 6) `useEffect` cleanups and callbacks run asynchronously after paint.",
+      "difficulty": "intermediate",
+      "whyAsked": "The universal test for React effect lifecycle timing."
+    },
+    {
+      "question": "Why was useInsertionEffect introduced in React 18?",
+      "answer": "CSS-in-JS libraries (Emotion, Styled-Components) injecting `<style>` tags during `useLayoutEffect` forced the browser to recalculate CSS styles and layouts multiple times before paint. `useInsertionEffect` runs before DOM mutations, allowing styles to be injected into `<head>` before any layout measurements occur.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of CSS-in-JS runtime engine integration."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "CSS-in-JS Dynamic Style Rule Injection",
+      "description": "Emotion and Styled-Components injecting runtime CSS classes before elements mount.",
+      "companies": "Emotion Core, Styled Components",
+      "codeSnippet": "useInsertionEffect(() => { insertStyleRule(className, rules); }, [rules]);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React provides three effect hooks targeting different stages of the commit pipeline: Insertion (pre-DOM), Layout (post-DOM pre-paint), and Passive (post-paint).",
+    "keyPoints": [
+      "useInsertionEffect runs before DOM mutations for CSS-in-JS.",
+      "useLayoutEffect runs after DOM mutations before browser paint.",
+      "useEffect runs asynchronously after browser paint.",
+      "Always default to useEffect unless synchronous DOM measurement is required."
+    ],
+    "closingImpression": "Selecting the correct effect hook prevents layout thrashing, style recalculations, and dropped animation frames.",
+    "analogies": [
+      "Stage lighting: useInsertionEffect sets up light bulbs; useLayoutEffect adjusts spotlights while the curtain is down; useEffect starts playing background music after the curtain rises."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using useLayoutEffect for data fetching.",
+      "why": "useLayoutEffect blocks browser paint; fetching data here freezes the screen.",
+      "correct": "Use useEffect for all non-visual operations."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why does useLayoutEffect log a warning during Server-Side Rendering (SSR)?",
+      "answer": "Because on the server there is no DOM and no paint! `useLayoutEffect` cannot execute on the server, producing a mismatch between client and server renders.",
+      "specReference": "React Documentation: useLayoutEffect SSR Warning"
+    }
+  ]
 }

@@ -88,5 +88,60 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does the Symbol.toPrimitive protocol work?",
+      "answer": "When an object needs to be converted to a primitive (e.g. for `+`, `==`, or template literals), JavaScript checks if the object has a `[Symbol.toPrimitive](hint)` method. If present, it calls it with a string `hint`: `'number'`, `'string'`, or `'default'`. If absent, it falls back to calling `.valueOf()` and `.toString()`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests modern ES6 object-to-primitive customization."
+    },
+    {
+      "question": "What is the difference in fallback order between 'number' hint and 'string' hint?",
+      "answer": "For a `'string'` hint: the engine tries `.toString()` first; if that returns a primitive it uses it, otherwise it tries `.valueOf()`. For a `'number'` or `'default'` hint: the engine tries `.valueOf()` first; if that returns a primitive it uses it, otherwise it tries `.toString()`. If neither returns a primitive, it throws TypeError.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests exact specification order of the OrdinaryToPrimitive algorithm."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Custom Currency / Decimal Value Objects",
+      "description": "Financial libraries define Money objects that format to strings in template literals (`$100.00`) while coercing to raw cents in arithmetic calculations.",
+      "companies": "Stripe, Square, PayPal",
+      "codeSnippet": "[Symbol.toPrimitive](hint) { return hint === 'string' ? `$${this.cents/100}` : this.cents; }"
+    },
+    {
+      "scenario": "Date Object Coercion",
+      "description": "Built-in `Date` overrides Symbol.toPrimitive: with hint `'string'` or `'default'`, it returns a date string; with hint `'number'`, it returns epoch milliseconds.",
+      "companies": "Native ECMAScript Specification",
+      "codeSnippet": "const d = new Date(); +d; // milliseconds; `${d}` // string"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Symbol.toPrimitive is the standardized ES6 protocol that grants objects full control over how they convert into primitives across number, string, and default contexts.",
+    "keyPoints": [
+      "Overrides legacy valueOf() and toString() fallback mechanics.",
+      "Receives a hint parameter: 'number', 'string', or 'default'.",
+      "Arithmetic '+' uses 'default' hint; unary '+' uses 'number' hint; template literals use 'string' hint.",
+      "Must return a primitive value, or a TypeError is thrown."
+    ],
+    "closingImpression": "Symbol.toPrimitive allows domain value objects (like Money or Units) to behave naturally with native JavaScript operators.",
+    "analogies": [
+      "A passport with multiple visas: when asked for identity at the bank you show your photo (string); at the sports club you show your membership number (number)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Returning an object from Symbol.toPrimitive.",
+      "why": "The specification mandates that Symbol.toPrimitive MUST return a primitive. Returning an object throws TypeError: Cannot convert object to primitive value.",
+      "correct": "Always return a string, number, boolean, symbol, or bigint."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Which native JavaScript built-in objects implement Symbol.toPrimitive?",
+      "answer": "Only two built-in standard objects implement `Symbol.toPrimitive` by default: `Date.prototype[Symbol.toPrimitive]` and `Symbol.prototype[Symbol.toPrimitive]`.",
+      "specReference": "ECMA-262 §21.4.3.4 Date.prototype[Symbol.toPrimitive]"
+    }
+  ]
 }

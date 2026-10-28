@@ -95,5 +95,66 @@
       "Property call syntax sets `this` to the base of the reference record."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does a custom polyfill for call/apply attach context without polluting the target object?",
+      "answer": "By creating a unique property on the target context using `const fnKey = Symbol('fn')` and assigning the function to it: `context[fnKey] = this`. Invoking `context[fnKey](...args)` naturally triggers the Implicit Binding rule, setting `this` to `context`. Using `Symbol()` guarantees no existing properties are overwritten, and executing inside a `try...finally` block guarantees `delete context[fnKey]` cleans up even if the function throws.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of how property invocation sets `this` under the hood."
+    },
+    {
+      "question": "What happens if context is null, undefined, or a primitive (number, string)?",
+      "answer": "In non-strict mode: 1) Passing `null` or `undefined` as context defaults to `globalThis` (window in browser, global in Node). 2) Passing a primitive (e.g. `42` or `'hello'`) causes JavaScript to wrap it into an object instance (`Object(42)` -> `Number` object) via boxing. In strict mode, `this` remains exactly as passed without coercion.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests knowledge of strict vs non-strict boxing and global fallback rules."
+    },
+    {
+      "question": "What is the difference between call and apply under the hood?",
+      "answer": "Both immediately invoke the function with a specified `this` context. The sole difference is argument formatting: `.call(thisArg, arg1, arg2...)` accepts a comma-separated argument list, while `.apply(thisArg, [argsArray])` accepts an array or array-like object. In ES6+, `fn.call(ctx, ...args)` accomplishes the same as `fn.apply(ctx, args)`.",
+      "difficulty": "basic",
+      "whyAsked": "Foundational API syntax check."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Borrowing Built-in Methods (Object.prototype.hasOwnProperty)",
+      "description": "Because objects created via `Object.create(null)` lack prototypes, and user objects might shadow properties (`obj.hasOwnProperty = false`), production code borrows the method safely: `Object.prototype.hasOwnProperty.call(obj, 'prop')`.",
+      "companies": "ESLint, TypeScript, Babel",
+      "codeSnippet": "const hasKey = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);"
+    },
+    {
+      "scenario": "Converting Array-Like Objects to Real Arrays",
+      "description": "Before `Array.from()`, legacy code used `Array.prototype.slice.call(arguments)` to convert function arguments or DOM NodeLists into arrays.",
+      "companies": "jQuery, Underscore.js",
+      "codeSnippet": "const args = Array.prototype.slice.call(arguments);"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Implementing custom `call` and `apply` demonstrates how JavaScript's implicit property invocation rules can be harnessed to achieve explicit context binding.",
+    "keyPoints": [
+      "A function invoked via `obj[key]()` has its `this` bound to `obj` via the Reference Record base.",
+      "Using `Symbol()` prevents naming collisions with existing object properties.",
+      "A `try...finally` block guarantees cleanup of the temporary property even on abrupt error completion.",
+      "Non-strict mode requires boxing primitive contexts into objects and falling back to `globalThis`."
+    ],
+    "closingImpression": "Method borrowing via `.call` remains the standard defensive technique for calling Object.prototype methods safely on untrusted input.",
+    "analogies": [
+      "Like temporarily clipping a name badge onto a visitor's shirt so they can enter the building as a member, and unclipping it as they leave."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using a hardcoded string like context.__fn__ = this.",
+      "why": "Hardcoded string keys can overwrite existing object properties or cause collisions in concurrent operations.",
+      "correct": "Always use Symbol('fn') to guarantee key uniqueness."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why was Object.hasOwn() introduced in ES2022 to replace Object.prototype.hasOwnProperty.call?",
+      "answer": "Calling `Object.prototype.hasOwnProperty.call(obj, 'prop')` is verbose and cumbersome. ES2022 introduced `Object.hasOwn(obj, 'prop')` as a direct static method. It avoids walking the prototype chain to lookup `hasOwnProperty` and works seamlessly on null-prototype objects without method borrowing.",
+      "specReference": "ECMA-262 §20.1.2.13 Object.hasOwn"
+    }
+  ]
 }

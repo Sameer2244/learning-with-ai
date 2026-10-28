@@ -106,5 +106,66 @@
       "Referencing a downstream default parameter causes a TDZ ReferenceError."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Why does function foo(a = b, b = 2) {} throw ReferenceError when invoked as foo()?",
+      "answer": "ECMA-262 §10.2.11 specifies that function parameters evaluate from left to right inside an intermediate Parameter Environment Record. When `a = b` evaluates, `b` has been declared in the parameter scope but has not yet evaluated its default expression (`b = 2`). Therefore, `b` is in the TDZ and reading it produces a ReferenceError.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests understanding of parameter scope evaluation order and TDZ boundaries."
+    },
+    {
+      "question": "What happens if you invoke foo(undefined, 5)? Does it still throw?",
+      "answer": "Yes, it still throws! Passing `undefined` triggers the default parameter evaluation for `a`, which attempts to read `b = b`. Because `b` has not yet been assigned in the left-to-right evaluation sequence, it throws ReferenceError regardless of the second argument's presence.",
+      "difficulty": "advanced",
+      "whyAsked": "Probes edge cases regarding default parameter trigger conditions."
+    },
+    {
+      "question": "Do function parameters share the exact same scope as the function body?",
+      "answer": "No! When a function uses default parameters, rest parameters, or destructured parameters, ECMAScript creates TWO separate environment records: 1) Parameter Environment Record (created first), and 2) Body Variable Environment Record. A `var x` in the function body does NOT overwrite parameter `x` during parameter initialization.",
+      "difficulty": "advanced",
+      "whyAsked": "High-level spec question that separates senior architects from standard developers."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Configurable Component Prop Defaults",
+      "description": "Functions accepting computed options (e.g. `(width, height = width * 1.5)`) safely derive subsequent parameters from previously initialized parameters to the left.",
+      "companies": "Tailwind UI, Material UI",
+      "codeSnippet": "function createBox(width = 100, height = width * 2) { return { width, height }; }"
+    },
+    {
+      "scenario": "Dependency Injection Resolvers",
+      "description": "DI containers validate topological parameter order to prevent circular constructor dependencies that trigger TDZ deadlocks.",
+      "companies": "NestJS, Angular",
+      "codeSnippet": "constructor(authService, logger = authService.getLogger()) {}"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Parameter scope initializes left-to-right in an independent declarative environment record, enforcing TDZ rules for default expressions referencing adjacent parameters.",
+    "keyPoints": [
+      "Default parameters evaluate sequentially from index 0 to N-1.",
+      "A parameter can safely reference any initialized parameter to its left.",
+      "Referencing a parameter to its right throws a ReferenceError because the target is still in the TDZ.",
+      "Parameter scopes form an intermediate environment between outer scope and function body scope."
+    ],
+    "closingImpression": "Recognizing that parameter evaluation order enforces TDZ boundaries prevents subtle initialization bugs in complex function signatures.",
+    "analogies": [
+      "An assembly line: worker B can use the part worker A just assembled, but worker A cannot grab the part worker B hasn't touched yet."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assuming parameters and local function body variables share a single flat scope when defaults are present.",
+      "why": "ECMAScript specifies an isolated Parameter Scope whenever non-simple parameter lists (defaults, destructuring, rest) are used.",
+      "correct": "Clarify that default parameters instantiate an intermediate Parameter Environment Record before the body record is created."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the difference between simple and non-simple parameter lists regarding 'use strict'?",
+      "answer": "In ES2016+, if a function has a non-simple parameter list (default values, destructuring, rest parameters), it is an early SyntaxError to include `'use strict'` directive inside the function body. This is because the parameters must evaluate BEFORE the body is parsed, meaning the engine would not know whether to evaluate the parameters in strict mode until after parsing them.",
+      "specReference": "ECMA-262 §15.1 Static Semantics: Early Errors for FunctionDeclaration"
+    }
+  ]
 }

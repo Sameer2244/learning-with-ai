@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does Radix UI and MUI's useControlled hook work?",
+      "answer": "`useControlled({ controlled, default, name })` manages state that can be either controlled by the caller or uncontrolled internally. It creates an internal `useState(default)`. If `controlled !== undefined`, it returns `[controlled, setControlled]`; if `controlled === undefined`, it returns `[internalState, setInternalState]`. It warns in development if a component switches between the two modes.",
+      "difficulty": "intermediate",
+      "whyAsked": "Core design system state abstraction question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Radix UI Primitives (Accordion, Switch, Dialog)",
+      "description": "Radix primitives supporting both controlled (`open` + `onOpenChange`) and uncontrolled (`defaultOpen`) modes.",
+      "companies": "Radix UI, Shadcn/ui",
+      "codeSnippet": "const [isOpen, setIsOpen] = useControllableState({ prop: open, defaultProp: defaultOpen, onChange: onOpenChange });"
+    }
+  ],
+  "howToExplain": {
+    "opening": "useControlled allows UI primitives to seamlessly support both controlled and uncontrolled usage without duplicating state logic.",
+    "keyPoints": [
+      "Inspects whether the controlled prop is defined.",
+      "Falls back to internal state if controlled prop is omitted.",
+      "Dispatches external onChange callbacks in both modes.",
+      "Standard architecture for headless UI libraries (Radix, MUI)."
+    ],
+    "closingImpression": "useControlled gives component consumers the flexibility to choose between simple drop-in usage and tight external control.",
+    "analogies": [
+      "A car with dual-mode transmission: you can drive in automatic mode (uncontrolled internal state) or switch to paddle shifters (controlled external state)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Syncing controlled props to internal state using useEffect.",
+      "why": "Creates an unnecessary extra render pass and causes visual desynchronization.",
+      "correct": "Derive state directly during render: `const value = prop !== undefined ? prop : internalState`."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why does the React team discourage deriving state from props (getDerivedStateFromProps)?",
+      "answer": "Duplicating props into state creates two sources of truth that frequently become desynchronized. React recommends either fully controlled components or fully uncontrolled components with a key.",
+      "specReference": "React Blog: You Probably Don't Need Derived State"
+    }
+  ]
 }

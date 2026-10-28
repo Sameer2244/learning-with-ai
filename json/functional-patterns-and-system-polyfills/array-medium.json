@@ -88,5 +88,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What happens if reduce() is called on an empty array without an initialValue?",
+      "answer": "Per ECMA-262 §23.1.3.24, calling `reduce` on an empty array without an `initialValue` MUST throw a `TypeError: Reduce of empty array with no initial value`.",
+      "difficulty": "intermediate",
+      "whyAsked": "Classic boundary edge case test."
+    },
+    {
+      "question": "If no initialValue is provided, what is used as the initial accumulator?",
+      "answer": "The first non-empty element in the array is used as the initial accumulator, and iteration begins at the NEXT index (index 1 if index 0 was populated).",
+      "difficulty": "intermediate",
+      "whyAsked": "Verifies initial value resolution logic."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Grouping and Aggregating Data (groupBy polyfill)",
+      "description": "Reducing a flat list of transactions into category totals.",
+      "companies": "Stripe, QuickBooks",
+      "codeSnippet": "const totals = txs.reduce((acc, t) => { acc[t.cat] = (acc[t.cat] || 0) + t.amount; return acc; }, {});"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Array.prototype.reduce accumulates elements into a single value, requiring careful handling of initial accumulator resolution and empty array validation.",
+    "keyPoints": [
+      "Throws TypeError if array is empty and no initialValue is supplied.",
+      "If initialValue is omitted, the first non-empty element becomes accumulator.",
+      "Skips sparse array holes during iteration.",
+      "Capable of implementing map, filter, and flat through reduction."
+    ],
+    "closingImpression": "reduce is the universal catamorphism of arrays: almost all other array methods can be expressed as a reduction.",
+    "analogies": [
+      "A snowball rolling down a hill: it starts with an initial core (initialValue) and picks up snow with every turn until it reaches the bottom."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Defaulting initialValue to 0 or null when omitted.",
+      "why": "When initialValue is omitted, the FIRST array element must be used as the accumulator.",
+      "correct": "Track whether an initial value was provided by checking arguments.length > 1."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why is Array.prototype.reduceRight needed?",
+      "answer": "`reduceRight` iterates in reverse (from length-1 down to 0). It is essential for function composition pipelines (`compose`) where functions evaluate right-to-left.",
+      "specReference": "ECMA-262 §23.1.3.25 Array.prototype.reduceRight"
+    }
+  ]
 }

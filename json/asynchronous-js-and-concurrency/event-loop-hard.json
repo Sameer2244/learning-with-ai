@@ -101,5 +101,60 @@
       "Yielding via setTimeout(0) or scheduler.yield breaks synchronous task monopolization."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does scheduler.yield() in modern browsers improve upon setTimeout(0) for task interleaving?",
+      "answer": "`scheduler.yield()` (W3C Prioritized Task Scheduling API) yields control back to the browser to process high-priority input (clicks, keypresses) and rendering, but immediately resumes the yielded task ahead of lower-priority macrotasks. Unlike `setTimeout(0)`, it avoids the 4ms clamping penalty and preserves task priority inheritance.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests cutting-edge web performance knowledge and familiarity with modern W3C standards."
+    },
+    {
+      "question": "Why does long-running JavaScript cause dropped frames (jank)?",
+      "answer": "At 60Hz, the browser must render a new frame every 16.6ms (at 120Hz, every 8.3ms). Because JavaScript execution runs on the exact same main thread as style recalculation, layout, and painting, any JavaScript task that runs longer than ~5ms risks blocking the render step, resulting in a dropped frame and visible animation stutter.",
+      "difficulty": "intermediate",
+      "whyAsked": "Connects JavaScript execution times directly to web performance metrics (INP / FID)."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React Concurrent Mode & Time Slicing",
+      "description": "React's Scheduler chunks large component trees into 5ms slices using `MessageChannel.port1.postMessage`, yielding to the browser between chunks to keep the page responsive.",
+      "companies": "Meta, Vercel, Shopify",
+      "codeSnippet": "if (shouldYieldToHost()) { scheduleCallback(continueWork); break; }"
+    },
+    {
+      "scenario": "Syntax Highlighting on Large Documents",
+      "description": "Monaco Editor and Prism.js chunk tokenization of 100,000-line files across multiple animation frames to prevent editor UI freezing.",
+      "companies": "VS Code, GitHub",
+      "codeSnippet": "while (lines.length && performance.now() - start < 10) tokenize(lines.shift());"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A Fair Task Scheduler breaks long synchronous computations into small time slices, voluntarily yielding the thread back to the event loop to allow user inputs and rendering to interleave.",
+    "keyPoints": [
+      "Monopolizing the main thread causes microtask starvation and input latency.",
+      "Chunking tasks with a ~5ms frame budget preserves 60fps responsiveness.",
+      "Yielding can be accomplished via MessageChannel, scheduler.yield(), or setTimeout(0).",
+      "React Fiber and browser editors rely on this pattern to perform massive computations without freezing the tab."
+    ],
+    "closingImpression": "Writing code that plays nicely with the browser's render pipeline is what separates senior frontend engineers from average developers.",
+    "analogies": [
+      "Like letting a person with one item cut ahead of you at the grocery register when you have three full shopping carts."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Using requestAnimationFrame to yield long tasks.",
+      "why": "rAF is synchronized with the display refresh rate (16ms) and runs BEFORE paint. Calling rAF in a processing loop throttles throughput to 60 items per second.",
+      "correct": "Use MessageChannel or scheduler.yield() which yield to the macrotask queue without waiting for display v-sync."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Why did React choose MessageChannel over setTimeout(0) for its scheduler polyfill?",
+      "answer": "`setTimeout(0)` has a 4ms clamp after 5 nested calls and prioritizes timer wheel bookkeeping. `MessageChannel.port1.postMessage` schedules an immediate macrotask without the 4ms clamp, providing near-instant thread resumption while still yielding to inputs and rendering.",
+      "specReference": "React source: packages/scheduler/src/forks/Scheduler.js"
+    }
+  ]
 }

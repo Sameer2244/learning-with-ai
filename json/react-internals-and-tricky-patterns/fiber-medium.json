@@ -88,5 +88,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does React link sibling chains when a parent returns multiple children?",
+      "answer": "During `reconcileChildren`, React iterates through the children array: the first child is attached to `parent.child`. Each subsequent child is linked to the previous child via `prevChild.sibling = currentChild`. All children have their `return` pointer pointed back to the parent.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests linked-list construction mechanics."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "React Fragments (<>...</>)",
+      "description": "Fragments return arrays of sibling fibers without creating extra wrapper DOM elements.",
+      "companies": "Meta",
+      "codeSnippet": "<> <Header /> <Main /> </>"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Fiber linking transforms standard child arrays into a singly-linked list of siblings connected to a shared parent via return pointers.",
+    "keyPoints": [
+      "First child becomes parent.child.",
+      "Subsequent children link via sibling pointers.",
+      "All children link back to parent via return pointers.",
+      "Enables non-recursive traversal across multi-child trees."
+    ],
+    "closingImpression": "Singly-linked pointer trees eliminate array re-allocation during traversal.",
+    "analogies": [
+      "A row of houses: the road connects to the first house (child); each house has a side gate to its neighbor (sibling); all have the street address on the deed (return)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Assigning all children to parent.children array on a fiber.",
+      "why": "Fiber does not use children arrays; it uses a single `child` pointer to the head of a sibling linked list.",
+      "correct": "Only the first child is linked to parent.child."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is the return pointer on a Fiber node and why is it not called parent?",
+      "answer": "It is called `return` because it represents the execution context that work returns to upon completing the current node, directly mirroring function return mechanics on call stacks.",
+      "specReference": "Andrew Clark: A Cartoon Intro to Fiber"
+    }
+  ]
 }

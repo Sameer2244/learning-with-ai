@@ -93,5 +93,72 @@
       "Variables declared with var are initialized to undefined upon environment instantiation."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Are let and const declarations hoisted in JavaScript?",
+      "answer": "Yes, `let` and `const` ARE hoisted to the very top of their enclosing block scope during the Creation Phase of the Execution Context. However, unlike `var` (which is hoisted and immediately initialized to `undefined`), `let` and `const` remain uninitialized. The region of code between entering the block and evaluating the declaration line is the Temporal Dead Zone (TDZ). Accessing the identifier in this zone throws ReferenceError.",
+      "difficulty": "intermediate",
+      "whyAsked": "The #1 trap question interviewers use to identify candidates who memorize surface-level answers vs understand the spec."
+    },
+    {
+      "question": "How does typeof behave on a TDZ variable vs an undeclared variable?",
+      "answer": "For an undeclared variable (one that was never declared anywhere), `typeof x` safely returns `'undefined'`. However, for a variable declared with `let` or `const` later in the scope, `typeof x` inside its TDZ throws `ReferenceError: Cannot access 'x' before initialization`. This proves that `let` is indeed hoisted and aware of its identifier in the scope.",
+      "difficulty": "intermediate",
+      "whyAsked": "Classic cross-question that definitively proves TDZ hoisting mechanics."
+    },
+    {
+      "question": "What is the internal representation of a TDZ binding in V8?",
+      "answer": "In V8, when an Environment Record is instantiated, variable slots for `let`/`const` are filled with a special internal sentinel value called `the_hole`. Whenever bytecode operations (e.g. `LdaCurrentContextSlot`) read a slot, the engine executes a 'hole check'. If the value is `the_hole`, V8 immediately raises a runtime ReferenceError.",
+      "difficulty": "advanced",
+      "whyAsked": "Demonstrates deep engine-level knowledge of V8 bytecode interpreter (Ignition)."
+    },
+    {
+      "question": "Why was the Temporal Dead Zone introduced in ES2015?",
+      "answer": "TDZ was designed for two reasons: 1) Const invariants: A `const` variable must never be observed in an unassigned state or reassigned; initializing it to `undefined` on hoisting would violate the `const` contract. 2) Bug prevention: Accessing variables before their declaration line is almost always a logical developer error; failing fast with a ReferenceError prevents subtle undefined bugs.",
+      "difficulty": "basic",
+      "whyAsked": "Tests understanding of language design rationale (TC39 motivations)."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Preventing State Desynchronization in React Components",
+      "description": "Block-scoped let/const inside hooks and conditional renders prevent stale hoisted variable leakage across branch conditions.",
+      "companies": "Meta, Vercel",
+      "codeSnippet": "if (condition) { const data = compute(); use(data); } // data is isolated to block"
+    },
+    {
+      "scenario": "Refactoring Legacy Codebases safely",
+      "description": "Static analyzers and TypeScript use TDZ rules to catch inadvertent variable access before initialization during automated code migrations.",
+      "companies": "Stripe, Airbnb",
+      "codeSnippet": "console.log(x); // TS Error: Block-scoped variable 'x' used before its declaration."
+    }
+  ],
+  "howToExplain": {
+    "opening": "The Temporal Dead Zone (TDZ) is the lexical timespan between entering a block scope and evaluating a let or const declaration. While the variable is hoisted, it cannot be read or written until its declaration is reached.",
+    "keyPoints": [
+      "All declarations (var, let, const, function, class) are hoisted during execution context creation.",
+      "var is initialized to undefined; let and const are left uninitialized in the TDZ.",
+      "Accessing a TDZ variable throws a ReferenceError — including the typeof operator.",
+      "TDZ is temporal (based on execution time order), not purely spatial (code line position)."
+    ],
+    "closingImpression": "TDZ guarantees that const variables are never observed without their assigned value and turns silent undefined bugs into clear runtime exceptions.",
+    "analogies": [
+      "Like reserving a table at a restaurant: your name is on the reservation book (hoisted), but you cannot sit or eat until your reserved time arrives (initialization)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Saying 'let and const are not hoisted at all'.",
+      "why": "If let was not hoisted, accessing a variable shadowed in an inner block would read the outer variable. Instead, it throws ReferenceError because the inner let IS hoisted and shadows the outer scope.",
+      "correct": "Explain that let is hoisted to block scope, but remains in the uninitialized TDZ state until evaluated."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "Explain why TDZ is called 'Temporal' rather than 'Spatial'.",
+      "answer": "TDZ is called 'temporal' because it depends on the order of execution in time, not line placement in code. For example:\n```javascript\nfunction test() {\n  const fn = () => console.log(x); // Line 2: declared before x\n  let x = 10;                      // Line 3: x initialized\n  fn();                            // Line 4: executes AFTER Line 3 -> Valid!\n}\n```\nHere `fn` appears above `let x` spatially, but because it is invoked temporally after `let x` evaluates, it executes without error.",
+      "specReference": "ECMA-262 §14.3.1 Let and Const Declarations Static Semantics"
+    }
+  ]
 }

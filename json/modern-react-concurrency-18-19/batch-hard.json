@@ -94,5 +94,54 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What is flushSync and when is it strictly necessary?",
+      "answer": "`flushSync(fn)` forces React to immediately execute the wrapped update and synchronously flush the entire commit phase to the real DOM. It is strictly necessary when you must read physical DOM measurements (like scroll position, element height) immediately after a state update, before the browser paints.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests understanding of the escape hatch for React 18 automatic batching."
+    },
+    {
+      "question": "Why should flushSync be used sparingly?",
+      "answer": "`flushSync` halts React's batching and scheduler, forcing an immediate synchronous render and layout reflow. Overusing it introduces layout thrashing and degrades frame rates.",
+      "difficulty": "intermediate",
+      "whyAsked": "Tests performance trade-off awareness."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Auto-Scrolling Chat Messages to Bottom",
+      "description": "Adding a new message and immediately scrolling to the bottom: `flushSync` ensures the new message DOM node exists before reading `scrollHeight`.",
+      "companies": "Slack, Discord",
+      "codeSnippet": "flushSync(() => setMessages(m => [...m, newMsg])); listRef.current.scrollTop = listRef.current.scrollHeight;"
+    }
+  ],
+  "howToExplain": {
+    "opening": "flushSync is the escape hatch that forces React to bypass batching and flush updates synchronously to the DOM immediately.",
+    "keyPoints": [
+      "Bypasses automatic batching.",
+      "Forces synchronous render and commit to host DOM.",
+      "Guarantees DOM measurements reflect the update immediately.",
+      "Use sparingly to prevent layout thrashing and performance degradation."
+    ],
+    "closingImpression": "flushSync gives developers synchronous control when imperative DOM measurements must immediately follow state changes.",
+    "analogies": [
+      "Pulling the emergency brake on a train: it overrides all scheduled stops and halts immediately at that exact spot."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Wrapping every state update in flushSync.",
+      "why": "Destroys all React batching performance benefits and freezes UI.",
+      "correct": "Only use flushSync when immediate post-update DOM measurement is mandatory."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What lane priority does flushSync execute with?",
+      "answer": "`flushSync` runs updates at `SyncLane` (Lane 1), the highest possible priority lane in the React reconciler.",
+      "specReference": "packages/react-reconciler/src/ReactFiberWorkLoop.js: flushSync"
+    }
+  ]
 }

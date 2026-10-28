@@ -94,5 +94,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How did React 18's Automatic Batching change update behavior across async boundaries?",
+      "answer": "In React 17 and earlier, batching ONLY worked inside synthetic React event handlers. Updates inside `setTimeout`, `Promise.then()`, or native `fetch` callbacks were NOT batched, triggering multiple independent re-renders. In React 18, 'Automatic Batching' batches ALL updates universally, regardless of whether they occur inside promises, timeouts, or native event listeners.",
+      "difficulty": "intermediate",
+      "whyAsked": "Crucial difference between React 17 and React 18."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Asynchronous Fetch Callback Updates in React 18",
+      "description": "Updating data, loading, and error states inside a `fetch().then()` block produces exactly 1 render in React 18 vs 3 renders in React 17.",
+      "companies": "Meta, Vercel",
+      "codeSnippet": "fetch().then(() => { setData(res); setLoading(false); setError(null); }); // 1 render in React 18!"
+    }
+  ],
+  "howToExplain": {
+    "opening": "React 18 introduced Automatic Batching, extending state batching across all asynchronous boundaries including promises, timeouts, and native events.",
+    "keyPoints": [
+      "React 17 only batched inside synthetic React event handlers.",
+      "React 18 batches universally across microtasks and macrotasks.",
+      "Reduces re-renders significantly in data-fetching components.",
+      "Opt out via flushSync when immediate DOM updates are required."
+    ],
+    "closingImpression": "Automatic batching is one of React 18's greatest out-of-the-box performance upgrades, requiring zero code changes.",
+    "analogies": [
+      "A bus that waits for all passengers from the delayed train (async promise) to board before departing, instead of driving off with one person at a time."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Thinking setTimeout is not batched in React 18.",
+      "why": "In React 18, updates inside setTimeout ARE batched by default.",
+      "correct": "Clarify that all asynchronous updates are batched in React 18."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React 18 schedule automatic batch flushes internally?",
+      "answer": "Updates are pushed onto the fiber lane queue and scheduled via a microtask (`ensureRootIsScheduled`), collapsing all updates that occur in the same tick.",
+      "specReference": "packages/react-reconciler/src/ReactFiberWorkLoop.js: ensureRootIsScheduled"
+    }
+  ]
 }

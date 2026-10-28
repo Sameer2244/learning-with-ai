@@ -113,5 +113,48 @@
       "Every hook node has a .next pointer pointing to the next hook."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How are different hook types (useState, useMemo, useEffect) stored on the same fiber.memoizedState?",
+      "answer": "All hooks share the exact same `Hook` node struct: `{ memoizedState, baseState, baseQueue, queue, next }`. What differs is what `memoizedState` holds: for `useState`, it holds the state value; for `useMemo`, it holds `[cachedValue, deps]`; for `useEffect`, it holds the `Effect` ring buffer node; for `useRef`, it holds `{ current: val }`.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests architectural understanding of hook node polymorphism."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Multi-Hook State Container in React Reconciler",
+      "description": "Components combining useState, useMemo, and useRef on a shared singly-linked list.",
+      "companies": "Meta, Next.js",
+      "codeSnippet": "fiber.memoizedState -> hook1 -> hook2 -> hook3 -> null"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Hooks are stored as a homogeneous singly-linked list on fiber.memoizedState, where each node's memoizedState property holds hook-specific payloads.",
+    "keyPoints": [
+      "Singly-linked list structure with .next pointers.",
+      "useState stores values; useMemo stores [value, deps]; useRef stores { current }.",
+      "workInProgressHook cursor steps through nodes in invocation order.",
+      "Mount phase creates nodes; update phase reads and reuses existing nodes."
+    ],
+    "closingImpression": "This unified linked list structure is why all hooks obey the exact same ordering rules.",
+    "analogies": [
+      "Train boxcars: all cars have the same couplers (.next), but car 1 carries coal (state), car 2 carries grain (memo), and car 3 carries tools (ref)."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Thinking useRef triggers re-renders when mutated.",
+      "why": "useRef simply returns a persistent object { current: value }. Mutating .current does not schedule any fiber updates.",
+      "correct": "Clarify that useRef provides mutable storage without triggering renders."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React manage the update queue on a useState hook?",
+      "answer": "`hook.queue.pending` is a circular singly-linked list of update actions. Using a circular list allows React to keep pointers to both the head (for fast traversal) and the tail (for O(1) appends) with a single pointer.",
+      "specReference": "packages/react-reconciler/src/ReactFiberHooks.js: UpdateQueue"
+    }
+  ]
 }

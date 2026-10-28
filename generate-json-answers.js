@@ -13,6 +13,24 @@ const path = require('path');
 const jsTopics = require('./topics');
 const reactTopics = require('./topics-react');
 
+const enhancementsEngine = require('./enhancements-engine');
+const enhancementsAsyncProto = require('./enhancements-async-proto');
+const enhancementsFunctionalBrowserReact = require('./enhancements-functional-browser-react');
+const enhancementsAdvanced = require('./enhancements-advanced');
+const enhancementsReactCore = require('./enhancements-react-core');
+const enhancementsReactPerfState = require('./enhancements-react-perf-state');
+const enhancementsReactAdvanced = require('./enhancements-react-advanced');
+
+const allEnhancements = {
+  ...enhancementsEngine,
+  ...enhancementsAsyncProto,
+  ...enhancementsFunctionalBrowserReact,
+  ...enhancementsAdvanced,
+  ...enhancementsReactCore,
+  ...enhancementsReactPerfState,
+  ...enhancementsReactAdvanced
+};
+
 // Mock DOM for layout hook tests
 global.document = {
   getElementById: (id) => ({
@@ -1606,6 +1624,8 @@ async function generateAllAnswers() {
           }
         };
 
+        const enhancement = allEnhancements[q.id] || {};
+
         const fullAnswerObject = {
           id: q.id,
           title: q.title,
@@ -1628,7 +1648,12 @@ async function generateAllAnswers() {
             details: testCaseResults
           },
           detailedExplanation: details.detailedExplanation,
-          onlineVerification: details.onlineVerification
+          onlineVerification: details.onlineVerification,
+          interviewCrossQuestions: enhancement.interviewCrossQuestions || [],
+          realWorldUseCases: enhancement.realWorldUseCases || [],
+          howToExplain: enhancement.howToExplain || null,
+          commonMistakes: enhancement.commonMistakes || [],
+          followUpDeepDive: enhancement.followUpDeepDive || []
         };
 
         // Strictly write ONLY one question JSON file
@@ -1731,6 +1756,8 @@ async function generateAllAnswers() {
           }
         };
 
+        const enhancement = allEnhancements[q.id] || {};
+
         const fullAnswerObject = {
           id: q.id,
           title: q.title,
@@ -1753,7 +1780,12 @@ async function generateAllAnswers() {
             details: testCaseResults
           },
           detailedExplanation: details.detailedExplanation,
-          onlineVerification: details.onlineVerification
+          onlineVerification: details.onlineVerification,
+          interviewCrossQuestions: enhancement.interviewCrossQuestions || [],
+          realWorldUseCases: enhancement.realWorldUseCases || [],
+          howToExplain: enhancement.howToExplain || null,
+          commonMistakes: enhancement.commonMistakes || [],
+          followUpDeepDive: enhancement.followUpDeepDive || []
         };
 
         // Strictly write ONLY one question JSON file

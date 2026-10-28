@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does a Transactional Two-Phase Commit reconciler handle host mutation failures?",
+      "answer": "A Transactional Reconciler records an 'undo log' (inverse mutation operations) during the commit phase. If a host mutation fails (e.g. out-of-memory or invalid host node state), the reconciler intercepts the exception in a `try...catch`, halts forward mutations, and replays the undo log in reverse order, rolling back all previously applied host mutations to leave the host tree in a clean, consistent prior state.",
+      "difficulty": "advanced",
+      "whyAsked": "High-level database/systems reliability question in custom renderer design."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Embedded Hardware & Robotics UI Systems",
+      "description": "Controlling microcontrollers or industrial displays where hardware write failures must roll back to safe default states.",
+      "companies": "Tesla, Medical Device UIs",
+      "codeSnippet": "try { commitMutations(); } catch (e) { rollbackTransaction(); }"
+    }
+  ],
+  "howToExplain": {
+    "opening": "A transactional reconciler brings database-style ACID rollbacks to React commit phases, maintaining an inverse mutation journal to restore host consistency if mutations fail.",
+    "keyPoints": [
+      "Records inverse operations before executing host mutations.",
+      "Catches mutation errors during the commit phase.",
+      "Replays rollback log in reverse order to restore previous state.",
+      "Guarantees all-or-nothing host state integrity under failure."
+    ],
+    "closingImpression": "Transactional commits prevent corrupt, partially-applied UI states in mission-critical hardware and financial renderers.",
+    "analogies": [
+      "A bank wire transfer: if debiting Account A succeeds but crediting Account B fails, the system rolls back the debit so money is never lost."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Replaying the rollback log in forward order.",
+      "why": "Rollbacks must execute in reverse order (LIFO) to properly unwind dependent tree mutations.",
+      "correct": "Iterate the rollback log in reverse order."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does React Fiber handle errors thrown during commitMutationEffects?",
+      "answer": "React wraps the commit phase in error handlers; if a mutation throws, React captures it, schedules an unmount of the failed root, and invokes Error Boundaries.",
+      "specReference": "packages/react-reconciler/src/ReactFiberWorkLoop.js: commitMutationEffects"
+    }
+  ]
 }

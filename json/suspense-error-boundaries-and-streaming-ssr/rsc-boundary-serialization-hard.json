@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "What types can and CANNOT be passed as props across the Server-to-Client component boundary in RSC?",
+      "answer": "Props passed from Server Components to Client Components ('use client') MUST be serializable by the Flight protocol: strings, numbers, booleans, null, undefined, plain objects, arrays, Dates, Maps, Sets, TypedArrays, and Server Actions (`'use server'`). You CANNOT pass functions (like `onClick`), class instances, or Symbols across the boundary; doing so throws a serialization error.",
+      "difficulty": "advanced",
+      "whyAsked": "Crucial boundary enforcement question for Next.js App Router."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "RSC Server Action Prop Passing",
+      "description": "Passing an asynchronous server action (`'use server'`) as an action prop to a client form component.",
+      "companies": "Vercel, Next.js",
+      "codeSnippet": "// Server Component passes server action to Client Button: <ClientButton onAction={serverAction} />"
+    }
+  ],
+  "howToExplain": {
+    "opening": "The Server-to-Client boundary requires strict serialization of props because data traverses an HTTP network boundary between server and client.",
+    "keyPoints": [
+      "Primitives, plain objects, arrays, and Dates are serializable.",
+      "Functions and class instances cannot cross the boundary.",
+      "Server Actions ('use server') are serializable as endpoint IDs.",
+      "Enforces clean separation between server computation and client UI."
+    ],
+    "closingImpression": "Understanding serialization boundaries prevents runtime Flight crashes when mixing server and client components.",
+    "analogies": [
+      "Shipping goods through international customs: raw ingredients (serializable data) pass through inspection; living animals or hazardous machinery (functions/closures) are stopped at the border."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Passing an event handler onClick={() => {}} from a Server Component to a Client Component.",
+      "why": "Functions cannot be serialized over the wire; throws 'Functions cannot be passed directly to Client Components'.",
+      "correct": "Declare the event handler inside the Client Component."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How do Server Actions bypass the function serialization restriction?",
+      "answer": "A Server Action is not serialized as code; it is transformed by the compiler into an opaque action ID string (`$$typeof: Symbol.for('react.server.reference')`). When invoked on the client, React sends an HTTP POST request with that action ID back to the server.",
+      "specReference": "React RFC: Server Actions & Server References"
+    }
+  ]
 }

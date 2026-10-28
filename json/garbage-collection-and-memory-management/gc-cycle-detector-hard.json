@@ -96,5 +96,54 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Can modern JavaScript Garbage Collectors collect circular references?",
+      "answer": "YES! Modern engines (V8, SpiderMonkey, JSC) use 'Mark-and-Sweep' and 'Tri-color Marking' algorithms based on REACHABILITY from GC roots (Global object, Call Stack, active timers). If two detached objects reference each other (`A.next = B; B.prev = A`) but have no active path from GC roots, the GC marks them as unreachable and sweeps both into free memory. The old 'Reference Counting' leak myth only applied to legacy IE6/7 COM objects.",
+      "difficulty": "advanced",
+      "whyAsked": "Tests whether candidate understands modern tracing garbage collectors vs obsolete reference counting."
+    },
+    {
+      "question": "What are the Generational GC spaces in V8 (Scavenger vs Mark-Sweep)?",
+      "answer": "V8 divides heap memory into two generations based on the 'Weak Generational Hypothesis' (most objects die young): 1) New Space (Young Generation): small (1-64MB), managed by the high-speed Cheney 'Scavenger' collector using semi-spaces. Surviving objects are promoted. 2) Old Space (Old Generation): large, managed by the 'Major GC' (Mark-Sweep-Compact), which performs incremental marking, concurrent sweeping, and memory compaction.",
+      "difficulty": "advanced",
+      "whyAsked": "The gold standard V8 memory internals question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Detecting Detached DOM Node Leaks",
+      "description": "Memory profiling tools detect DOM elements removed from the document tree that are still retained by JavaScript closure references.",
+      "companies": "Chrome DevTools Memory Profiler",
+      "codeSnippet": "// Detached HTMLButtonElement retained by window.buttonRef"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Modern V8 garbage collection is a generational tracing collector that evaluates object reachability from roots, naturally reclaiming circular references that lack root connections.",
+    "keyPoints": [
+      "Reachability determines collection, not reference counting.",
+      "Unrooted circular references are reclaimed safely by Mark-and-Sweep.",
+      "Generational collection splits memory into Young (Scavenger) and Old (Mark-Sweep) spaces.",
+      "Detached DOM nodes retained by long-lived closures are the #1 source of real-world leaks."
+    ],
+    "closingImpression": "Circular references do not leak in modern JavaScript; un-severed root references do.",
+    "analogies": [
+      "An island that drifts away from the mainland: even if the towns on the island have bridges connecting each other, nobody on the mainland can reach the island, so the whole island is forgotten."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Claiming that setting objA.ref = null and objB.ref = null is required to prevent circular leaks in modern JS.",
+      "why": "Modern mark-and-sweep collectors collect detached cycles automatically.",
+      "correct": "Clarify that severing the reference from the ROOT (window or long-lived scope) is what matters."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is Tri-Color Marking in V8's Major GC?",
+      "answer": "Objects are colored: 1) White: unvisited (candidates for collection). 2) Grey: visited, but child pointers not yet scanned. 3) Black: visited and all child pointers scanned. V8 incrementally scans grey objects concurrently on background threads to avoid main-thread freeze pauses.",
+      "specReference": "V8 Dev Blog: Trash talk: the Orinoco garbage collector"
+    }
+  ]
 }

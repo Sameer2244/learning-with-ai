@@ -88,5 +88,48 @@
       "Adheres to ECMAScript runtime evaluation specifications."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "Explain the three states of an Inline Cache (IC): Monomorphic, Polymorphic, and Megamorphic.",
+      "answer": "1) **Monomorphic** (1 shape observed): TurboFan inlines a direct C++ memory offset read with a single shape check (fastest, near-native CPU speed). 2) **Polymorphic** (2 to 4 shapes): the engine executes a small switch statement checking shapes linearly. 3) **Megamorphic** (5+ shapes): V8 gives up on inline caching and falls back to a global hash table lookup (slowest).",
+      "difficulty": "advanced",
+      "whyAsked": "The definitive compiler-level question for JavaScript optimization."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Framework Hot-Path Functions",
+      "description": "React and Lodash keep internal node descriptors monomorphic so that property reads in hot loops compile to single-cycle machine instructions.",
+      "companies": "Meta, Lodash, Fastify",
+      "codeSnippet": "function getX(point) { return point.x; } // monomorphic if point shape is stable"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Inline Caching (IC) is V8's primary optimization for dynamic property access, caching property memory offsets at bytecode call-sites.",
+    "keyPoints": [
+      "Monomorphic ICs cache 1 shape, achieving direct memory offset access.",
+      "Polymorphic ICs handle 2-4 shapes with small branch checks.",
+      "Megamorphic ICs (5+ shapes) degrade to slow dictionary lookups.",
+      "Functions should accept objects with consistent shapes to stay monomorphic."
+    ],
+    "closingImpression": "Maintaining monomorphic call-sites is the secret behind high-throughput JavaScript libraries like Fastify.",
+    "analogies": [
+      "A key rack: if you only ever drive one car, you grab the single key instantly; if you drive 50 cars, you must search through a giant drawer of keys."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Passing objects with varying shapes to hot utility functions.",
+      "why": "Quickly pushes the function's inline cache into the megamorphic state.",
+      "correct": "Normalize object shapes before passing them into high-frequency loops."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "How does TurboFan deoptimize when an IC becomes megamorphic?",
+      "answer": "TurboFan generates optimized machine code assuming the monomorphic shape check holds. If a new shape is encountered, the check fails (Bailout), and TurboFan deoptimizes the function back to Ignition bytecode interpretation.",
+      "specReference": "V8 TurboFan Compilation Pipeline: Deoptimization and Bailout"
+    }
+  ]
 }

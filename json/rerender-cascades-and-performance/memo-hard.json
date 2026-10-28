@@ -88,5 +88,48 @@
       "Hooks must be called in exact order matching the fiber memoizedState linked list."
     ],
     "verificationStatus": "VERIFIED_AND_TESTED"
-  }
+  },
+  "interviewCrossQuestions": [
+    {
+      "question": "How does Reselect achieve multi-input memoization in Redux applications?",
+      "answer": "Reselect's `createSelector` takes an array of input selectors and a result function. It caches the previous inputs and the previous result. On each call, it runs all input selectors and checks if their outputs match previous inputs via shallow reference equality (`===`). If ALL inputs match, it immediately returns the cached result without executing the result function.",
+      "difficulty": "advanced",
+      "whyAsked": "Standard Redux / enterprise architecture question."
+    }
+  ],
+  "realWorldUseCases": [
+    {
+      "scenario": "Redux Normalized Entity Selection",
+      "description": "Denormalizing relational database records (users, posts, comments) into compound view models with caching.",
+      "companies": "Discord, Slack, Airbnb",
+      "codeSnippet": "const selectUserPosts = createSelector([selectUsers, selectPosts], (u, p) => denormalize(u, p));"
+    }
+  ],
+  "howToExplain": {
+    "opening": "Reselect memoizes selector pipelines by checking input selector identity, ensuring complex data transformations only re-calculate when source slices change.",
+    "keyPoints": [
+      "Input selectors extract relevant state slices.",
+      "Result function executes only when input references change.",
+      "Default cache size is 1 (stores most recent input/output pair).",
+      "Prevents unnecessary selector re-computations and component re-renders."
+    ],
+    "closingImpression": "Selector memoization is essential for keeping Redux state derivation fast in massive enterprise state graphs.",
+    "analogies": [
+      "A chef preparing special salad dressings: if the requested ingredients (oil, vinegar) haven't changed, the chef pours from the batch already made."
+    ]
+  },
+  "commonMistakes": [
+    {
+      "mistake": "Creating a new selector instance inside a component body.",
+      "why": "Creates a brand new selector with an empty cache on every render, defeating all memoization.",
+      "correct": "Define selectors outside components or wrap in useMemo."
+    }
+  ],
+  "followUpDeepDive": [
+    {
+      "question": "What is Reselect 5.0's createSelector with lruMemoize?",
+      "answer": "Reselect 5.0 replaced the default single-entry memoizer with `lruMemoize`, supporting configurable cache capacity (maxSize) and custom equality checks.",
+      "specReference": "Reselect 5.0 Release Documentation"
+    }
+  ]
 }
