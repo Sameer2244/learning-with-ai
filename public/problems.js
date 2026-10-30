@@ -192,14 +192,16 @@
     }
   }
 
-  // Switch Track (JS Problems vs React Problems)
+  // Switch Track (JS Problems vs React Problems vs LeetCode DSA)
   function switchTrack(targetTrack) {
     if (currentTrack === targetTrack) return;
     currentTrack = targetTrack;
     const btnJs = document.getElementById('btnTrackJs');
     const btnReact = document.getElementById('btnTrackReact');
+    const btnDsa = document.getElementById('btnTrackDsa');
     if (btnJs) btnJs.classList.toggle('active', targetTrack === 'javascript');
     if (btnReact) btnReact.classList.toggle('active', targetTrack === 'react');
+    if (btnDsa) btnDsa.classList.toggle('active', targetTrack === 'dsa');
 
     state.masteredTopics = new Set(JSON.parse(localStorage.getItem(getMasteredKey()) || '[]'));
     state.userCodeHistory = JSON.parse(localStorage.getItem(getHistoryKey()) || '{}');
@@ -1344,11 +1346,13 @@
 
   // Setup Event Listeners
   function setupEventListeners() {
-    // Track pills (JS Problems vs React Problems)
+    // Track pills (JS Problems vs React Problems vs LeetCode DSA)
     const btnJs = document.getElementById('btnTrackJs');
     const btnReact = document.getElementById('btnTrackReact');
+    const btnDsa = document.getElementById('btnTrackDsa');
     if (btnJs) btnJs.addEventListener('click', () => switchTrack('javascript'));
     if (btnReact) btnReact.addEventListener('click', () => switchTrack('react'));
+    if (btnDsa) btnDsa.addEventListener('click', () => switchTrack('dsa'));
 
     // Search
     topicSearch.addEventListener('input', (e) => {

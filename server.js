@@ -8,6 +8,7 @@ const designSystemTopicsCatalog = require('./topics-design-system');
 const systemDesignTopicsCatalog = require('./topics-system-design');
 const challengesJs = require('./topics-challenges-js');
 const challengesReact = require('./topics-challenges-react');
+const challengesDsa = require('./topics-challenges-dsa');
 const db = require('./db');
 
 const app = express();
@@ -94,9 +95,12 @@ app.get(['/problems', '/coding'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'problems.html'));
 });
 
-// Challenges API (supports track=javascript, track=react)
+// Challenges API (supports track=javascript, track=react, track=dsa / leetcode)
 app.get('/api/challenges', (req, res) => {
   const track = (req.query.track || 'javascript').toLowerCase();
+  if (track === 'dsa' || track === 'leetcode') {
+    return res.json({ categories: challengesDsa, track: 'dsa' });
+  }
   if (track === 'react' || track === 'reactjs') {
     return res.json({ categories: challengesReact, track: 'react' });
   }
