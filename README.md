@@ -1,7 +1,7 @@
 # JS.DEPTH — End-to-End JavaScript & React Architecture Mastery Platform
 
-> **Stop Playing the Guessing Game in Interviews.**  
-> Master JavaScript and React runtime engine internals, mental models, and subtle interviewer traps with 100% offline verified test suites and authoritative architectural knowledge guides.
+> **Stop Playing the Guessing Game in Senior Interviews.**  
+> Master JavaScript and React runtime engine internals, mental models, and subtle interviewer traps with authoritative architectural knowledge guides and staff-level concept questions.
 
 ---
 
@@ -15,23 +15,27 @@ npm start
 Then visit:
 - **JavaScript Engine Track**: **[http://localhost:3000](http://localhost:3000)**
 - **React.js Mastery Track**: **[http://localhost:3000/react](http://localhost:3000/react)**
+- **Design System Architecture**: **[http://localhost:3000/design-system](http://localhost:3000/design-system)**
+- **System Design & Servers**: **[http://localhost:3000/system-design](http://localhost:3000/system-design)**
+- **Interview Problem Solving Arena**: **[http://localhost:3000/problems](http://localhost:3000/problems)** (Monaco Editor & Automated Test Runner)
 
-You can also seamlessly toggle between JavaScript and React at any time using the **Track Switcher** in the top navigation bar!
+You can also seamlessly toggle between tracks at any time using the **Track Switcher** in the top navigation bar!
 
 ---
 
-## ⚡ 100% Offline Verified Engine
+## ⚡ 100% Concept-Based & Zero-Friction Learning
 
-The platform operates completely standalone with zero external or local LLM dependencies:
-- **Zero API Keys or GPU Required**: Runs on any machine instantly.
-- **Pre-Generated Verified JSON Answers**: Detailed, online-verified answers for all questions stored in `/json/`.
-- **In-Browser Execution Sandbox**: Fast, client-side automated unit testing with immediate feedback.
+The platform is designed specifically for deep conceptual understanding without problem-solving editor distraction:
+- **No Coding Puzzles or Test Runners**: Pure focus on reading, internalizing mental models, and mastering engine internals.
+- **Interactive Staff-Level Concept Questions**: 10–15 deep architectural interview questions per topic with expandable expert answers.
+- **100% Offline & Instant**: Zero external or local LLM dependencies, running instantly on any machine.
+- **Dedicated Knowledge Information Arena**: Clean 2-column interface featuring Production Impact banners, Mental Models, Senior Traps, and Masterclass Guides with Prism syntax highlighting.
 
 ---
 
 ## 📚 Curriculum Structure
 
-### JavaScript Mastery Track (12 Categories, 24 Topics, 72 Questions across Basic/Medium/Hard)
+### JavaScript Mastery Track (12 Categories, 24 Topics)
 1. **JS Engine & Memory Internals**: Execution Context & Call Stack, Scope Chain & Closures, Hoisting & TDZ, `this` Binding Rules
 2. **Asynchronous JS & Concurrency**: Event Loop & Microtasks/Macrotasks, Promise Internals & Combinators, Async/Await Generators
 3. **Prototypes, Objects & Type System**: Prototype Chain & Shadowing, Type Coercion Rules, Object Descriptors & Circular Deep Cloning
@@ -45,7 +49,7 @@ The platform operates completely standalone with zero external or local LLM depe
 11. **Binary Data, Buffers & Memory Systems**: ArrayBuffer, DataView Explicit Endianness, Base64 Bitwise Decoders, Circular Ring Buffers
 12. **Module Systems: ESM vs CommonJS**: CJS require cache, ESM Live Bindings vs Value Snapshots, Circular Dependency Graph Resolution
 
-### React.js Mastery Track (8 Categories, 19 Topics, 57 Questions across Basic/Medium/Hard)
+### React.js Mastery Track (8 Categories, 19 Topics)
 1. **Fiber Architecture & Reconciliation**: Fiber Linked List Traversal, Diffing Algorithm & Key Traps, Render vs Commit Phase
 2. **Hooks State Machine & Closures**: Hooks Linked List, Stale Closures & Functional Updates, Effect Timings (`useEffect`/`useLayoutEffect`/`useInsertionEffect`)
 3. **Re-render Cascades & Performance**: Re-render Triggers & `React.memo`, Context Churn & Splitting, Component Composition over Memo
@@ -60,17 +64,14 @@ The platform operates completely standalone with zero external or local LLM depe
 ## 🛠️ Features
 
 1. **Curriculum Explorer**: Real-time topic search, status tracking, and category grouping.
-2. **Curated Comprehensive Challenge Catalog**: Real-world interview problems targeting the exact tricky edge cases tested at top tech companies.
-3. **The Interview Trap Decoded**: Revealing why typical candidates guess wrong and what mental model is required to solve it.
-4. **In-Browser Execution Sandbox**: Live execution capturing `console.log`, return values, and automated unit test assertions.
-5. **Architectural Knowledge Guides**:
+2. **The Interview Trap Decoded**: Revealing why typical candidates guess wrong and what mental model is required to answer correctly.
+3. **Interactive Concept Question Cards**: Expand and collapse staff-level questions to read the question, why interviewers ask it, and the comprehensive answer.
+4. **Architectural Knowledge Guides**:
    - In-depth mental models and step-by-step lifecycles
-   - V8 / Fiber engine low-level mechanics
+   - V8 / SpiderMonkey / React Fiber engine low-level mechanics
    - Big-O algorithmic and space complexity analysis
    - Online specifications and standards verification
-6. **Local Persistence**: Saves your code solutions and completion progress automatically in browser storage.
-7. **Strict Single JSON File Storage & Offline Architecture**:
-   - **Strictly One JSON File Per Question**: 171 verified questions (JavaScript, React, System Design, Design System) each stored in exactly one individual JSON file under `./json/`.
-   - **Unified Schema**: Consistent question schema across JavaScript, React, System Design, and Design System tracks.
-   - **Pure Local JSON Storage**: All user-saved knowledge guides are persisted in `knowledge.json` with in-place updates (zero versioning, zero database overhead).
-   - **Dedicated Saved Guides Panel**: Search, filter, view, and delete saved guides from local JSON with a single click.
+5. **Local Persistence**: Saves your mastered progress automatically in browser storage.
+6. **Strict Single JSON File Storage**:
+   - All user-saved knowledge guides are persisted in `knowledge.json` with in-place updates.
+   - Dedicated Saved Guides Panel to search, filter, view, and delete saved guides.

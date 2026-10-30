@@ -1,37 +1,24 @@
-// JS.DEPTH — Interactive Client Application
-// End-to-End JavaScript & React Mastery Platform with Monaco Editor & Automated Test Runner
+// JS.DEPTH / REACT.DEPTH — Dedicated Deep Knowledge Masterclass Controller
+// Pure Conceptual Architecture & Engine Internals (No Code Editor, No Problem Puzzles)
 
 (function () {
   'use strict';
 
-  // Track Awareness (JavaScript vs React)
+  // Track Awareness (defaults to 'javascript', override via window.APP_TRACK = 'react')
   const currentTrack = window.APP_TRACK || 'javascript';
   const storageMasteredKey = 'jsdepth_mastered_' + currentTrack;
-  const storageHistoryKey = 'jsdepth_code_history_' + currentTrack;
-
-  // Auto-reset solved questions data migration
-  if (!localStorage.getItem('jsdepth_reset_solved_v1')) {
-    localStorage.removeItem('jsdepth_mastered_javascript');
-    localStorage.removeItem('jsdepth_mastered_react');
-    localStorage.removeItem('jsdepth_code_history_javascript');
-    localStorage.removeItem('jsdepth_code_history_react');
-    localStorage.setItem('jsdepth_reset_solved_v1', 'true');
-  }
+  const storageThemeKey = 'jsdepth_theme';
 
   // State Management
   const state = {
     categories: [],
     selectedTopic: null,
-    selectedDifficulty: 'Basic',
-    currentQuestion: null,
+    selectedCategory: null,
     masteredTopics: new Set(JSON.parse(localStorage.getItem(storageMasteredKey) || '[]')),
-    userCodeHistory: JSON.parse(localStorage.getItem(storageHistoryKey) || '{}'),
-    lastConsoleOutput: '',
+    activeView: 'guide', // 'guide' | 'saved'
+    currentGuideMarkdown: '',
     storageMode: 'json'
   };
-
-  // Monaco Editor Reference
-  let monacoEditor = null;
 
   // DOM Elements
   const modelStatusPill = document.getElementById('modelStatusPill');
@@ -46,49 +33,24 @@
 
   const crumbCategory = document.getElementById('crumbCategory');
   const crumbTopic = document.getElementById('crumbTopic');
-  const diffChips = document.querySelectorAll('.diff-chip');
-  const onlineSearchCheckbox = document.getElementById('onlineSearchCheckbox');
-  const explainTopicBtn = document.getElementById('explainTopicBtn');
-  const generateQuestionBtn = document.getElementById('generateQuestionBtn');
+  const markMasteredBtn = document.getElementById('markMasteredBtn');
+  const generateKnowledgeBtn = document.getElementById('generateKnowledgeBtn');
+  const copyGuideBtn = document.getElementById('copyGuideBtn');
 
-  const problemTitle = document.getElementById('problemTitle');
-  const problemDifficulty = document.getElementById('problemDifficulty');
-  const problemConcept = document.getElementById('problemConcept');
-  const problemDescription = document.getElementById('problemDescription');
-  const toggleTrapBtn = document.getElementById('toggleTrapBtn');
-  const interviewTrapBox = document.getElementById('interviewTrapBox');
-  const interviewTrapText = document.getElementById('interviewTrapText');
+  const topicTitle = document.getElementById('topicTitle');
+  const topicBadge = document.getElementById('topicBadge');
+  const topicImportanceText = document.getElementById('topicImportanceText');
+  const topicMentalModel = document.getElementById('topicMentalModel');
+  const topicTraps = document.getElementById('topicTraps');
+  const interviewQuestionsCard = document.getElementById('interviewQuestionsCard');
+  const topicInterviewQuestions = document.getElementById('topicInterviewQuestions');
 
-  const monacoEditorContainer = document.getElementById('monacoEditorContainer');
-  const codeEditor = document.getElementById('codeEditor');
-  const lineNumbers = document.getElementById('lineNumbers');
-  const resetCodeBtn = document.getElementById('resetCodeBtn');
-  const formatCodeBtn = document.getElementById('formatCodeBtn');
-  const runCodeBtn = document.getElementById('runCodeBtn');
-  const evaluateBtn = document.getElementById('evaluateBtn');
+  const tabGuideBtn = document.getElementById('tabGuideBtn');
+  const tabSavedBtn = document.getElementById('tabSavedBtn');
+  const guideView = document.getElementById('guideView');
+  const savedView = document.getElementById('savedView');
+  const guideContent = document.getElementById('guideContent');
 
-  // Test Results & Console Tabs
-  const tabTestCasesBtn = document.getElementById('tabTestCasesBtn');
-  const tabConsoleBtn = document.getElementById('tabConsoleBtn');
-  const testCasesPane = document.getElementById('testCasesPane');
-  const consolePane = document.getElementById('consolePane');
-  const testSummaryBadge = document.getElementById('testSummaryBadge');
-  const testBanner = document.getElementById('testBanner');
-  const testCasesList = document.getElementById('testCasesList');
-
-  const consoleOutput = document.getElementById('consoleOutput');
-  const execTime = document.getElementById('execTime');
-  const clearConsoleBtn = document.getElementById('clearConsoleBtn');
-
-  // Right Panel Tabs & Content
-  const tabKnowledgeBtn = document.getElementById('tabKnowledgeBtn');
-  const tabSavedGuidesBtn = document.getElementById('tabSavedGuidesBtn');
-  const tabEvalBtn = document.getElementById('tabEvalBtn');
-  const knowledgePane = document.getElementById('knowledgePane');
-  const savedGuidesPane = document.getElementById('savedGuidesPane');
-  const evalPane = document.getElementById('evalPane');
-  const emptyKnowledgeState = document.getElementById('emptyKnowledgeState');
-  const knowledgeContent = document.getElementById('knowledgeContent');
   const savedCountBadge = document.getElementById('savedCountBadge');
   const savedGuidesSearch = document.getElementById('savedGuidesSearch');
   const refreshSavedGuidesBtn = document.getElementById('refreshSavedGuidesBtn');
@@ -99,95 +61,97 @@
   const btnStorageJson = document.getElementById('btnStorageJson');
   const panelStorageJsonBtn = document.getElementById('panelStorageJsonBtn');
 
-  const evaluationContent = document.getElementById('evaluationContent');
-  const markMasteredBtn = document.getElementById('markMasteredBtn');
-
-  const evaluationPanel = document.getElementById('evaluationPanel');
-  const toggleMaximizeBtn = document.getElementById('toggleMaximizeBtn');
-  const panelMaxTopicBadge = document.getElementById('panelMaxTopicBadge');
-  const panelMaxTopicName = document.getElementById('panelMaxTopicName');
-  const floatingMinimizeBtn = document.getElementById('floatingMinimizeBtn');
-  const emptyStateGenerateBtn = document.getElementById('emptyStateGenerateBtn');
-  const emptyStateMaximizeBtn = document.getElementById('emptyStateMaximizeBtn');
-
-  // Initialize
+  // Initialize Application
   async function init() {
-    setupTheme();
-    setupEditor();
+    initTheme();
     setupEventListeners();
     await initStorageMode();
-    await checkModelHealth();
+    checkHealth();
     await loadTopics();
-    updateMasteryProgress();
-    await updateSavedGuidesCount();
+    updateSavedGuidesCount();
   }
 
   // Theme Management
-  function setupTheme() {
-    const savedTheme = localStorage.getItem('jsdepth_theme') || 'dark';
+  function initTheme() {
+    const savedTheme = localStorage.getItem(storageThemeKey) || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeIcon(savedTheme);
+  }
 
-    themeToggle.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('jsdepth_theme', next);
-      updateThemeIcon(next);
-
-      if (window.monaco && monaco.editor) {
-        monaco.editor.setTheme(next === 'light' ? 'vs' : 'vs-dark');
-      }
-    });
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem(storageThemeKey, next);
+    updateThemeIcon(next);
   }
 
   function updateThemeIcon(theme) {
+    if (!themeToggle) return;
     const icon = themeToggle.querySelector('i');
-    if (theme === 'dark') {
-      icon.className = 'fa-solid fa-moon';
-    } else {
-      icon.className = 'fa-solid fa-sun';
+    if (icon) {
+      icon.className = theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
     }
   }
 
-  // Model Health Check
-  async function checkModelHealth() {
+  // Check System Health
+  async function checkHealth() {
+    if (!modelStatusPill) return;
     try {
       const res = await fetch('/api/health');
       const data = await res.json();
-      const indicator = modelStatusPill ? modelStatusPill.querySelector('.status-indicator') : null;
-      const label = modelStatusPill ? modelStatusPill.querySelector('.model-name') : null;
+      const indicator = modelStatusPill.querySelector('.status-indicator');
+      const name = modelStatusPill.querySelector('.model-name');
 
       if (data.status === 'ok') {
-        if (indicator) indicator.className = 'status-indicator connected';
-        if (label) label.textContent = 'Verified Suite Ready';
-        if (modelStatusPill) modelStatusPill.title = 'Offline Verified Engine & Test Suite Ready';
+        if (indicator) indicator.className = 'status-indicator online connected';
+        if (name) name.textContent = 'Verified Suite Ready';
+        modelStatusPill.title = 'Offline Verified Engine Ready';
       } else {
         if (indicator) indicator.className = 'status-indicator offline';
-        if (label) label.textContent = 'Server Offline';
+        if (name) name.textContent = 'Server Offline';
       }
     } catch (err) {
-      const indicator = modelStatusPill ? modelStatusPill.querySelector('.status-indicator') : null;
-      const label = modelStatusPill ? modelStatusPill.querySelector('.model-name') : null;
+      const indicator = modelStatusPill.querySelector('.status-indicator');
+      const name = modelStatusPill.querySelector('.model-name');
       if (indicator) indicator.className = 'status-indicator offline';
-      if (label) label.textContent = 'Server Offline';
+      if (name) name.textContent = 'Server Offline';
     }
   }
 
-  // Load Topics from API
+  // Load Topics from Backend
   async function loadTopics() {
     try {
+      const trackLabel = currentTrack === 'react' ? 'React' : 'JavaScript';
+      topicsTree.innerHTML = `<div class="loading-state"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading ${trackLabel} syllabus...</div>`;
       const res = await fetch('/api/topics?track=' + currentTrack);
       const data = await res.json();
       state.categories = data.categories || [];
       renderTopicsTree(state.categories);
+      updateMasteryProgress();
 
-      // Select first topic by default
-      if (state.categories.length > 0 && state.categories[0].topics.length > 0) {
+      // Check URL hash for direct topic navigation (e.g. #execution-context)
+      const hash = window.location.hash.replace(/^#/, '');
+      let defaultSelected = false;
+
+      if (hash) {
+        for (const cat of state.categories) {
+          const match = cat.topics.find(t => t.id === hash);
+          if (match) {
+            selectTopic(match, cat);
+            defaultSelected = true;
+            break;
+          }
+        }
+      }
+
+      // Fallback: select first topic by default
+      if (!defaultSelected && state.categories.length > 0 && state.categories[0].topics.length > 0) {
         selectTopic(state.categories[0].topics[0], state.categories[0]);
       }
     } catch (err) {
-      topicsTree.innerHTML = `<div class="empty-eval-state"><p style="color:var(--accent-danger);">Failed to load syllabus</p></div>`;
+      console.error('Failed to load syllabus:', err);
+      topicsTree.innerHTML = `<div class="empty-eval-state"><p style="color:var(--accent-danger);">Failed to load syllabus: ${err.message}</p></div>`;
     }
   }
 
@@ -196,35 +160,66 @@
     topicsTree.innerHTML = '';
     const q = filter.toLowerCase().trim();
 
-    categories.forEach(cat => {
-      const filteredTopics = cat.topics.filter(t => 
-        !q || t.title.toLowerCase().includes(q) || t.summary.toLowerCase().includes(q) || t.tag.toLowerCase().includes(q)
+    categories.forEach((cat) => {
+      const matchingTopics = cat.topics.filter(t => 
+        !q || 
+        t.title.toLowerCase().includes(q) || 
+        (t.tag && t.tag.toLowerCase().includes(q)) || 
+        (t.summary && t.summary.toLowerCase().includes(q))
       );
 
-      if (filteredTopics.length === 0) return;
+      if (q && matchingTopics.length === 0) return;
 
       const catEl = document.createElement('div');
       catEl.className = 'category-group';
 
       const catHeader = document.createElement('div');
       catHeader.className = 'category-header';
-      catHeader.innerHTML = `<span>${cat.category}</span><i class="fa-solid fa-angle-down"></i>`;
+      
+      const masteredInCat = cat.topics.filter(t => state.masteredTopics.has(t.id)).length;
+      
+      const accentColor = currentTrack === 'react' ? '#38bdf8' : '#eab308';
+      const accentBg = currentTrack === 'react' ? 'rgba(56,189,248,0.12)' : 'rgba(234,179,8,0.12)';
+      const accentBorder = currentTrack === 'react' ? 'rgba(56,189,248,0.3)' : 'rgba(234,179,8,0.3)';
+
+      catHeader.innerHTML = `
+        <div class="cat-title-wrap">
+          <i class="fa-solid fa-chevron-down cat-arrow"></i>
+          <span>${cat.category}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span class="category-badge" style="background:${accentBg}; color:${accentColor}; border:1px solid ${accentBorder};">${masteredInCat}/${cat.topics.length}</span>
+        </div>
+      `;
 
       const topicList = document.createElement('div');
-      topicList.className = 'topic-list';
+      topicList.className = 'category-topics';
 
-      filteredTopics.forEach(t => {
+      catHeader.addEventListener('click', () => {
+        catHeader.classList.toggle('collapsed');
+        topicList.classList.toggle('collapsed');
+      });
+
+      matchingTopics.forEach(t => {
         const item = document.createElement('div');
-        const isMastered = state.masteredTopics.has(t.id);
-        const isActive = state.selectedTopic && state.selectedTopic.id === t.id;
+        item.className = 'topic-item';
+        item.dataset.topicId = t.id;
 
-        item.className = `topic-item ${isActive ? 'active' : ''} ${isMastered ? 'mastered' : ''}`;
+        if (state.selectedTopic && state.selectedTopic.id === t.id) {
+          item.classList.add('active');
+        }
+
+        const isMastered = state.masteredTopics.has(t.id);
+        if (isMastered) {
+          item.classList.add('mastered');
+        }
+
         item.innerHTML = `
-          <div style="display:flex; align-items:center;">
-            <i class="topic-status-icon ${isMastered ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'}"></i>
-            <span>${t.title}</span>
+          <div class="topic-item-left">
+            <span class="topic-status-dot ${isMastered ? 'done' : ''}"><i class="fa-solid fa-check"></i></span>
+            <span class="topic-item-title">${t.title}</span>
           </div>
-          <span class="topic-badge">${t.tag}</span>
+          <span class="topic-badge" style="border-color:${accentBorder};">${t.tag || 'Architecture'}</span>
         `;
 
         item.addEventListener('click', () => {
@@ -242,1034 +237,145 @@
     });
   }
 
-  // Select Topic
-  function selectTopic(topic, category) {
+  // Select a Topic
+  async function selectTopic(topic, category) {
     state.selectedTopic = topic;
+    state.selectedCategory = category;
+
+    // Update URL hash without jumping
+    if (history.replaceState) {
+      history.replaceState(null, null, '#' + topic.id);
+    }
+
+    // Breadcrumbs
     crumbCategory.textContent = category.category.replace(/^\d+\.\s*/, '');
     crumbTopic.textContent = topic.title;
 
-    if (panelMaxTopicName) {
-      panelMaxTopicName.textContent = topic.title;
-    }
+    // Hero Overview
+    topicTitle.textContent = topic.title;
+    topicBadge.textContent = topic.tag || category.badge || (currentTrack === 'react' ? 'React Architecture' : 'JS Engine');
+    topicImportanceText.textContent = topic.importance || topic.summary;
+    topicMentalModel.textContent = topic.mentalModel || topic.summary;
+    topicTraps.textContent = topic.traps || 'Subtle engine behaviors and edge cases that typical candidates fail to explain.';
+
+    // Interactive Concept Interview Questions Card
+    renderInterviewQuestions(topic.interviewQuestions);
 
     updateMasteredButtonState();
+    switchView('guide');
 
-    // Pick challenge for current difficulty
-    let challenge = null;
-    if (topic.challenges) {
-      challenge = topic.challenges[state.selectedDifficulty] || topic.challenges.Basic;
-    } else {
-      challenge = topic.starterChallenge;
-    }
-
-    setProblem(challenge);
+    // Load guide
+    await checkAndLoadGuide(topic);
   }
 
-  // Strip markdown code block wrappers
-  function cleanCodeSnippet(code) {
-    if (!code) return '';
-    let cleaned = code.trim();
-    if (cleaned.startsWith('```')) {
-      cleaned = cleaned.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '');
-    }
-    return cleaned;
-  }
+  // Render Interactive Concept Questions
+  function renderInterviewQuestions(questions) {
+    if (!interviewQuestionsCard || !topicInterviewQuestions) return;
 
-  // Update Problem View
-  function setProblem(challenge) {
-    state.currentQuestion = challenge;
-    problemTitle.textContent = challenge.title;
-    
-    // Set difficulty badge and sync active diff-chip
-    const diff = challenge.difficulty || state.selectedDifficulty;
-    state.selectedDifficulty = diff;
-    problemDifficulty.textContent = diff;
-    problemDifficulty.className = 'badge diff-badge ' + diff;
-
-    diffChips.forEach(chip => {
-      if (chip.dataset.diff === diff) {
-        chip.classList.add('active');
-      } else {
-        chip.classList.remove('active');
-      }
-    });
-
-    problemConcept.textContent = challenge.concept || (state.selectedTopic ? state.selectedTopic.tag : 'Deep Concept');
-
-    // Render markdown description
-    problemDescription.innerHTML = marked.parse(challenge.description || '');
-
-    // Interview trap
-    interviewTrapText.textContent = challenge.interviewTrap || state.selectedTopic?.traps || 'Understanding engine execution lifecycle without guessing.';
-    interviewTrapBox.style.display = 'none';
-    toggleTrapBtn.innerHTML = '<i class="fa-solid fa-eye"></i> The Trap';
-
-    // Populate Code Editor
-    const rawStarter = cleanCodeSnippet(challenge.starterCode);
-    const solutionCode = cleanCodeSnippet(challenge.solutionCode);
-    let savedCode = state.userCodeHistory[challenge.title];
-
-    // If the saved code is identical to the solution, discard it so user gets the blank starter template to solve
-    if (savedCode && solutionCode && savedCode.trim() === solutionCode.trim()) {
-      delete state.userCodeHistory[challenge.title];
-      localStorage.setItem(storageHistoryKey, JSON.stringify(state.userCodeHistory));
-      savedCode = null;
-    }
-
-    const codeToSet = savedCode || rawStarter || '// Write solution here\n';
-    setCode(codeToSet);
-
-    // Render Test Cases
-    renderTestCases(challenge.testCases || []);
-
-    // Check local JSON storage for saved knowledge guide
-    checkAndLoadSavedGuide(challenge);
-  }
-
-  // HTML escaping utility
-  function escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
-  // Deep Equality Comparison
-  function deepEqual(a, b) {
-    if (a === b) return true;
-    if (typeof a === 'number' && typeof b === 'number' && Number.isNaN(a) && Number.isNaN(b)) return true;
-    if (a == null || b == null) return false;
-    if (typeof a !== typeof b) return false;
-    if (typeof a !== 'object') return false;
-    if (Array.isArray(a) !== Array.isArray(b)) return false;
-    if (Array.isArray(a)) {
-      if (a.length !== b.length) return false;
-      for (let i = 0; i < a.length; i++) {
-        if (!deepEqual(a[i], b[i])) return false;
-      }
-      return true;
-    }
-    const keysA = Object.keys(a);
-    const keysB = Object.keys(b);
-    if (keysA.length !== keysB.length) return false;
-    for (const k of keysA) {
-      if (!Object.prototype.hasOwnProperty.call(b, k) || !deepEqual(a[k], b[k])) return false;
-    }
-    return true;
-  }
-
-  // Render Test Cases List
-  function renderTestCases(testCases = [], results = null) {
-    testCasesList.innerHTML = '';
-    if (!testCases || testCases.length === 0) {
-      testCasesList.innerHTML = '<div style="color:var(--text-muted); padding:10px; font-size:13px;">No automated test cases defined for this problem.</div>';
-      testSummaryBadge.textContent = 'None';
-      testSummaryBadge.className = 'test-summary-badge';
+    if (!questions || questions.length === 0) {
+      interviewQuestionsCard.style.display = 'none';
       return;
     }
 
-    if (!results) {
-      // Ready / Idle state
-      testSummaryBadge.textContent = `${testCases.length} Tests Ready`;
-      testSummaryBadge.className = 'test-summary-badge';
-      testBanner.className = 'test-banner idle';
-      testBanner.innerHTML = `
-        <span class="test-banner-icon"><i class="fa-solid fa-circle-play"></i></span>
-        <span class="test-banner-text">Click <strong>Run Tests</strong> (or press <kbd>Ctrl</kbd> + <kbd>Enter</kbd>) to verify your solution against ${testCases.length} test cases.</span>
-      `;
-    }
-
-    testCases.forEach((tc, idx) => {
-      const res = results ? results[idx] : null;
-      const card = document.createElement('div');
-
-      let statusClass = 'pending';
-      let iconHtml = '<i class="fa-regular fa-circle test-icon pending"></i>';
-      let statusPill = '<span class="test-status-pill pending">Pending</span>';
-
-      if (res) {
-        if (res.pass) {
-          statusClass = 'passed';
-          iconHtml = '<i class="fa-solid fa-circle-check test-icon passed"></i>';
-          statusPill = '<span class="test-status-pill passed">PASS</span>';
-        } else {
-          statusClass = 'failed';
-          iconHtml = '<i class="fa-solid fa-circle-xmark test-icon failed"></i>';
-          statusPill = '<span class="test-status-pill failed">FAIL</span>';
-        }
-      }
-
-      card.className = `test-case-card ${statusClass}`;
-      card.innerHTML = `
-        <div class="test-card-header">
-          <div class="test-title-wrap">
-            ${iconHtml}
-            <span>Test Case ${tc.id || idx + 1}: ${escapeHtml(tc.name)}</span>
-          </div>
-          <div class="test-meta">
-            ${res ? `<span class="test-duration">${res.duration} ms</span>` : ''}
-            ${statusPill}
-          </div>
-        </div>
-        <div class="test-card-body">
-          <div class="test-row">
-            <span class="test-label">Input:</span>
-            <span class="test-val">${escapeHtml(typeof tc.input === 'object' ? JSON.stringify(tc.input) : String(tc.input))}</span>
-          </div>
-          <div class="test-row">
-            <span class="test-label">Expected:</span>
-            <span class="test-val">${escapeHtml(typeof tc.expected === 'object' ? JSON.stringify(tc.expected) : String(tc.expected))}</span>
-          </div>
-          ${res ? `
-          <div class="test-row">
-            <span class="test-label">Received:</span>
-            <span class="test-val ${res.pass ? 'match' : 'mismatch'}">${escapeHtml(typeof res.received === 'object' ? JSON.stringify(res.received) : String(res.received))}</span>
-          </div>
-          ` : ''}
-        </div>
-      `;
-      testCasesList.appendChild(card);
-    });
-  }
-
-  // Switch Results Panel Tabs (Test Cases vs Console)
-  function switchResultsTab(tabName) {
-    if (tabName === 'testcases') {
-      tabTestCasesBtn.classList.add('active');
-      tabConsoleBtn.classList.remove('active');
-      testCasesPane.style.display = 'flex';
-      consolePane.style.display = 'none';
-    } else {
-      tabConsoleBtn.classList.add('active');
-      tabTestCasesBtn.classList.remove('active');
-      consolePane.style.display = 'flex';
-      testCasesPane.style.display = 'none';
-    }
-  }
-
-  // Code Editor Management (Monaco + Textarea Fallback)
-  function setupEditor() {
-    initMonaco();
-
-    // Fallback textarea event listeners
-    if (codeEditor) {
-      codeEditor.addEventListener('input', () => {
-        updateLineNumbers();
-        if (state.currentQuestion) {
-          state.userCodeHistory[state.currentQuestion.title] = codeEditor.value;
-          localStorage.setItem(storageHistoryKey, JSON.stringify(state.userCodeHistory));
-        }
-      });
-
-      codeEditor.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
-          e.preventDefault();
-          const start = codeEditor.selectionStart;
-          const end = codeEditor.selectionEnd;
-          codeEditor.value = codeEditor.value.substring(0, start) + '  ' + codeEditor.value.substring(end);
-          codeEditor.selectionStart = codeEditor.selectionEnd = start + 2;
-          updateLineNumbers();
-        }
-
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-          e.preventDefault();
-          runCode();
-        }
-      });
-    }
-  }
-
-  // Initialize VS Code Monaco Editor
-  function initMonaco() {
-    if (window.monaco && monaco.editor) {
-      createMonacoInstance();
-      return;
-    }
-
-    if (typeof require !== 'undefined' && require.config) {
-      try {
-        require.config({
-          paths: {
-            vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs'
-          }
-        });
-
-        require(['vs/editor/editor.main'], function () {
-          createMonacoInstance();
-        });
-      } catch (e) {
-        console.warn('Monaco loader notice:', e);
-        showTextareaFallback();
-      }
-    } else {
-      showTextareaFallback();
-    }
-  }
-
-  function createMonacoInstance() {
-    if (!monacoEditorContainer || monacoEditor) return;
-
-    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-
-    try {
-      monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-        noSemanticValidation: true,
-        noSyntaxValidation: false
-      });
-
-      monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
-        target: monaco.languages.typescript.ScriptTarget.ES2022,
-        allowNonTextExtensions: true,
-        allowJs: true,
-        jsx: monaco.languages.typescript.JsxEmit.React
-      });
-
-      const initialValue = codeEditor ? codeEditor.value : '// Write solution here\n';
-
-      monacoEditor = monaco.editor.create(monacoEditorContainer, {
-        value: initialValue,
-        language: 'javascript',
-        theme: isLight ? 'vs' : 'vs-dark',
-        fontSize: 14,
-        fontFamily: "'Fira Code', 'JetBrains Mono', Consolas, 'Courier New', monospace",
-        fontLigatures: true,
-        automaticLayout: true,
-        lineNumbers: 'on',
-        tabSize: 2,
-        insertSpaces: true,
-        bracketPairColorization: {
-          enabled: true
-        },
-        autoClosingBrackets: 'always',
-        autoClosingQuotes: 'always',
-        autoClosingDelete: 'always',
-        autoClosingOvertype: 'always',
-        quickSuggestions: {
-          other: true,
-          comments: false,
-          strings: true
-        },
-        suggestOnTriggerCharacters: true,
-        wordBasedSuggestions: "allDocuments",
-        formatOnPaste: true,
-        formatOnType: true,
-        minimap: { enabled: false },
-        scrollBeyondLastLine: false,
-        cursorBlinking: 'smooth',
-        cursorSmoothCaretAnimation: 'on',
-        padding: { top: 12, bottom: 12 }
-      });
-
-      // Hide textarea and line numbers once Monaco is live
-      if (codeEditor) codeEditor.style.display = 'none';
-      if (lineNumbers) lineNumbers.style.display = 'none';
-
-      monacoEditor.onDidChangeModelContent(() => {
-        const val = monacoEditor.getValue();
-        if (state.currentQuestion) {
-          state.userCodeHistory[state.currentQuestion.title] = val;
-          localStorage.setItem(storageHistoryKey, JSON.stringify(state.userCodeHistory));
-        }
-      });
-
-      monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-        runCode();
-      });
-    } catch (err) {
-      console.warn('Monaco initialization failed, using textarea:', err);
-      showTextareaFallback();
-    }
-  }
-
-  function showTextareaFallback() {
-    if (codeEditor) codeEditor.style.display = 'block';
-    if (lineNumbers) lineNumbers.style.display = 'block';
-  }
-
-  function getCode() {
-    return monacoEditor ? monacoEditor.getValue() : (codeEditor ? codeEditor.value : '');
-  }
-
-  function setCode(code) {
-    if (monacoEditor) {
-      monacoEditor.setValue(code);
-    }
-    if (codeEditor) {
-      codeEditor.value = code;
-      updateLineNumbers();
-    }
-  }
-
-  function updateLineNumbers() {
-    if (!lineNumbers || !codeEditor) return;
-    const lines = codeEditor.value.split('\n').length;
-    let numbers = '';
-    for (let i = 1; i <= Math.max(lines, 1); i++) {
-      numbers += i + '\n';
-    }
-    lineNumbers.textContent = numbers;
-  }
-
-  // Execute Code and Run Test Cases in Browser Sandbox
-  async function runCode() {
-    const code = getCode();
-    consoleOutput.innerHTML = '';
-    const logs = [];
-    const startTime = performance.now();
-
-    // Capture console methods
-    const originalLog = console.log;
-    const originalWarn = console.warn;
-    const originalError = console.error;
-
-    function formatArg(arg) {
-      if (arg === null) return 'null';
-      if (arg === undefined) return 'undefined';
-      if (typeof arg === 'object') {
-        try {
-          return JSON.stringify(arg, null, 2);
-        } catch (e) {
-          return Object.prototype.toString.call(arg);
-        }
-      }
-      return String(arg);
-    }
-
-    function appendLog(type, args) {
-      const text = args.map(formatArg).join(' ');
-      logs.push(`[${type.toUpperCase()}] ${text}`);
-      const line = document.createElement('div');
-      line.className = `log-line ${type}`;
-      line.textContent = `> ${text}`;
-      consoleOutput.appendChild(line);
-      consoleOutput.scrollTop = consoleOutput.scrollHeight;
-    }
-
-    console.log = (...args) => { appendLog('log', args); originalLog.apply(console, args); };
-    console.warn = (...args) => { appendLog('warn', args); originalWarn.apply(console, args); };
-    console.error = (...args) => { appendLog('error', args); originalError.apply(console, args); };
-
-    // Auto-switch to test cases tab
-    switchResultsTab('testcases');
-
-    const testCases = state.currentQuestion?.testCases || [];
-    const results = [];
-    let passedCount = 0;
-
-    try {
-      // Support React JSX compilation if Babel is available
-      let executableCode = code;
-      if (window.Babel && /<[a-zA-Z0-9_\s="'{}/]+>/.test(code)) {
-        try {
-          executableCode = Babel.transform(code, { presets: ['react'] }).code;
-        } catch (babelErr) {
-          appendLog('error', ['[JSX Transpile Error]: ' + babelErr.message]);
-          testBanner.className = 'test-banner failure';
-          testBanner.innerHTML = `<span class="test-banner-icon"><i class="fa-solid fa-triangle-exclamation"></i></span><span class="test-banner-text">JSX Transpilation Error: ${escapeHtml(babelErr.message)}</span>`;
-          return;
-        }
-      }
-
-      // Execute each test case
-      for (const tc of testCases) {
-        const tcStart = performance.now();
-        try {
-          const runner = new Function('deepEqual', `
-            return (async () => {
-              ${executableCode}
-              ;
-              ${tc.testFn}
-            })();
-          `);
-
-          const out = await runner(deepEqual);
-          const dur = Math.round((performance.now() - tcStart) * 10) / 10;
-
-          if (out && typeof out === 'object' && typeof out.pass === 'boolean') {
-            if (out.pass) passedCount++;
-            results.push({
-              pass: out.pass,
-              received: 'received' in out ? out.received : out,
-              expected: 'expected' in out ? out.expected : tc.expected,
-              duration: dur
-            });
-          } else {
-            const pass = deepEqual(out, tc.expected);
-            if (pass) passedCount++;
-            results.push({
-              pass,
-              received: out,
-              expected: tc.expected,
-              duration: dur
-            });
-          }
-        } catch (err) {
-          const dur = Math.round((performance.now() - tcStart) * 10) / 10;
-          results.push({
-            pass: false,
-            received: `${err.name}: ${err.message}`,
-            expected: tc.expected,
-            duration: dur
-          });
-        }
-      }
-
-      // If no test cases are defined, execute raw code in sandbox
-      if (testCases.length === 0) {
-        const wrapped = `(async function() {\n${executableCode}\n})();`;
-        const result = await eval(wrapped);
-        if (result !== undefined) {
-          appendLog('log', ['[Return Value]:', result]);
-        }
-      }
-    } finally {
-      console.log = originalLog;
-      console.warn = originalWarn;
-      console.error = originalError;
-
-      const duration = (performance.now() - startTime).toFixed(1);
-      execTime.textContent = `${duration} ms`;
-
-      if (logs.length === 0) {
-        consoleOutput.innerHTML = `<div class="console-placeholder">// Code executed cleanly without console logs (${duration} ms)</div>`;
-      }
-      state.lastConsoleOutput = logs.join('\n');
-
-      // Update Test Cases UI
-      if (testCases.length > 0) {
-        renderTestCases(testCases, results);
-        testSummaryBadge.textContent = `${passedCount} / ${testCases.length} Passed`;
-        
-        if (passedCount === testCases.length) {
-          testSummaryBadge.className = 'test-summary-badge all-passed';
-          testBanner.className = 'test-banner success';
-          testBanner.innerHTML = `
-            <span class="test-banner-icon"><i class="fa-solid fa-circle-check"></i></span>
-            <span class="test-banner-text">🎉 All ${testCases.length} test cases passed! Great job mastering this concept!</span>
-          `;
-          // Mark topic mastered
-          if (state.selectedTopic) {
-            state.masteredTopics.add(state.selectedTopic.id);
-            localStorage.setItem(storageMasteredKey, JSON.stringify([...state.masteredTopics]));
-            updateMasteryProgress();
-            updateMasteredButtonState();
-          }
-        } else {
-          testSummaryBadge.className = 'test-summary-badge has-failed';
-          testBanner.className = 'test-banner failure';
-          testBanner.innerHTML = `
-            <span class="test-banner-icon"><i class="fa-solid fa-circle-xmark"></i></span>
-            <span class="test-banner-text">❌ ${testCases.length - passedCount} of ${testCases.length} test cases failed. Review details above.</span>
-          `;
-        }
-      }
-    }
-  }
-
-  // Sanitize Markdown
-  function sanitizeMarkdown(text) {
-    if (!text) return '';
-    let str = text.trim();
-    if (/^```(?:markdown)?/i.test(str)) {
-      str = str.replace(/^```(?:markdown)?\s*\n?/i, '').replace(/\n?\s*```$/, '');
-    }
-    return str.trim();
-  }
-
-  // Render High-End Executive Preview with Section Cards and QuickNav
-  function renderProperPreview(rawMarkdown) {
-    const cleaned = sanitizeMarkdown(rawMarkdown);
-    if (!cleaned) return '';
-
-    const sectionRegex = /^##\s+(.+)$/gm;
-    const matches = [...cleaned.matchAll(sectionRegex)];
-
-    if (matches.length >= 2) {
-      const sections = [];
-      let lastIndex = 0;
-      let lastTitle = '';
-
-      for (let i = 0; i < matches.length; i++) {
-        const match = matches[i];
-        if (i > 0) {
-          const content = cleaned.slice(lastIndex, match.index).trim();
-          sections.push({ title: lastTitle, content });
-        } else {
-          const preamble = cleaned.slice(0, match.index).trim();
-          if (preamble && !preamble.startsWith('# Masterclass')) {
-            sections.push({ title: '📋 Overview', content: preamble });
-          }
-        }
-        lastTitle = match[1].trim();
-        lastIndex = match.index + match[0].length;
-      }
-      sections.push({ title: lastTitle, content: cleaned.slice(lastIndex).trim() });
-
-      let quickNav = '<div class="guide-quicknav">';
-      sections.forEach((sec, idx) => {
-        const iconMatch = sec.title.match(/[\u{1F300}-\u{1FAFF}]/u);
-        const icon = iconMatch ? iconMatch[0] : '📌';
-        const label = sec.title.replace(/[\u{1F300}-\u{1FAFF}]/u, '').trim().slice(0, 18);
-        quickNav += `<a href="#guide-sec-${idx}" class="quicknav-pill">${icon} ${label}</a>`;
-      });
-      quickNav += '</div>';
-
-      let cardsHtml = '<div class="masterclass-guide">' + quickNav;
-      sections.forEach((sec, idx) => {
-        const parsedBody = marked.parse(sec.content);
-        cardsHtml += `
-          <div class="guide-card" id="guide-sec-${idx}">
-            <div class="guide-card-header">
-              <span class="guide-card-title">${sec.title}</span>
-            </div>
-            <div class="guide-card-body">${parsedBody}</div>
-          </div>
-        `;
-      });
-      cardsHtml += '</div>';
-
-      return cardsHtml;
-    }
-
-    return `<div class="guide-card"><div class="guide-card-body">${marked.parse(cleaned)}</div></div>`;
-  }
-
-  // Panel Tab Switching (Knowledge Guide vs Saved DB Guides)
-  function switchPanelTab(tabName) {
-    if (tabName === 'saved') {
-      if (tabSavedGuidesBtn) tabSavedGuidesBtn.classList.add('active');
-      if (tabKnowledgeBtn) tabKnowledgeBtn.classList.remove('active');
-      if (savedGuidesPane) {
-        savedGuidesPane.classList.add('active');
-        savedGuidesPane.style.display = 'block';
-      }
-      if (knowledgePane) {
-        knowledgePane.classList.remove('active');
-        knowledgePane.style.display = 'none';
-      }
-      loadSavedGuidesList(savedGuidesSearch ? savedGuidesSearch.value : '');
-    } else {
-      if (tabKnowledgeBtn) tabKnowledgeBtn.classList.add('active');
-      if (tabSavedGuidesBtn) tabSavedGuidesBtn.classList.remove('active');
-      if (knowledgePane) {
-        knowledgePane.classList.add('active');
-        knowledgePane.style.display = 'block';
-      }
-      if (savedGuidesPane) savedGuidesPane.style.display = 'none';
-    }
-  }
-
-  // Panel Maximize / Minimize Controls
-  function maximizePanel() {
-    if (!evaluationPanel) return;
-    evaluationPanel.classList.add('maximized');
-    document.body.classList.add('panel-is-maximized');
-
-    if (toggleMaximizeBtn) {
-      toggleMaximizeBtn.classList.add('active');
-      toggleMaximizeBtn.title = 'Minimize / Restore to Side Panel (Esc)';
-      const icon = toggleMaximizeBtn.querySelector('i');
-      if (icon) icon.className = 'fa-solid fa-compress';
-      const text = toggleMaximizeBtn.querySelector('.maximize-btn-text');
-      if (text) text.textContent = 'Minimize';
-    }
-
-    if (panelMaxTopicBadge) {
-      panelMaxTopicBadge.style.display = 'inline-flex';
-      if (panelMaxTopicName && state.selectedTopic) {
-        panelMaxTopicName.textContent = state.selectedTopic.title;
-      }
-    }
-
-    if (floatingMinimizeBtn) {
-      floatingMinimizeBtn.style.display = 'inline-flex';
-    }
-
-    const inlineMaxBtn = document.getElementById('btnGuideMaximizeInline');
-    if (inlineMaxBtn) {
-      inlineMaxBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Minimize';
-      inlineMaxBtn.title = 'Minimize / Restore to Side Panel (Esc)';
-    }
-  }
-
-  function minimizePanel() {
-    if (!evaluationPanel) return;
-    evaluationPanel.classList.remove('maximized');
-    document.body.classList.remove('panel-is-maximized');
-
-    if (toggleMaximizeBtn) {
-      toggleMaximizeBtn.classList.remove('active');
-      toggleMaximizeBtn.title = 'Maximize Knowledge Window';
-      const icon = toggleMaximizeBtn.querySelector('i');
-      if (icon) icon.className = 'fa-solid fa-expand';
-      const text = toggleMaximizeBtn.querySelector('.maximize-btn-text');
-      if (text) text.textContent = 'Maximize';
-    }
-
-    if (panelMaxTopicBadge) {
-      panelMaxTopicBadge.style.display = 'none';
-    }
-
-    if (floatingMinimizeBtn) {
-      floatingMinimizeBtn.style.display = 'none';
-    }
-
-    const inlineMaxBtn = document.getElementById('btnGuideMaximizeInline');
-    if (inlineMaxBtn) {
-      inlineMaxBtn.innerHTML = '<i class="fa-solid fa-expand"></i> Maximize';
-      inlineMaxBtn.title = 'Maximize Knowledge Window';
-    }
-
-    if (monacoEditor) {
-      setTimeout(() => {
-        monacoEditor.layout();
-      }, 60);
-    }
-  }
-
-  function toggleMaximize() {
-    if (evaluationPanel && evaluationPanel.classList.contains('maximized')) {
-      minimizePanel();
-    } else {
-      maximizePanel();
-    }
-  }
-
-  // Open Knowledge Section in Maximized Window
-  function openKnowledgeSection(forceRegenerate = false) {
-    switchPanelTab('knowledge');
-    maximizePanel();
-
-    const hasLoadedGuide = knowledgeContent && 
-      knowledgeContent.style.display !== 'none' && 
-      knowledgeContent.innerHTML.trim().length > 0 && 
-      !knowledgeContent.querySelector('.empty-eval-state') &&
-      !knowledgeContent.querySelector('.loading-knowledge');
-
-    if (forceRegenerate || !hasLoadedGuide) {
-      generateTopicKnowledge();
-    }
-  }
-
-  // -------------------------------------------------------------
-  // Storage Management (Strictly Local JSON File - knowledge.json)
-  // -------------------------------------------------------------
-
-  async function initStorageMode() {
-    state.storageMode = 'json';
-    updateStorageUI();
-  }
-
-  function updateStorageUI() {
-    if (btnStorageJson) {
-      btnStorageJson.classList.add('active');
-    }
-    if (panelStorageJsonBtn) {
-      panelStorageJsonBtn.classList.add('active');
-    }
-    if (tabSavedLabel) {
-      tabSavedLabel.textContent = 'Saved JSON';
-    }
-    if (tabSavedIcon) {
-      tabSavedIcon.className = 'fa-solid fa-file-code';
-    }
-  }
-
-  async function handleStorageSwitch(targetMode) {
-    state.storageMode = 'json';
-    updateStorageUI();
-    await updateSavedGuidesCount();
-
-    if (savedGuidesPane && savedGuidesPane.classList.contains('active')) {
-      loadSavedGuidesList(savedGuidesSearch ? savedGuidesSearch.value : '');
-    }
-
-    if (state.currentQuestion) {
-      checkAndLoadSavedGuide(state.currentQuestion);
-    }
-  }
-
-  // Display a Knowledge Guide
-  function displaySavedGuide(guide, isFromAutoLoad = false) {
-    if (!guide || !guide.guide_content) return;
-
-    emptyKnowledgeState.style.display = 'none';
-    knowledgeContent.style.display = 'block';
-
-    const isCurrentlyMax = evaluationPanel && evaluationPanel.classList.contains('maximized');
-    const maxBtnInGuide = `<button class="btn-xs" id="btnGuideMaximizeInline" title="${isCurrentlyMax ? 'Minimize / Restore to Side Panel (Esc)' : 'Maximize Knowledge Window'}" style="margin-left: auto;">
-      <i class="fa-solid ${isCurrentlyMax ? 'fa-compress' : 'fa-expand'}"></i> ${isCurrentlyMax ? 'Minimize' : 'Maximize'}
-    </button>`;
-
-    const sourcesBadge = guide.search_results_count > 0
-      ? `<div style="display:inline-flex; align-items:center; gap:6px; background:rgba(2,132,199,0.12); color:#38bdf8; border:1px solid rgba(2,132,199,0.3); border-radius:4px; padding:3px 8px; font-size:11px; margin-right:8px; margin-bottom:12px;">
-          <i class="fa-solid fa-globe"></i> Grounded with ${guide.search_results_count} Live Specs
-         </div>`
-      : '';
-
-    const storageBadge = `<div class="storage-target-badge json">
-      <i class="fa-solid fa-file-code"></i> Saved in Local JSON (knowledge.json #${guide.id || 'Saved'})
-    </div>`;
-
-    const banner = isFromAutoLoad
-      ? `<div class="db-loaded-banner">
-          <div class="db-banner-left">
-            <i class="fa-solid fa-file-code" style="color:#38bdf8;"></i>
-            <span><strong>Loaded from Local JSON (knowledge.json)</strong> (Saved: ${guide.created_at || 'Saved'})</span>
-          </div>
-          <button class="btn-xs" id="btnRegenSaved" title="Re-read authoritative guide">
-            <i class="fa-solid fa-arrows-rotate"></i> Refresh
-          </button>
-        </div>`
-      : '';
-
-    const previewHtml = renderProperPreview(guide.guide_content || '');
-    knowledgeContent.innerHTML = `${banner}<div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">${sourcesBadge}${storageBadge}${maxBtnInGuide}</div>${previewHtml}`;
-    Prism.highlightAllUnder(knowledgeContent);
-
-    const regenBtn = knowledgeContent.querySelector('#btnRegenSaved');
-    if (regenBtn) {
-      regenBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        generateTopicKnowledge();
-      });
-    }
-
-    const inlineMaxBtn = knowledgeContent.querySelector('#btnGuideMaximizeInline');
-    if (inlineMaxBtn) {
-      inlineMaxBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleMaximize();
-      });
-    }
-  }
-
-  // Check storage if a guide was previously saved
-  async function checkAndLoadSavedGuide(challenge) {
-    if (!state.selectedTopic) return;
-
-    try {
-      const topicTitle = state.selectedTopic.title;
-      const questionTitle = challenge.title;
-      const url = `/api/knowledge-guide?track=${currentTrack}&topicTitle=${encodeURIComponent(topicTitle)}&questionTitle=${encodeURIComponent(questionTitle)}&storageMode=${state.storageMode}`;
-      
-      const res = await fetch(url);
-      const data = await res.json();
-
-      if (data.success && data.guide) {
-        displaySavedGuide({
-          ...data.guide,
-          storageMode: data.storageMode || state.storageMode
-        }, true);
-      } else {
-        emptyKnowledgeState.style.display = 'flex';
-        knowledgeContent.style.display = 'none';
-        knowledgeContent.innerHTML = '';
-      }
-    } catch (err) {
-      console.warn('Could not auto-load saved guide:', err);
-    }
-  }
-
-  // Generate In-Depth Topic Knowledge with Web Search
-  async function generateTopicKnowledge() {
-    if (!state.selectedTopic) return;
-
-    switchPanelTab('knowledge');
-    maximizePanel();
-
-    const btn = explainTopicBtn;
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Loading...`;
-
-    emptyKnowledgeState.style.display = 'none';
-    knowledgeContent.style.display = 'block';
-
-    knowledgeContent.innerHTML = `
-      <div class="loading-knowledge">
-        <i class="fa-solid fa-book-open fa-bounce"></i>
-        <h3>Loading Verified Knowledge Guide</h3>
-        <p>Grounding with internal engine architecture and verified specs...</p>
-      </div>
-    `;
-
-    try {
-      const res = await fetch('/api/explain-topic', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          track: currentTrack,
-          topicTitle: state.selectedTopic.title,
-          questionTitle: state.currentQuestion ? state.currentQuestion.title : state.selectedTopic.title,
-          concept: state.currentQuestion ? state.currentQuestion.concept : state.selectedTopic.tag,
-          problemDescription: state.currentQuestion ? state.currentQuestion.description : state.selectedTopic.summary,
-          storageMode: state.storageMode
-        })
-      });
-
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to explain topic');
-      }
-
-      displaySavedGuide({
-        id: data.guideId || data.savedGuide?.id,
-        created_at: 'Just now',
-        search_results_count: data.searchResultsCount || 0,
-        guide_content: data.explanation,
-        storageMode: data.storageMode || state.storageMode
-      }, false);
-
-      updateSavedGuidesCount();
-    } catch (err) {
-      knowledgeContent.innerHTML = `
-        <div class="empty-eval-state">
-          <i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-danger);"></i>
-          <h3>Generation Failed</h3>
-          <p>${err.message}</p>
-        </div>
-      `;
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-    }
-  }
-
-  // Update total count badge for saved knowledge guides
-  async function updateSavedGuidesCount() {
-    if (!savedCountBadge) return;
-    try {
-      const res = await fetch(`/api/knowledge-guides/count?track=${currentTrack}&storageMode=${state.storageMode}`);
-      const data = await res.json();
-      if (data.success && typeof data.count === 'number') {
-        savedCountBadge.textContent = String(data.count);
-      }
-    } catch (e) {
-      // Non-critical
-    }
-  }
-
-  // Load Saved Knowledge Guides List from local JSON storage
-  async function loadSavedGuidesList(searchTerm = '') {
-    if (!savedGuidesList) return;
-
-    savedGuidesList.innerHTML = `
-      <div style="text-align:center; padding:24px; color:var(--text-muted);">
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading ${state.storageMode === 'json' ? 'JSON' : 'SQL'} guides...
-      </div>
-    `;
-
-    try {
-      const params = new URLSearchParams({ track: currentTrack, limit: '100' });
-      if (searchTerm) params.append('search', searchTerm);
-
-      const res = await fetch(`/api/knowledge-guides?${params.toString()}`);
-      const data = await res.json();
-
-      if (!data.success || !data.guides || data.guides.length === 0) {
-        savedGuidesList.innerHTML = `
-          <div class="empty-eval-state" style="padding:40px 20px;">
-            <i class="fa-solid fa-file-code" style="font-size:32px; color:var(--text-muted); margin-bottom:12px;"></i>
-            <h3>No Saved Knowledge Guides in Local JSON</h3>
-            <p>Click "Deep Knowledge Guide" on any topic to view and save guides to knowledge.json.</p>
-          </div>
-        `;
-        return;
-      }
-
-      savedGuidesList.innerHTML = '';
-      data.guides.forEach(g => {
-        const item = document.createElement('div');
-        item.className = 'saved-guide-item';
-        const dateStr = g.created_at ? g.created_at.slice(0, 16) : '';
-        const searchBadge = g.search_results_count > 0 
-          ? `<span class="badge" style="background:rgba(2,132,199,0.15); color:#38bdf8; font-size:10px;"><i class="fa-solid fa-globe"></i> ${g.search_results_count} Specs</span>` 
-          : '';
-        const storageTypeBadge = `<span class="badge" style="background:rgba(14,165,233,0.15); color:#38bdf8; font-size:10px;">
-          <i class="fa-solid fa-file-code"></i> JSON #${g.id}
-        </span>`;
-
-        item.innerHTML = `
-          <div class="saved-guide-item-header">
-            <div>
-              <span class="saved-guide-topic">${escapeHtml(g.topic_title)}</span>
-              <div class="saved-guide-question">${escapeHtml(g.question_title)}</div>
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
-              <span class="saved-guide-date">${dateStr}</span>
-              <div style="display:flex; gap:4px; align-items:center;">
-                ${storageTypeBadge}
-                ${searchBadge}
+    interviewQuestionsCard.style.display = 'flex';
+
+    if (Array.isArray(questions)) {
+      const qCardsHtml = questions.map((q, idx) => {
+        const isObj = typeof q === 'object' && q !== null;
+        const qText = isObj ? q.question : q;
+        const qAns = isObj ? q.answer : '';
+        const qWhy = isObj ? q.whyAsked : '';
+        const qDiff = isObj ? q.difficulty : '';
+
+        const diffBadge = qDiff ? `<span class="ds-badge" style="background:rgba(56,189,248,0.1); color:#38bdf8; font-size:10px; text-transform:uppercase;">${qDiff}</span>` : '';
+
+        return `
+          <div class="interview-q-card" data-idx="${idx}">
+            <div class="interview-q-header">
+              <div class="interview-q-title">
+                <span class="q-num">Q${idx + 1}</span>
+                <span>${escapeHtml(qText)}</span>
+                ${diffBadge}
               </div>
+              <i class="fa-solid fa-chevron-down q-arrow"></i>
+            </div>
+            <div class="interview-q-body" style="display: none;">
+              ${qWhy ? `<div class="q-why"><i class="fa-solid fa-circle-question"></i> <strong>Why Interviewers Ask:</strong> ${escapeHtml(qWhy)}</div>` : ''}
+              <div class="q-answer">${qAns ? marked.parse(qAns) : '<p>Detailed answer available in the Masterclass Guide below.</p>'}</div>
             </div>
           </div>
-          <div class="saved-guide-preview">${escapeHtml(g.preview || '')}...</div>
-          <div class="saved-guide-actions">
-            <button class="btn-xs primary load-guide-btn" data-id="${g.id}">
-              <i class="fa-solid fa-book-open"></i> View Guide
-            </button>
-            <button class="btn-xs danger delete-guide-btn" data-id="${g.id}">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </div>
         `;
+      }).join('');
 
-        item.querySelector('.load-guide-btn').addEventListener('click', async () => {
-          await loadFullGuideById(g.id);
+      topicInterviewQuestions.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:12px; color:var(--text-muted);"><i class="fa-solid fa-comments"></i> ${questions.length} Staff-Level Architectural Concept Questions</span>
+          <button type="button" class="icon-btn-sm" id="toggleAllQuestionsBtn" style="font-size:11px; padding:3px 8px;">
+            <i class="fa-solid fa-arrows-up-down"></i> Toggle All
+          </button>
+        </div>
+        <div class="interview-q-list">
+          ${qCardsHtml}
+        </div>
+      `;
+
+      // Accordion click handlers
+      const qCards = topicInterviewQuestions.querySelectorAll('.interview-q-card');
+      qCards.forEach(card => {
+        const header = card.querySelector('.interview-q-header');
+        const body = card.querySelector('.interview-q-body');
+        header.addEventListener('click', () => {
+          const isExpanded = card.classList.toggle('expanded');
+          body.style.display = isExpanded ? 'block' : 'none';
         });
-
-        item.querySelector('.delete-guide-btn').addEventListener('click', async (e) => {
-          e.stopPropagation();
-          if (confirm(`Delete saved knowledge guide #${g.id} from local JSON file?`)) {
-            await deleteGuideById(g.id);
-          }
-        });
-
-        savedGuidesList.appendChild(item);
       });
-    } catch (err) {
-      savedGuidesList.innerHTML = `<div class="empty-eval-state"><p style="color:var(--accent-danger);">Failed to load: ${err.message}</p></div>`;
-    }
-  }
 
-  // Load a single full guide from storage by ID and show it in the Knowledge Guide tab
-  async function loadFullGuideById(id) {
-    try {
-      const res = await fetch(`/api/knowledge-guide/${id}?storageMode=${state.storageMode}`);
-      const data = await res.json();
-      if (data.success && data.guide) {
-        switchPanelTab('knowledge');
-        displaySavedGuide({
-          ...data.guide,
-          storageMode: data.storageMode || state.storageMode
-        }, true);
-        maximizePanel();
+      // Toggle All button
+      const toggleAllBtn = document.getElementById('toggleAllQuestionsBtn');
+      if (toggleAllBtn) {
+        let allExpanded = false;
+        toggleAllBtn.addEventListener('click', () => {
+          allExpanded = !allExpanded;
+          qCards.forEach(card => {
+            const body = card.querySelector('.interview-q-body');
+            if (allExpanded) {
+              card.classList.add('expanded');
+              body.style.display = 'block';
+            } else {
+              card.classList.remove('expanded');
+              body.style.display = 'none';
+            }
+          });
+          toggleAllBtn.innerHTML = allExpanded 
+            ? '<i class="fa-solid fa-compress"></i> Collapse All'
+            : '<i class="fa-solid fa-arrows-up-down"></i> Expand All';
+        });
       }
-    } catch (err) {
-      alert('Could not load guide: ' + err.message);
+    } else {
+      topicInterviewQuestions.innerHTML = `<p>${escapeHtml(questions)}</p>`;
     }
   }
 
-  // Delete a guide by ID
-  async function deleteGuideById(id) {
-    try {
-      const res = await fetch(`/api/knowledge-guide/${id}?storageMode=${state.storageMode}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        loadSavedGuidesList(savedGuidesSearch ? savedGuidesSearch.value : '');
-        updateSavedGuidesCount();
-      }
-    } catch (err) {
-      alert('Could not delete guide: ' + err.message);
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Update Mastered Button State
+  function updateMasteredButtonState() {
+    if (!markMasteredBtn || !state.selectedTopic) return;
+    const isMastered = state.masteredTopics.has(state.selectedTopic.id);
+    if (isMastered) {
+      markMasteredBtn.classList.add('mastered');
+      markMasteredBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Mastered';
+    } else {
+      markMasteredBtn.classList.remove('mastered');
+      markMasteredBtn.innerHTML = '<i class="fa-regular fa-circle-check"></i> Mark as Mastered';
     }
   }
 
-  // Toggle Mastery State
-  function toggleMastery() {
+  // Toggle Mastered Status for Topic
+  function toggleMasteredStatus() {
     if (!state.selectedTopic) return;
     const id = state.selectedTopic.id;
     if (state.masteredTopics.has(id)) {
@@ -1278,138 +384,309 @@
       state.masteredTopics.add(id);
     }
 
-    localStorage.setItem(storageMasteredKey, JSON.stringify([...state.masteredTopics]));
-    updateMasteryProgress();
+    localStorage.setItem(storageMasteredKey, JSON.stringify(Array.from(state.masteredTopics)));
     updateMasteredButtonState();
-    renderTopicsTree(state.categories);
+    updateMasteryProgress();
+    renderTopicsTree(state.categories, topicSearch.value);
   }
 
-  function updateMasteredButtonState() {
-    if (!state.selectedTopic) return;
-    const isMastered = state.masteredTopics.has(state.selectedTopic.id);
-    if (isMastered) {
-      markMasteredBtn.classList.add('mastered');
-      markMasteredBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Mastered';
-    } else {
-      markMasteredBtn.classList.remove('mastered');
-      markMasteredBtn.innerHTML = '<i class="fa-regular fa-circle-check"></i> Mark Mastered';
-    }
-  }
-
+  // Update Overall Curriculum Mastery Progress
   function updateMasteryProgress() {
     let totalTopics = 0;
-    state.categories.forEach(c => totalTopics += c.topics.length);
-    if (totalTopics === 0) return;
+    state.categories.forEach(c => { totalTopics += c.topics.length; });
 
-    const count = state.masteredTopics.size;
-    const percent = Math.round((count / totalTopics) * 100);
-    masteryPercentEl.textContent = `${percent}% (${count}/${totalTopics})`;
-    progressBarFill.style.width = `${percent}%`;
+    const solvedCount = state.masteredTopics.size;
+    const pct = totalTopics > 0 ? Math.round((solvedCount / totalTopics) * 100) : 0;
+
+    masteryPercentEl.textContent = `${pct}% (${solvedCount}/${totalTopics})`;
+    progressBarFill.style.width = `${pct}%`;
   }
 
-  // Export Progress JSON
-  function exportProgress() {
-    const report = {
-      track: currentTrack,
-      timestamp: new Date().toISOString(),
-      masteredTopics: [...state.masteredTopics],
-      codeHistory: state.userCodeHistory
-    };
-
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentTrack}-depth-mastery-report-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  // Storage Management (Strictly Local JSON File - knowledge.json)
+  async function initStorageMode() {
+    state.storageMode = 'json';
+    updateStorageUI();
   }
 
-  // Setup Event Listeners
-  function setupEventListeners() {
-    // Search
-    topicSearch.addEventListener('input', (e) => {
-      renderTopicsTree(state.categories, e.target.value);
-    });
+  function updateStorageUI() {
+    if (btnStorageJson) btnStorageJson.classList.add('active');
+    if (panelStorageJsonBtn) panelStorageJsonBtn.classList.add('active');
+    if (tabSavedLabel) tabSavedLabel.textContent = 'Saved JSON';
+    if (tabSavedIcon) tabSavedIcon.className = 'fa-solid fa-file-code';
+  }
 
-    // Difficulty switcher (Basic, Medium, Hard)
-    diffChips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        diffChips.forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        state.selectedDifficulty = chip.dataset.diff;
+  // Check and Load Guide (from DB or curated default)
+  async function checkAndLoadGuide(topic) {
+    try {
+      guideContent.innerHTML = `
+        <div class="loading-state" style="padding: 40px 0;">
+          <i class="fa-solid fa-circle-notch fa-spin"></i> Loading verified architectural guide for "${topic.title}"...
+        </div>
+      `;
 
-        if (state.selectedTopic && state.selectedTopic.challenges) {
-          const target = state.selectedTopic.challenges[state.selectedDifficulty] || state.selectedTopic.challenges.Basic;
-          if (target) {
-            setProblem(target);
-          }
-        }
-      });
-    });
+      const res = await fetch(`/api/knowledge-guide?track=${currentTrack}&topicTitle=${encodeURIComponent(topic.title)}&storageMode=${state.storageMode}`);
+      const data = await res.json();
 
-    // Results Tabs (Test Cases vs Console)
-    if (tabTestCasesBtn) {
-      tabTestCasesBtn.addEventListener('click', () => switchResultsTab('testcases'));
-    }
-    if (tabConsoleBtn) {
-      tabConsoleBtn.addEventListener('click', () => switchResultsTab('console'));
-    }
-
-    // Knowledge Guide
-    if (explainTopicBtn) {
-      explainTopicBtn.addEventListener('click', () => {
-        openKnowledgeSection(false);
-      });
-    }
-
-    // Maximize / Minimize Window Controls
-    if (toggleMaximizeBtn) {
-      toggleMaximizeBtn.addEventListener('click', toggleMaximize);
-    }
-
-    if (floatingMinimizeBtn) {
-      floatingMinimizeBtn.addEventListener('click', minimizePanel);
-    }
-
-    if (emptyStateGenerateBtn) {
-      emptyStateGenerateBtn.addEventListener('click', () => {
-        openKnowledgeSection(true);
-      });
-    }
-
-    if (emptyStateMaximizeBtn) {
-      emptyStateMaximizeBtn.addEventListener('click', () => {
-        maximizePanel();
-      });
-    }
-
-    // Keyboard shortcut: Esc to minimize window
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (evaluationPanel && evaluationPanel.classList.contains('maximized')) {
-          minimizePanel();
-        }
+      if (data.success && data.guide && data.guide.guide_content) {
+        renderGuideContent(data.guide.guide_content, {
+          id: data.guide.id,
+          created_at: data.guide.created_at,
+          search_results_count: data.guide.search_results_count,
+          isDb: true,
+          storageMode: data.storageMode || state.storageMode
+        });
+      } else if (topic.defaultGuide) {
+        renderGuideContent(topic.defaultGuide, {
+          isDb: false,
+          created_at: 'Curated Senior Architectural Masterclass Guide'
+        });
+      } else {
+        guideContent.innerHTML = `
+          <div class="empty-eval-state">
+            <i class="fa-solid fa-book-open"></i>
+            <h3>No Guide Available Yet</h3>
+            <p>Click <strong>Knowledge Guide</strong> to view the verified architectural guide.</p>
+          </div>
+        `;
       }
+    } catch (err) {
+      console.warn('Could not load guide from storage, falling back to default:', err);
+      if (topic.defaultGuide) {
+        renderGuideContent(topic.defaultGuide, { isDb: false, created_at: 'Curated Senior Architectural Masterclass Guide' });
+      }
+    }
+  }
+
+  // Render Guide Markdown into Container
+  function renderGuideContent(markdown, meta = {}) {
+    state.currentGuideMarkdown = markdown;
+
+    const sourcesBadge = meta.search_results_count > 0
+      ? `<div style="display:inline-flex; align-items:center; gap:6px; background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.3); border-radius:4px; padding:3px 8px; font-size:11px; margin-right:8px; margin-bottom:12px;">
+          <i class="fa-solid fa-globe"></i> Grounded with ${meta.search_results_count} Live Engine Specs
+         </div>`
+      : '';
+
+    const dbBadge = meta.isDb
+      ? `<div class="storage-target-badge json" style="display:inline-flex; align-items:center; gap:6px; background:rgba(14,165,233,0.12); color:#38bdf8; border:1px solid rgba(14,165,233,0.3); border-radius:4px; padding:3px 8px; font-size:11px; margin-bottom:12px;">
+          <i class="fa-solid fa-file-code"></i> Saved in Local JSON (ID: #${meta.id || 'Latest'}) • ${meta.created_at || ''}
+         </div>`
+      : `<div style="display:inline-flex; align-items:center; gap:6px; background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.3); border-radius:4px; padding:3px 8px; font-size:11px; margin-bottom:12px;">
+          <i class="fa-solid fa-certificate"></i> Verified Architectural Masterclass Guide
+         </div>`;
+
+    // Format GitHub-style alerts in markdown
+    let processed = markdown || '';
+    processed = processed.replace(/>\s*\[!NOTE\]\s*\n((?:>.*\n?)*)/gi, (match, content) => {
+      const clean = content.replace(/^>\s?/gm, '');
+      return `<div class="gh-alert gh-alert-note"><div class="gh-alert-title"><i class="fa-solid fa-info-circle"></i> NOTE</div>${clean}</div>\n`;
+    });
+    processed = processed.replace(/>\s*\[!WARNING\]\s*\n((?:>.*\n?)*)/gi, (match, content) => {
+      const clean = content.replace(/^>\s?/gm, '');
+      return `<div class="gh-alert gh-alert-warning"><div class="gh-alert-title"><i class="fa-solid fa-triangle-exclamation"></i> WARNING</div>${clean}</div>\n`;
+    });
+    processed = processed.replace(/>\s*\[!IMPORTANT\]\s*\n((?:>.*\n?)*)/gi, (match, content) => {
+      const clean = content.replace(/^>\s?/gm, '');
+      return `<div class="gh-alert gh-alert-important"><div class="gh-alert-title"><i class="fa-solid fa-circle-exclamation"></i> IMPORTANT</div>${clean}</div>\n`;
     });
 
-    // Storage Controls (Local JSON Storage)
-    if (btnStorageJson) {
-      btnStorageJson.addEventListener('click', () => handleStorageSwitch('json'));
+    const parsedHtml = marked.parse(processed);
+
+    guideContent.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+        <div>
+          ${sourcesBadge}
+          ${dbBadge}
+        </div>
+      </div>
+      <div class="guide-body-rendered">
+        ${parsedHtml}
+      </div>
+    `;
+
+    // Apply Prism Syntax Highlighting
+    if (window.Prism) {
+      Prism.highlightAllUnder(guideContent);
     }
-    if (panelStorageJsonBtn) {
-      panelStorageJsonBtn.addEventListener('click', () => handleStorageSwitch('json'));
+  }
+
+  // Switch View: Guide vs Saved
+  function switchView(targetView) {
+    state.activeView = targetView;
+    if (targetView === 'guide') {
+      tabGuideBtn.classList.add('active');
+      tabSavedBtn.classList.remove('active');
+      guideView.style.display = 'block';
+      savedView.style.display = 'none';
+    } else {
+      tabGuideBtn.classList.remove('active');
+      tabSavedBtn.classList.add('active');
+      guideView.style.display = 'none';
+      savedView.style.display = 'block';
+      loadSavedGuidesList(savedGuidesSearch ? savedGuidesSearch.value : '');
+    }
+  }
+
+  // Update Saved Guides Count Badge
+  async function updateSavedGuidesCount() {
+    if (!savedCountBadge) return;
+    try {
+      const res = await fetch(`/api/knowledge-guides/count?track=${currentTrack}&storageMode=${state.storageMode}`);
+      const data = await res.json();
+      if (data.success && typeof data.count === 'number') {
+        savedCountBadge.textContent = data.count;
+      }
+    } catch (err) {
+      console.warn('Could not update saved guides count:', err);
+    }
+  }
+
+  // Load Saved Guides List
+  async function loadSavedGuidesList(searchQuery = '') {
+    if (!savedGuidesList) return;
+    try {
+      savedGuidesList.innerHTML = '<div class="loading-state"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading saved guides from knowledge.json...</div>';
+      const q = encodeURIComponent(searchQuery || '');
+      const res = await fetch(`/api/knowledge-guides?track=${currentTrack}&search=${q}&storageMode=${state.storageMode}`);
+      const data = await res.json();
+
+      if (data.success && Array.isArray(data.guides) && data.guides.length > 0) {
+        savedGuidesList.innerHTML = data.guides.map(g => `
+          <div class="saved-guide-item" data-id="${g.id}">
+            <div class="saved-guide-header">
+              <div class="saved-guide-title">
+                <i class="fa-solid fa-file-lines" style="color:var(--accent-primary);"></i>
+                <strong>${escapeHtml(g.topic_title || 'Untitled Topic')}</strong>
+                <span class="saved-guide-chip">${escapeHtml(g.question_title || g.concept || currentTrack)}</span>
+              </div>
+              <div class="saved-guide-meta">
+                <span class="saved-guide-date"><i class="fa-regular fa-clock"></i> ${escapeHtml(g.created_at || 'Recently saved')}</span>
+                <span class="storage-tag json"><i class="fa-solid fa-file-code"></i> JSON</span>
+              </div>
+            </div>
+            <p class="saved-guide-preview">${escapeHtml((g.problem_description || g.concept || '').substring(0, 140))}...</p>
+            <div class="saved-guide-actions">
+              <button class="btn secondary-btn view-saved-btn" data-id="${g.id}"><i class="fa-solid fa-book-open"></i> Read Guide</button>
+              <button class="icon-btn-sm delete-saved-btn" data-id="${g.id}" title="Delete Guide"><i class="fa-regular fa-trash-can"></i></button>
+            </div>
+          </div>
+        `).join('');
+
+        // Attach action handlers
+        savedGuidesList.querySelectorAll('.view-saved-btn').forEach(btn => {
+          btn.addEventListener('click', () => viewSavedGuide(btn.dataset.id));
+        });
+
+        savedGuidesList.querySelectorAll('.delete-saved-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteSavedGuide(btn.dataset.id);
+          });
+        });
+      } else {
+        savedGuidesList.innerHTML = `
+          <div class="empty-eval-state">
+            <i class="fa-solid fa-database"></i>
+            <h3>No Saved Guides Yet</h3>
+            <p>Saved guides in local <code>knowledge.json</code> will appear here for rapid review.</p>
+          </div>
+        `;
+      }
+    } catch (err) {
+      console.error('Failed to load saved guides:', err);
+      savedGuidesList.innerHTML = `<div class="empty-eval-state"><p style="color:var(--accent-danger);">Failed to load saved guides: ${err.message}</p></div>`;
+    }
+  }
+
+  // View Single Saved Guide
+  async function viewSavedGuide(id) {
+    try {
+      const res = await fetch(`/api/knowledge-guide/${id}?storageMode=${state.storageMode}`);
+      const data = await res.json();
+      if (data.success && data.guide) {
+        switchView('guide');
+        renderGuideContent(data.guide.guide_content, {
+          id: data.guide.id,
+          created_at: data.guide.created_at,
+          search_results_count: data.guide.search_results_count,
+          isDb: true,
+          storageMode: data.storageMode || state.storageMode
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch (err) {
+      alert('Could not open saved guide: ' + err.message);
+    }
+  }
+
+  // Delete Saved Guide
+  async function deleteSavedGuide(id) {
+    if (!confirm('Are you sure you want to delete this saved guide from knowledge.json?')) return;
+    try {
+      const res = await fetch(`/api/knowledge-guide/${id}?storageMode=${state.storageMode}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        await updateSavedGuidesCount();
+        await loadSavedGuidesList(savedGuidesSearch ? savedGuidesSearch.value : '');
+      } else {
+        alert('Could not delete guide: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Failed to delete guide: ' + err.message);
+    }
+  }
+
+  // Copy Current Guide to Clipboard
+  function copyCurrentGuide() {
+    if (!state.currentGuideMarkdown) return;
+    navigator.clipboard.writeText(state.currentGuideMarkdown).then(() => {
+      const originalText = copyGuideBtn.innerHTML;
+      copyGuideBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+      setTimeout(() => {
+        copyGuideBtn.innerHTML = originalText;
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy guide:', err);
+    });
+  }
+
+  // Event Listeners Setup
+  function setupEventListeners() {
+    if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+    if (markMasteredBtn) markMasteredBtn.addEventListener('click', toggleMasteredStatus);
+    if (copyGuideBtn) copyGuideBtn.addEventListener('click', copyCurrentGuide);
+
+    if (generateKnowledgeBtn) {
+      generateKnowledgeBtn.addEventListener('click', () => {
+        if (state.selectedTopic) {
+          checkAndLoadGuide(state.selectedTopic);
+        }
+      });
     }
 
-    // Right Panel Tabs
-    if (tabKnowledgeBtn) {
-      tabKnowledgeBtn.addEventListener('click', () => switchPanelTab('knowledge'));
-    }
-    if (tabSavedGuidesBtn) {
-      tabSavedGuidesBtn.addEventListener('click', () => switchPanelTab('saved'));
+    if (tabGuideBtn) tabGuideBtn.addEventListener('click', () => switchView('guide'));
+    if (tabSavedBtn) tabSavedBtn.addEventListener('click', () => switchView('saved'));
+
+    // Topic Search filter
+    if (topicSearch) {
+      topicSearch.addEventListener('input', (e) => {
+        renderTopicsTree(state.categories, e.target.value);
+      });
     }
 
-    // Saved Guides Actions
+    // Saved guides search
+    if (savedGuidesSearch) {
+      let debounceTimer = null;
+      savedGuidesSearch.addEventListener('input', (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          loadSavedGuidesList(e.target.value);
+        }, 300);
+      });
+    }
+
     if (refreshSavedGuidesBtn) {
       refreshSavedGuidesBtn.addEventListener('click', () => {
         loadSavedGuidesList(savedGuidesSearch ? savedGuidesSearch.value : '');
@@ -1417,141 +694,41 @@
       });
     }
 
-    if (savedGuidesSearch) {
-      let debounceTimer = null;
-      savedGuidesSearch.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          loadSavedGuidesList(e.target.value);
-        }, 250);
-      });
-    }
-
-    // Toggle Interview Trap
-    toggleTrapBtn.addEventListener('click', () => {
-      const isVisible = interviewTrapBox.style.display !== 'none';
-      interviewTrapBox.style.display = isVisible ? 'none' : 'block';
-      toggleTrapBtn.innerHTML = isVisible 
-        ? '<i class="fa-solid fa-eye"></i> The Trap' 
-        : '<i class="fa-solid fa-eye-slash"></i> Hide Trap';
-    });
-
-    // Editor Actions
-    resetCodeBtn.addEventListener('click', () => {
-      if (confirm('Reset editor to initial template? Any unsaved edits will be lost.')) {
-        if (state.currentQuestion) {
-          delete state.userCodeHistory[state.currentQuestion.title];
-          localStorage.setItem(storageHistoryKey, JSON.stringify(state.userCodeHistory));
-          setCode(cleanCodeSnippet(state.currentQuestion.starterCode) || '');
-        }
-      }
-    });
-
-    // Reference Solution Modal wiring
-    const solutionCodeBtn = document.getElementById('solutionCodeBtn');
-    const solutionModal = document.getElementById('solutionModal');
-    const closeSolutionModalBtn = document.getElementById('closeSolutionModalBtn');
-    const solutionCodeDisplay = document.getElementById('solutionCodeDisplay');
-    const copySolutionBtn = document.getElementById('copySolutionBtn');
-    const loadSolutionBtn = document.getElementById('loadSolutionBtn');
-
-    if (solutionCodeBtn && solutionModal) {
-      solutionCodeBtn.addEventListener('click', () => {
-        const sol = cleanCodeSnippet(state.currentQuestion?.solutionCode || '// No reference solution available');
-        if (solutionCodeDisplay) {
-          solutionCodeDisplay.textContent = sol;
-          if (window.Prism) {
-            Prism.highlightElement(solutionCodeDisplay);
-          }
-        }
-        solutionModal.style.display = 'flex';
-      });
-
-      closeSolutionModalBtn?.addEventListener('click', () => {
-        solutionModal.style.display = 'none';
-      });
-
-      solutionModal.addEventListener('click', (e) => {
-        if (e.target === solutionModal) {
-          solutionModal.style.display = 'none';
-        }
-      });
-
-      copySolutionBtn?.addEventListener('click', () => {
-        const sol = cleanCodeSnippet(state.currentQuestion?.solutionCode || '');
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(sol).then(() => {
-            copySolutionBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
-            setTimeout(() => {
-              copySolutionBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy Solution';
-            }, 1500);
-          });
-        }
-      });
-
-      loadSolutionBtn?.addEventListener('click', () => {
-        if (confirm('Load reference solution into the editor? This will replace your current code.')) {
-          const sol = cleanCodeSnippet(state.currentQuestion?.solutionCode || '');
-          setCode(sol);
-          solutionModal.style.display = 'none';
-        }
-      });
-    }
-
-    formatCodeBtn.addEventListener('click', () => {
-      if (monacoEditor) {
-        monacoEditor.getAction('editor.action.formatDocument').run();
-      } else if (codeEditor) {
-        const lines = codeEditor.value.split('\n');
-        codeEditor.value = lines.map(l => l.replace(/\s+$/, '')).join('\n');
-        updateLineNumbers();
-      }
-    });
-
-    runCodeBtn.addEventListener('click', runCode);
-
-    clearConsoleBtn.addEventListener('click', () => {
-      consoleOutput.innerHTML = '<div class="console-placeholder">// Console cleared</div>';
-      execTime.textContent = '0 ms';
-    });
-
-    markMasteredBtn.addEventListener('click', toggleMastery);
-    exportProgressBtn.addEventListener('click', exportProgress);
-
+    // Reset Progress
     if (resetProgressBtn) {
       resetProgressBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to reset all solved questions and progress back to 0%?')) {
-          localStorage.removeItem('jsdepth_mastered_javascript');
-          localStorage.removeItem('jsdepth_mastered_react');
-          localStorage.removeItem('jsdepth_code_history_javascript');
-          localStorage.removeItem('jsdepth_code_history_react');
+        if (confirm(`Reset all mastered topics in ${currentTrack} to 0%?`)) {
           state.masteredTopics.clear();
-          state.userCodeHistory = {};
-          updateMasteryProgress();
+          localStorage.removeItem(storageMasteredKey);
           updateMasteredButtonState();
-          renderTopicsTree(state.categories);
-          if (state.currentQuestion) {
-            setCode(cleanCodeSnippet(state.currentQuestion.starterCode) || '');
-          }
+          updateMasteryProgress();
+          renderTopicsTree(state.categories, topicSearch.value);
         }
       });
     }
 
-    // Smooth scroll for QuickNav pills in Knowledge Guide
-    document.addEventListener('click', (e) => {
-      const pill = e.target.closest('.quicknav-pill');
-      if (pill) {
-        e.preventDefault();
-        const targetId = pill.getAttribute('href')?.replace('#', '');
-        const targetEl = document.getElementById(targetId);
-        if (targetEl) {
-          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }
-    });
+    // Export Progress
+    if (exportProgressBtn) {
+      exportProgressBtn.addEventListener('click', () => {
+        const payload = {
+          track: currentTrack,
+          exportDate: new Date().toISOString(),
+          totalTopics: state.categories.reduce((acc, c) => acc + c.topics.length, 0),
+          masteredCount: state.masteredTopics.size,
+          masteredTopics: Array.from(state.masteredTopics)
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentTrack}-mastery-export-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
   }
 
-  // Start app on DOMContentLoaded or immediately if already loaded
+  // Start app when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

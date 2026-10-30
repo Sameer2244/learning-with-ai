@@ -6,6 +6,8 @@ const topicsCatalog = require('./topics');
 const reactTopicsCatalog = require('./topics-react');
 const designSystemTopicsCatalog = require('./topics-design-system');
 const systemDesignTopicsCatalog = require('./topics-system-design');
+const challengesJs = require('./topics-challenges-js');
+const challengesReact = require('./topics-challenges-react');
 const db = require('./db');
 
 const app = express();
@@ -87,6 +89,20 @@ app.get('/system-design', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'system-design.html'));
 });
 
+// Dedicated route for Hands-On Interview Problem Solving & Coding Arena
+app.get(['/problems', '/coding'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'problems.html'));
+});
+
+// Challenges API (supports track=javascript, track=react)
+app.get('/api/challenges', (req, res) => {
+  const track = (req.query.track || 'javascript').toLowerCase();
+  if (track === 'react' || track === 'reactjs') {
+    return res.json({ categories: challengesReact, track: 'react' });
+  }
+  res.json({ categories: challengesJs, track: 'javascript' });
+});
+
 // Get topics catalog (supports track=javascript, track=react, track=design-system, track=system-design)
 app.get('/api/topics', (req, res) => {
   const track = (req.query.track || 'javascript').toLowerCase();
@@ -132,6 +148,10 @@ app.get('/api/answers/:questionId', (req, res) => {
 
 // Synthesize Authoritative Knowledge Guide from Verified Answers / Curated Architecture (No LLM needed)
 function buildKnowledgeGuideMarkdown({ track, topicTitle, questionTitle, concept, answer, topicMeta }) {
+  if (topicMeta && topicMeta.defaultGuide) {
+    return topicMeta.defaultGuide;
+  }
+
   if (answer && answer.detailedExplanation) {
     const d = answer.detailedExplanation;
     const v = answer.onlineVerification || {};
@@ -393,6 +413,51 @@ app.get('/api/knowledge-guide', (req, res) => {
       return res.status(400).json({ success: false, error: 'topicTitle parameter is required' });
     }
 
+    // 1. Check if user has a customized saved guide in knowledge.json
+    const savedGuide = db.getLatestGuide({ track, topicTitle, questionTitle });
+    if (savedGuide && savedGuide.guide_content) {
+      return res.json({ success: true, found: true, guide: savedGuide, storageMode: 'json' });
+    }
+
+    // 2. Check topic catalogs for curated authoritative defaultGuide
+    let catalog = topicsCatalog;
+    if (track === 'react' || track === 'reactjs') catalog = reactTopicsCatalog;
+    else if (track === 'system-design' || track === 'systemdesign' || track === 'system_design') catalog = systemDesignTopicsCatalog;
+    else if (track === 'design-system' || track === 'designsystem' || track === 'design_system') catalog = designSystemTopicsCatalog;
+
+    let matchedTopic = null;
+    if (Array.isArray(catalog)) {
+      for (const cat of catalog) {
+        if (Array.isArray(cat.topics)) {
+          for (const t of cat.topics) {
+            if (t.title?.toLowerCase() === topicTitle.toLowerCase() || t.id?.toLowerCase() === topicTitle.toLowerCase()) {
+              matchedTopic = t;
+              break;
+            }
+          }
+        }
+        if (matchedTopic) break;
+      }
+    }
+
+    if (matchedTopic && matchedTopic.defaultGuide) {
+      return res.json({
+        success: true,
+        found: true,
+        guide: {
+          id: `guide-${matchedTopic.id}`,
+          track,
+          topic_title: matchedTopic.title,
+          question_title: questionTitle || matchedTopic.title,
+          concept: matchedTopic.tag || matchedTopic.title,
+          problem_description: matchedTopic.summary,
+          guide_content: matchedTopic.defaultGuide,
+          created_at: 'Curated Architectural Masterclass Guide'
+        },
+        storageMode: 'json'
+      });
+    }
+
     const searchKeys = [
       (questionTitle || '').toLowerCase().trim(),
       (topicTitle || '').toLowerCase().trim()
@@ -413,7 +478,7 @@ app.get('/api/knowledge-guide', (req, res) => {
         questionTitle: questionTitle || topicTitle,
         concept: foundAnswer.concept || topicTitle,
         answer: foundAnswer,
-        topicMeta: null
+        topicMeta: matchedTopic
       });
 
       return res.json({
@@ -433,8 +498,7 @@ app.get('/api/knowledge-guide', (req, res) => {
       });
     }
 
-    const guide = db.getLatestGuide({ track, topicTitle, questionTitle });
-    res.json({ success: true, found: Boolean(guide), guide, storageMode: 'json' });
+    res.json({ success: true, found: false, guide: null, storageMode: 'json' });
   } catch (err) {
     console.error('Error fetching knowledge guide:', err);
     res.status(500).json({ success: false, error: err.message });
