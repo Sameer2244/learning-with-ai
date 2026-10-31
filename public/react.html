@@ -27,6 +27,10 @@
   <!-- Top App Navigation -->
   <header class="app-header">
     <div class="header-left">
+      <button class="icon-btn mobile-menu-toggle" id="mobileSidebarToggle" aria-label="Toggle Syllabus Navigation" title="Toggle Topics Syllabus">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
       <div class="logo">
         <span class="logo-mark" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.3);">
           <i class="fa-brands fa-react" style="color: #38bdf8;"></i>
@@ -69,10 +73,10 @@
         <i class="fa-solid fa-moon"></i>
       </button>
       <button class="btn secondary-btn" id="resetProgressBtn" title="Reset Mastered Topics to 0%">
-        <i class="fa-solid fa-arrow-rotate-left"></i> Reset Progress
+        <i class="fa-solid fa-arrow-rotate-left"></i> <span class="btn-text">Reset Progress</span>
       </button>
       <button class="btn secondary-btn" id="exportProgressBtn" title="Export Progress">
-        <i class="fa-solid fa-download"></i> Export
+        <i class="fa-solid fa-download"></i> <span class="btn-text">Export</span>
       </button>
     </div>
   </header>
@@ -87,6 +91,9 @@
           <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" id="topicSearch" placeholder="Search Fiber, Hooks, Re-renders, Concurrency, RSC, Compiler...">
         </div>
+        <button class="icon-btn-sm mobile-sidebar-close" id="mobileSidebarClose" aria-label="Close Syllabus" title="Close Syllabus">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
       <div class="topics-tree" id="topicsTree">
@@ -95,6 +102,8 @@
         </div>
       </div>
     </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
     <!-- CENTER PANEL: Dedicated Knowledge Information Arena (No Code Editor) -->
     <main class="arena-panel">

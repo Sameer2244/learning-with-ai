@@ -64,11 +64,44 @@
   // Initialize Application
   async function init() {
     initTheme();
+    initMobileDrawer();
     setupEventListeners();
     await initStorageMode();
     checkHealth();
     await loadTopics();
     updateSavedGuidesCount();
+  }
+
+  // Mobile Sidebar Drawer Management
+  function closeMobileSidebar() {
+    const sidebar = document.querySelector('.sidebar-panel');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (backdrop) backdrop.classList.remove('active');
+    document.body.classList.remove('sidebar-is-open');
+  }
+
+  function toggleMobileSidebar() {
+    const sidebar = document.querySelector('.sidebar-panel');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (!sidebar) return;
+    const isOpen = sidebar.classList.toggle('mobile-open');
+    if (backdrop) backdrop.classList.toggle('active', isOpen);
+    document.body.classList.toggle('sidebar-is-open', isOpen);
+  }
+
+  function initMobileDrawer() {
+    const mobileToggle = document.getElementById('mobileSidebarToggle');
+    const mobileClose = document.getElementById('mobileSidebarClose');
+    const backdrop = document.getElementById('sidebarBackdrop');
+
+    if (mobileToggle) mobileToggle.addEventListener('click', toggleMobileSidebar);
+    if (mobileClose) mobileClose.addEventListener('click', closeMobileSidebar);
+    if (backdrop) backdrop.addEventListener('click', closeMobileSidebar);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMobileSidebar();
+    });
   }
 
   // Theme Management
@@ -221,6 +254,8 @@
   async function selectTopic(topic, category) {
     state.selectedTopic = topic;
     state.selectedCategory = category;
+
+    closeMobileSidebar();
 
     // Breadcrumbs
     crumbCategory.textContent = category.category.replace(/^\d+\.\s*/, '');

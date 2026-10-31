@@ -64,10 +64,14 @@ body {
   background-color: var(--bg-app);
   color: var(--text-primary);
   height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   line-height: 1.5;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ==========================================================================
@@ -76,6 +80,7 @@ body {
 
 .app-header {
   height: var(--header-height);
+  flex-shrink: 0;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
@@ -83,6 +88,7 @@ body {
   justify-content: space-between;
   padding: 0 20px;
   user-select: none;
+  z-index: 100;
 }
 
 .header-left {
@@ -125,6 +131,65 @@ body {
 .logo-text .subtitle {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+/* Mobile Navigation Controls */
+.mobile-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.mobile-menu-toggle:hover {
+  background: var(--border-strong);
+}
+
+.mobile-sidebar-close {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.mobile-sidebar-close:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 1150;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.sidebar-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Track Switcher (JavaScript vs React.js) */
@@ -259,9 +324,12 @@ body {
 
 .workspace-container {
   display: flex;
-  height: calc(100vh - var(--header-height));
+  flex: 1;
+  min-height: 0;
+  height: auto;
   width: 100%;
   overflow: hidden;
+  position: relative;
 }
 
 /* Left Sidebar: Topics Tree */
@@ -2718,6 +2786,598 @@ body.panel-is-maximized {
   background: var(--bg-code);
   padding: 2px 5px;
   border-radius: 3px;
+}
+
+/* ==========================================================================
+   Comprehensive Mobile & Tablet Responsive Engine
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-width: 280px;
+    --eval-width: 380px;
+  }
+}
+
+@media (max-width: 900px) {
+  /* Prevent horizontal scrolling on body */
+  body {
+    overflow-x: hidden;
+  }
+
+  body.sidebar-is-open {
+    overflow: hidden;
+  }
+
+  /* --------------------------------------------------------------------------
+     Top Navigation Header (Mobile 2-Row Layout)
+     -------------------------------------------------------------------------- */
+  .app-header {
+    height: auto;
+    min-height: 52px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    gap: 8px 0;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-flex;
+    margin-right: 4px;
+  }
+
+  .header-left {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .logo {
+    gap: 8px;
+  }
+
+  .logo-text .subtitle {
+    display: none;
+  }
+
+  .logo-text .title {
+    font-size: 13px;
+    letter-spacing: 0.4px;
+  }
+
+  .model-status-pill {
+    padding: 3px 6px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .model-status-pill .model-name {
+    display: none;
+  }
+
+  .header-center {
+    display: none; /* Hide progress from cramped top header on mobile */
+  }
+
+  .header-right {
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .header-right .btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  /* Track Switcher: Smooth Horizontally Scrollable Pills Bar on Mobile */
+  .track-switcher {
+    width: 100%;
+    order: 10;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding: 4px 2px;
+    margin-top: 4px;
+    border-radius: var(--radius-sm);
+  }
+
+  .track-switcher::-webkit-scrollbar {
+    display: none;
+  }
+
+  .track-tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* --------------------------------------------------------------------------
+     Workspace & Slide-In Drawer Navigation
+     -------------------------------------------------------------------------- */
+  .sidebar-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(85vw, 320px);
+    min-width: 0;
+    height: 100%;
+    height: 100dvh;
+    z-index: 1200;
+    background-color: var(--bg-surface);
+    border-right: 1px solid var(--border-subtle);
+    box-shadow: 0 0 35px rgba(0, 0, 0, 0.75);
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.33, 1, 0.68, 1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-panel.mobile-open {
+    transform: translateX(0);
+  }
+
+  .mobile-sidebar-close {
+    display: inline-flex;
+  }
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .sidebar-header .search-box {
+    flex: 1;
+    width: 100%;
+  }
+
+  .topics-tree {
+    padding: 10px 8px;
+  }
+
+  .topic-item {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  /* --------------------------------------------------------------------------
+     Arena Panel (Knowledge Guides & Main Content)
+     -------------------------------------------------------------------------- */
+  .arena-panel {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px 14px;
+    gap: 14px;
+    overflow-x: hidden;
+  }
+
+  .arena-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .topic-breadcrumbs {
+    font-size: 12px;
+    flex-wrap: wrap;
+    line-height: 1.4;
+  }
+
+  .ds-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .ds-hero-actions button,
+  .ds-hero-actions .storage-toggle-control {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .ds-topic-hero {
+    padding: 14px 12px;
+  }
+
+  .ds-topic-hero-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .ds-topic-title {
+    font-size: clamp(1.2rem, 5vw, 1.6rem);
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .sys-importance-banner {
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .ds-collapsible-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .ds-info-card {
+    padding: 12px 14px;
+  }
+
+  .ds-main-tabs {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ds-tab-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  .saved-guides-filter-bar,
+  .saved-guides-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .saved-guides-filter-bar .search-box,
+  .saved-guides-toolbar .saved-search-box {
+    width: 100%;
+  }
+
+  .saved-storage-toggle {
+    width: 100%;
+  }
+
+  .saved-storage-toggle button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* --------------------------------------------------------------------------
+     Markdown Typography & Code Blocks on Mobile
+     -------------------------------------------------------------------------- */
+  .markdown-content {
+    font-size: 13.5px;
+    line-height: 1.65;
+  }
+
+  .markdown-content h1 {
+    font-size: 1.45rem;
+    line-height: 1.3;
+    margin: 18px 0 10px 0;
+  }
+
+  .markdown-content h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+    margin: 16px 0 8px 0;
+  }
+
+  .markdown-content h3 {
+    font-size: 1.1rem;
+    line-height: 1.3;
+    margin: 14px 0 6px 0;
+  }
+
+  .markdown-content pre {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 12px;
+    padding: 12px 10px;
+    margin: 12px 0;
+  }
+
+  .markdown-content code {
+    word-break: break-word;
+  }
+
+  .markdown-content pre code {
+    word-break: normal;
+    white-space: pre;
+  }
+
+  .markdown-content table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 12px;
+  }
+
+  .markdown-content img,
+  .markdown-content svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* --------------------------------------------------------------------------
+     Coding Problems Arena (problems.html) on Mobile
+     -------------------------------------------------------------------------- */
+  .evaluation-panel:not(.maximized) {
+    display: none;
+  }
+
+  .problem-card {
+    padding: 12px 14px;
+  }
+
+  .problem-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .problem-title-wrap h2 {
+    font-size: clamp(1.15rem, 4.5vw, 1.45rem);
+    word-break: break-word;
+    line-height: 1.3;
+  }
+
+  .problem-meta {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  #toggleTrapBtn {
+    align-self: flex-start;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .topbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .topbar-actions button,
+  .topbar-actions .storage-toggle-control {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .difficulty-group {
+    width: 100%;
+    display: flex;
+  }
+
+  .difficulty-group .diff-chip {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  /* Editor Toolbar & Monaco Editor on Mobile */
+  .editor-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .toolbar-left {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .shortcut-tip {
+    display: none;
+  }
+
+  .toolbar-right {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .toolbar-right .icon-btn-sm {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 6px 8px;
+    font-size: 11px;
+    min-height: 32px;
+  }
+
+  .toolbar-right .run-btn {
+    flex: 2 1 100%;
+    justify-content: center;
+    padding: 9px 16px;
+    font-size: 13px;
+    min-height: 38px;
+  }
+
+  .editor-wrapper {
+    height: 270px;
+  }
+
+  /* Results Panel */
+  .results-panel {
+    margin-top: 10px;
+  }
+
+  .results-header {
+    padding: 0 8px;
+    height: 40px;
+  }
+
+  .results-tab-btn {
+    padding: 0 8px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .results-actions {
+    gap: 8px;
+  }
+
+  .results-content-pane {
+    max-height: 260px;
+    padding: 10px 8px;
+  }
+
+  .test-banner {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .test-case-card {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  /* Full Screen Maximized Knowledge Guide on Mobile */
+  .evaluation-panel.maximized .panel-header {
+    padding: 10px 14px;
+  }
+
+  .evaluation-panel.maximized #knowledgeContent,
+  .evaluation-panel.maximized #savedGuidesPane,
+  .evaluation-panel.maximized #evalPane {
+    padding: 14px 12px 90px 12px;
+  }
+
+  .evaluation-panel.maximized #emptyKnowledgeState {
+    margin: 20px auto;
+    padding: 20px 14px;
+    border-radius: var(--radius-md);
+  }
+
+  .floating-minimize-btn {
+    bottom: 16px;
+    right: 16px;
+    padding: 9px 16px;
+    font-size: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .floating-minimize-btn kbd {
+    display: none;
+  }
+
+  /* Solution Modal on Mobile */
+  .modal-backdrop {
+    padding: 10px;
+  }
+
+  .modal-dialog {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: var(--radius-md);
+  }
+
+  .modal-header {
+    padding: 12px 14px;
+  }
+
+  .modal-body {
+    padding: 10px;
+    max-height: 65vh;
+  }
+
+  .modal-footer {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .modal-footer button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-right .btn .btn-text {
+    display: none;
+  }
+
+  .header-right .btn {
+    padding: 6px 8px;
+    min-width: 34px;
+    justify-content: center;
+  }
+
+  .header-right {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 6px 8px;
+  }
+
+  .logo-mark,
+  .ds-logo-mark,
+  .sys-logo-mark {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .logo-text .title {
+    font-size: 12px;
+  }
+
+  .arena-panel {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .ds-topic-hero {
+    padding: 10px;
+  }
+
+  .ds-badges-row {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .ds-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .editor-wrapper {
+    height: 240px;
+  }
+
+  .interview-q-header {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .interview-q-body {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
 }
 
 

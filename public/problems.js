@@ -113,6 +113,7 @@
   // Initialize
   async function init() {
     setupTheme();
+    initMobileDrawer();
     setupEditor();
     setupEventListeners();
     await initStorageMode();
@@ -120,6 +121,44 @@
     await loadTopics();
     updateMasteryProgress();
     await updateSavedGuidesCount();
+  }
+
+  // Mobile Sidebar Drawer Management
+  function closeMobileSidebar() {
+    const sidebar = document.querySelector('.sidebar-panel');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (backdrop) backdrop.classList.remove('active');
+    document.body.classList.remove('sidebar-is-open');
+  }
+
+  function toggleMobileSidebar() {
+    const sidebar = document.querySelector('.sidebar-panel');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (!sidebar) return;
+    const isOpen = sidebar.classList.toggle('mobile-open');
+    if (backdrop) backdrop.classList.toggle('active', isOpen);
+    document.body.classList.toggle('sidebar-is-open', isOpen);
+  }
+
+  function initMobileDrawer() {
+    const mobileToggle = document.getElementById('mobileSidebarToggle');
+    const mobileClose = document.getElementById('mobileSidebarClose');
+    const backdrop = document.getElementById('sidebarBackdrop');
+
+    if (mobileToggle) mobileToggle.addEventListener('click', toggleMobileSidebar);
+    if (mobileClose) mobileClose.addEventListener('click', closeMobileSidebar);
+    if (backdrop) backdrop.addEventListener('click', closeMobileSidebar);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMobileSidebar();
+    });
+
+    window.addEventListener('resize', () => {
+      if (monacoEditor && typeof monacoEditor.layout === 'function') {
+        monacoEditor.layout();
+      }
+    });
   }
 
   // Theme Management
@@ -264,6 +303,9 @@
   // Select Topic
   function selectTopic(topic, category) {
     state.selectedTopic = topic;
+
+    closeMobileSidebar();
+
     crumbCategory.textContent = category.category.replace(/^\d+\.\s*/, '');
     crumbTopic.textContent = topic.title;
 
